@@ -23,62 +23,62 @@ import {
 
 const features = [
     {
-        icon: MessageSquare,
-        title: 'AI-Powered Chat',
-        description: 'Intelligent conversations powered by Claude AI for smarter, context-aware messaging'
-    },
-    {
         icon: Zap,
-        title: 'Blazing Fast',
-        description: 'Server-side rendering with Vue 3 and Laravel 12 for optimal performance'
-    },
-    {
-        icon: Shield,
-        title: 'Secure by Default',
-        description: 'Built-in authentication, authorization, and data encryption'
-    },
-    {
-        icon: Palette,
-        title: 'Beautiful UI',
-        description: 'Modern design with Tailwind CSS 4 and shadcn/ui components'
-    },
-    {
-        icon: Moon,
-        title: 'Dark Mode',
-        description: 'Seamless theme switching with system preference detection'
-    },
-    {
-        icon: Smartphone,
-        title: 'PWA Ready',
-        description: 'Progressive Web App capabilities for native-like mobile experience'
+        title: 'Instant Start',
+        description: 'Zero setup required - start coding immediately with everything pre-configured'
     },
     {
         icon: Code2,
-        title: 'Developer Friendly',
-        description: 'Clean architecture with TypeScript, composables, and modern tooling'
+        title: 'Live Preview',
+        description: 'See your changes instantly with hot module replacement and real-time updates'
+    },
+    {
+        icon: MessageSquare,
+        title: 'AI-Ready Conversations',
+        description: 'Claude AI integration ready to assist with intelligent, context-aware responses'
     },
     {
         icon: Globe,
-        title: 'Real-time Updates',
-        description: 'WebSocket integration for instant message delivery and notifications'
+        title: 'Always Available',
+        description: 'Cloud-based environment accessible from anywhere, anytime, on any device'
+    },
+    {
+        icon: Shield,
+        title: 'Production Ready',
+        description: 'Built-in authentication, security, and scalability from day one'
+    },
+    {
+        icon: Palette,
+        title: 'Beautiful by Default',
+        description: 'Pre-styled components with Tailwind CSS 4 and shadcn/ui ready to use'
+    },
+    {
+        icon: Moon,
+        title: 'Adaptive Interface',
+        description: 'Automatic theme switching with system preference detection'
+    },
+    {
+        icon: Smartphone,
+        title: 'Works Everywhere',
+        description: 'PWA capabilities for seamless desktop and mobile experience'
     }
 ];
 
 const benefits = [
     {
-        title: 'Boost Productivity',
-        description: 'AI assistance helps you communicate more effectively and get answers instantly',
-        points: ['Smart suggestions', 'Context awareness', 'Quick responses']
+        title: 'Start Instantly',
+        description: 'No installation, no configuration - just open and start building immediately',
+        points: ['Pre-configured environment', 'Instant hot reload', 'Live preview window']
     },
     {
-        title: 'Scale with Confidence',
-        description: 'Built on battle-tested technologies that grow with your needs',
-        points: ['Laravel robustness', 'Vue reactivity', 'Optimized database']
+        title: 'Code with Confidence',
+        description: 'Everything you need is ready - from AI assistance to instant feedback',
+        points: ['Real-time preview', 'AI-powered suggestions', 'Integrated debugging']
     },
     {
-        title: 'Delight Your Users',
-        description: 'Intuitive interface that users love with minimal learning curve',
-        points: ['Clean design', 'Fast interactions', 'Mobile-first approach']
+        title: 'Ship Faster',
+        description: 'From idea to production with zero friction and maximum velocity',
+        points: ['One-click deployment', 'Built-in CI/CD', 'Production-ready code']
     }
 ];
 
@@ -177,15 +177,14 @@ onUnmounted(() => {
             <div class="mx-auto max-w-7xl">
                 <div class="observe-animate mx-auto max-w-3xl text-center opacity-0 translate-y-10 transition-all duration-700 ease-out">
                     <h1 class="text-4xl font-bold tracking-tight text-foreground sm:text-6xl lg:text-7xl">
-                        Chat Smarter with
+                        Always Ready to
                         <span class="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                            AI-Powered
+                            Start Coding
                         </span>
-                        Conversations
                     </h1>
                     <p class="mt-6 text-lg leading-8 text-muted-foreground sm:text-xl">
-                        Experience the future of messaging with LaraChat - where Laravel meets Vue.js and Claude AI 
-                        to create seamless, intelligent conversations that enhance your communication.
+                        Jump straight into conversations and coding with instant preview. No setup, no waiting - 
+                        LaraChat is always ready when inspiration strikes, with real-time feedback at your fingertips.
                     </p>
                     <div class="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
                         <Link href="/register">
@@ -204,15 +203,28 @@ onUnmounted(() => {
             </div>
         </section>
 
+        <!-- Hero Image Section -->
+        <section class="py-12">
+            <div class="mx-auto max-w-7xl px-6 lg:px-8">
+                <div class="observe-animate mx-auto max-w-6xl opacity-0 translate-y-10 transition-all duration-700 ease-out">
+                    <img 
+                        src="https://www.dropbox.com/scl/fi/u93zkurmzxkdxulyoa3da/Monosnap-Laravel-2025-08-16-12-41-58.png?rlkey=a0p6anklyr2adso07d4iyhdtk&raw=1"
+                        alt="LaraChat Dashboard"
+                        class="w-full rounded-2xl shadow-2xl ring-1 ring-gray-900/10 dark:ring-gray-100/10"
+                    />
+                </div>
+            </div>
+        </section>
+
         <!-- Features Section -->
         <section class="py-24 sm:py-32">
             <div class="mx-auto max-w-7xl px-6 lg:px-8">
                 <div class="observe-animate mx-auto max-w-2xl text-center opacity-0 translate-y-10 transition-all duration-700 ease-out">
                     <h2 class="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-                        Everything You Need for Modern Chat
+                        Ready When You Are
                     </h2>
                     <p class="mt-4 text-lg text-muted-foreground">
-                        Built with the latest technologies and best practices for exceptional performance
+                        Everything pre-configured and instantly available - just start coding
                     </p>
                 </div>
                 <div class="mx-auto mt-16 grid max-w-7xl grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -241,10 +253,10 @@ onUnmounted(() => {
             <div class="mx-auto max-w-7xl px-6 lg:px-8">
                 <div class="observe-animate mx-auto max-w-2xl text-center opacity-0 translate-y-10 transition-all duration-700 ease-out">
                     <h2 class="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-                        Why Teams Choose LaraChat
+                        Zero to Production in Minutes
                     </h2>
                     <p class="mt-4 text-lg text-muted-foreground">
-                        More than just a chat app - it's a productivity powerhouse
+                        Skip the setup, jump straight to building with instant preview
                     </p>
                 </div>
                 <div class="mx-auto mt-16 grid max-w-6xl grid-cols-1 gap-8 lg:grid-cols-3">
@@ -338,10 +350,10 @@ onUnmounted(() => {
             <div class="mx-auto max-w-7xl px-6 lg:px-8">
                 <div class="observe-animate relative isolate overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 to-purple-600 px-6 py-24 text-center shadow-2xl sm:px-16 opacity-0 scale-95 transition-all duration-700 ease-out">
                     <h2 class="mx-auto max-w-2xl text-3xl font-bold tracking-tight text-white sm:text-4xl">
-                        Ready to Transform Your Communication?
+                        Start Coding in Seconds, Not Hours
                     </h2>
                     <p class="mx-auto mt-6 max-w-xl text-lg leading-8 text-indigo-100">
-                        Join thousands of teams already using LaraChat to enhance their conversations with AI
+                        Everything is ready - your development environment, AI assistant, and live preview await
                     </p>
                     <div class="mt-10 flex items-center justify-center gap-x-6">
                         <Link href="/register">
