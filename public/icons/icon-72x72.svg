@@ -1,11 +1,17 @@
 <svg width="72" height="72" viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
     <defs>
         <linearGradient id="grad72" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" style="stop-color:#0ea5e9;stop-opacity:1" />
-            <stop offset="100%" style="stop-color:#0284c7;stop-opacity:1" />
+            <stop offset="0%" style="stop-color:#1a1a1a;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#000000;stop-opacity:1" />
         </linearGradient>
     </defs>
     <rect width="72" height="72" fill="url(#grad72)" rx="7.2" />
-    <circle cx="36" cy="36" r="25.2" fill="white" />
-    <text x="36" y="36" font-family="Arial, sans-serif" font-size="21.599999999999998" font-weight="bold" fill="#0ea5e9" text-anchor="middle" dominant-baseline="middle">LC</text>
+    <g transform="translate(36, 32) scale(0.141)">
+        <path d="M -120 -80 Q -120 -100 -100 -100 L 100 -100 Q 120 -100 120 -80 L 120 40 Q 120 60 100 60 L -20 60 L -60 100 L -60 60 L -100 60 Q -120 60 -120 40 Z" 
+              fill="white" stroke="none"/>
+        <rect x="-80" y="-60" width="120" height="10" rx="5" fill="#000000"/>
+        <rect x="-80" y="-30" width="160" height="10" rx="5" fill="#000000"/>
+        <rect x="-80" y="0" width="90" height="10" rx="5" fill="#000000"/>
+    </g>
+    <text x="36" y="56" font-family="system-ui, -apple-system, sans-serif" font-size="10" font-weight="600" fill="white" text-anchor="middle" dominant-baseline="middle">LaraChat</text>
 </svg>
