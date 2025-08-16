@@ -67,6 +67,11 @@ const quickMessages = [
 
 onMounted(() => {
     fetchFileTree();
+    // Auto-focus the input when page loads
+    const inputEl = document.querySelector('input[placeholder="Type your message or question..."]') as HTMLInputElement;
+    if (inputEl) {
+        inputEl.focus();
+    }
 });
 </script>
 

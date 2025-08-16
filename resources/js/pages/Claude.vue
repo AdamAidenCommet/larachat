@@ -652,6 +652,8 @@ onMounted(async () => {
         await scrollToBottom(true);
         // Also refresh conversations to ensure sidebar is up to date
         await fetchConversations(true, true);
+        // Focus input after loading conversation
+        focusInput(false);
     } else if (props.conversationId) {
         // For conversation-based pages, we'll need to wait for the session file
         // Start polling immediately to check for session file
@@ -664,8 +666,10 @@ onMounted(async () => {
         messages.value = [];
         sessionFilename.value = null;
         sessionId.value = null;
-        focusInput(false);
     }
+    
+    // Auto-focus input on mount
+    focusInput(false);
 });
 
 onUnmounted(() => {
