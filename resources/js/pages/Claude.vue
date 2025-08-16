@@ -695,24 +695,16 @@ onUnmounted(() => {
             >
                 <component :is="isArchived ? ArchiveRestore : Archive" class="h-4 w-4" />
             </Button>
-            <div v-if="conversationId && showArchiveConfirm && !isArchived" class="mr-2 flex gap-2">
-                <Button
-                    @click="showArchiveConfirm = false"
-                    variant="outline"
-                    size="sm"
-                    :disabled="isArchiving"
-                >
-                    Cancel
-                </Button>
-                <Button
-                    @click="archiveConversation()"
-                    variant="destructive"
-                    size="sm"
-                    :disabled="isArchiving"
-                >
-                    Confirm Archive
-                </Button>
-            </div>
+            <Button
+                v-if="conversationId && showArchiveConfirm && !isArchived"
+                @click="archiveConversation()"
+                variant="destructive"
+                size="sm"
+                :disabled="isArchiving"
+                class="mr-2"
+            >
+                Confirm Archive
+            </Button>
             <Button
                 @click="hideSystemMessages = !hideSystemMessages"
                 variant="ghost"
