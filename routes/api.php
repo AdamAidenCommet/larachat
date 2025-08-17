@@ -19,6 +19,8 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::delete('/repositories/{repository}', [RepositoryController::class, 'destroy']);
     Route::post('/repositories/{repository}/pull', [RepositoryController::class, 'pull']);
     Route::post('/repositories/{repository}/copy-to-hot', [RepositoryController::class, 'copyToHot']);
+    Route::get('/repositories/{repository}/env', [RepositoryController::class, 'getEnvFile']);
+    Route::put('/repositories/{repository}/env', [RepositoryController::class, 'updateEnvFile']);
 
     Route::get('/conversations', [ConversationsController::class, 'index']);
     Route::post('/conversations', [ConversationsController::class, 'store']);

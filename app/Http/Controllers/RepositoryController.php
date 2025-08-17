@@ -277,6 +277,86 @@ class RepositoryController extends Controller
         ]);
     }
 
+    /**
+     * Get .env file content
+     * 
+     * Retrieve the contents of the repository's .env file
+     * 
+     * @authenticated
+     * 
+     * @urlParam repository integer required The ID of the repository. Example: 1
+     * 
+     * @response 200 scenario="Success" {
+     *   "content": "APP_NAME=Laravel\nAPP_ENV=local\nAPP_KEY=base64:...\nAPP_DEBUG=true"
+     * }
+     * 
+     * @response 404 scenario=".env File Not Found" {
+     *   "message": ".env file not found"
+     * }
+     */
+    public function getEnvFile(Repository $repository)
+    {
+        $envPath = storage_path('app/private/' . $repository->local_path . '/.env');
+        
+        if (!file_exists($envPath)) {
+            return response()->json([
+                'content' => ''
+            ]);
+        }
+        
+        $content = file_get_contents($envPath);
+        
+        return response()->json([
+            'content' => $content
+        ]);
+    }
+    
+    /**
+     * Update .env file content
+     * 
+     * Update the contents of the repository's .env file
+     * 
+     * @authenticated
+     * 
+     * @urlParam repository integer required The ID of the repository. Example: 1
+     * @bodyParam content string required The new content for the .env file. Example: APP_NAME=MyApp\nAPP_ENV=production
+     * 
+     * @response 200 scenario="Success" {
+     *   "message": ".env file updated successfully"
+     * }
+     * 
+     * @response 422 scenario="Update Failed" {
+     *   "message": "Failed to update .env file"
+     * }
+     */
+    public function updateEnvFile(Request $request, Repository $repository)
+    {
+        $request->validate([
+            'content' => 'required|string'
+        ]);
+        
+        $envPath = storage_path('app/private/' . $repository->local_path . '/.env');
+        
+        // Create backup of existing .env file if it exists
+        if (file_exists($envPath)) {
+            $backupPath = storage_path('app/private/' . $repository->local_path . '/.env.backup');
+            copy($envPath, $backupPath);
+        }
+        
+        // Write new content
+        $result = file_put_contents($envPath, $request->input('content'));
+        
+        if ($result === false) {
+            return response()->json([
+                'message' => 'Failed to update .env file'
+            ], 422);
+        }
+        
+        return response()->json([
+            'message' => '.env file updated successfully'
+        ]);
+    }
+
     private function extractRepoName(string $url): string
     {
         // Remove trailing .git if present

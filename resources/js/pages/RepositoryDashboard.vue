@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import EnvFileModal from '@/components/EnvFileModal.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { router } from '@inertiajs/vue3';
 import axios from 'axios';
-import { Activity, ArrowRight, FileCode, MessageSquare, Send, Sparkles } from 'lucide-vue-next';
+import { Activity, ArrowRight, FileCode, FileKey2, MessageSquare, Send, Sparkles } from 'lucide-vue-next';
 import { onMounted, ref } from 'vue';
 
 const props = defineProps<{
@@ -34,6 +35,7 @@ const props = defineProps<{
 const fileTree = ref<any[]>([]);
 const loadingTree = ref(false);
 const messageInput = ref('');
+const showEnvModal = ref(false);
 
 const fetchFileTree = async () => {
     loadingTree.value = true;
@@ -72,6 +74,17 @@ onMounted(() => {
 
 <template>
     <AppLayout>
+        <template #header-actions>
+            <Button
+                @click="showEnvModal = true"
+                variant="outline"
+                size="sm"
+            >
+                <FileKey2 class="mr-2 h-4 w-4" />
+                Environment
+            </Button>
+        </template>
+        
         <div class="container mx-auto py-6">
             <!-- Main CTA Section -->
             <div class="flex min-h-[60vh] flex-col items-center justify-center">
@@ -144,5 +157,11 @@ onMounted(() => {
                 </div>
             </div>
         </div>
+        
+        <!-- Environment Variables Modal -->
+        <EnvFileModal
+            v-model="showEnvModal"
+            :repository-id="repository.id"
+        />
     </AppLayout>
 </template>
