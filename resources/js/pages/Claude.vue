@@ -61,6 +61,7 @@ const inputMessage = ref('');
 const sessionFilename = ref<string | null>(props.sessionFile || null);
 const sessionId = ref<string | null>(props.sessionId || null);
 const conversationId = ref<number | null>(props.conversationId || null);
+const conversation = ref<any>(null);
 const hideSystemMessages = ref(true);
 const selectedRepository = ref<string | null>(props.repository || null);
 const isUserInteracting = ref(false);
@@ -651,8 +652,14 @@ watch(
 // Reset archive state when conversation changes
 watch(
     () => props.conversationId,
-    (newId) => {
+    async (newId) => {
         conversationId.value = newId || null;
+        // Fetch the conversation when ID changes
+        if (newId) {
+            await fetchConversation(newId);
+        } else {
+            conversation.value = null;
+        }
         // Reset archive button state when conversation changes
         isArchived.value = props.isArchived || false;
         isArchiving.value = false;
@@ -668,6 +675,40 @@ watch(
         showArchiveConfirm.value = false;
     },
 );
+
+// Update conversation when conversations list changes
+watch(
+    conversations,
+    () => {
+        if (conversationId.value) {
+            const updatedConv = conversations.value.find(c => c.id === conversationId.value);
+            if (updatedConv) {
+                conversation.value = updatedConv;
+            }
+        }
+    },
+    { deep: true }
+);
+
+// Function to fetch a specific conversation
+const fetchConversation = async (id: number) => {
+    try {
+        // First try to find it in the conversations list
+        const foundConv = conversations.value.find(c => c.id === id);
+        if (foundConv) {
+            conversation.value = foundConv;
+        } else {
+            // If not found, fetch conversations and try again
+            await fetchConversations(true, true);
+            const foundConvAfterFetch = conversations.value.find(c => c.id === id);
+            if (foundConvAfterFetch) {
+                conversation.value = foundConvAfterFetch;
+            }
+        }
+    } catch (error) {
+        console.error('Error fetching conversation:', error);
+    }
+};
 
 // Lifecycle
 onMounted(async () => {
@@ -699,7 +740,11 @@ onMounted(async () => {
     // Fetch conversations on mount to ensure they're up to date
     await fetchConversations(false, true);
 
-    if (props.conversationId) conversationId.value = props.conversationId;
+    if (props.conversationId) {
+        conversationId.value = props.conversationId;
+        // Fetch the specific conversation
+        await fetchConversation(props.conversationId);
+    }
     if (props.sessionId) sessionId.value = props.sessionId;
 
     if (props.sessionFile) {
