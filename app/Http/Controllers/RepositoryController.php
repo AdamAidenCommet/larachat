@@ -299,16 +299,20 @@ class RepositoryController extends Controller
         $envPath = storage_path('app/private/' . $repository->local_path . '/.env');
         
         if (!file_exists($envPath)) {
+            // Return 200 with empty content, not 404
+            // This is expected behavior when .env doesn't exist yet
             return response()->json([
-                'content' => ''
-            ]);
+                'content' => '',
+                'exists' => false
+            ], 200);
         }
         
         $content = file_get_contents($envPath);
         
         return response()->json([
-            'content' => $content
-        ]);
+            'content' => $content,
+            'exists' => true
+        ], 200);
     }
     
     /**

@@ -29,11 +29,22 @@ const loading = ref(false);
 const saving = ref(false);
 
 const fetchEnvFile = async () => {
+    if (!props.repositoryId) {
+        console.error('Repository ID is not defined');
+        toast.error('Repository ID is missing');
+        return;
+    }
+    
     loading.value = true;
     try {
         const response = await axios.get(`/api/repositories/${props.repositoryId}/env`);
         envContent.value = response.data.content || '';
         originalContent.value = response.data.content || '';
+        
+        // Show a hint if the file doesn't exist yet
+        if (!response.data.exists) {
+            toast.info('.env file does not exist yet. You can create one by adding content and saving.');
+        }
     } catch (error: any) {
         toast.error(error.response?.data?.message || 'Failed to load .env file');
         console.error('Failed to fetch .env file:', error);
@@ -66,8 +77,11 @@ watch(envContent, (newVal) => {
 });
 
 watch(() => props.modelValue, (isOpen) => {
-    if (isOpen) {
+    if (isOpen && props.repositoryId) {
         fetchEnvFile();
+    } else if (isOpen && !props.repositoryId) {
+        console.error('Modal opened but repository ID is not defined');
+        toast.error('Repository ID is missing. Please refresh the page.');
     } else {
         envContent.value = '';
         originalContent.value = '';
