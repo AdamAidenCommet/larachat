@@ -96,10 +96,17 @@ class ConversationsController extends Controller
 
         $project_id = uniqid();
         $msg = $request->input('message');
+        $mode = $request->input('mode', 'plan');
         
-        // Get base project directory from .env
-        $baseProjectDirectory = env('PROJECTS_DIRECTORY', 'app/private/repositories');
-        $projectDirectory = rtrim($baseProjectDirectory, '/') . '/' . $project_id;
+        // For planning mode, use the base repository path
+        // For coding mode, create a unique project directory
+        if ($mode === 'plan') {
+            $projectDirectory = 'app/private/repositories/base/' . $request->input('repository');
+        } else {
+            // Get base project directory from .env
+            $baseProjectDirectory = env('PROJECTS_DIRECTORY', 'app/private/repositories');
+            $projectDirectory = rtrim($baseProjectDirectory, '/') . '/' . $project_id;
+        }
 
         $conversation = Conversation::query()->create([
             'user_id' => Auth::id(),
@@ -110,7 +117,7 @@ class ConversationsController extends Controller
             'repository' => $request->input('repository'),
             'filename' => 'claude-sessions/' . date('Y-m-d\TH-i-s') . '-session-' . $project_id . '.json',
             'is_processing' => true, // Mark as processing when created
-            'mode' => $request->input('mode', 'plan'), // Default to 'plan' if not specified
+            'mode' => $mode, // Default to 'plan' if not specified
         ]);
 
         Bus::chain([

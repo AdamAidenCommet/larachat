@@ -39,6 +39,25 @@ class InitializeConversationSessionJob implements ShouldQueue
 
         Storage::put($this->conversation->filename, json_encode($sessionData, JSON_PRETTY_PRINT));
 
+        // Check if planning mode - if so, set directory to repositories/base/<repository> without copying
+        if ($this->conversation->mode === 'plan') {
+            $baseRepositoryPath = storage_path('app/private/repositories/base/' . $this->conversation->repository);
+            
+            // Update conversation with the base repository path
+            $this->conversation->update([
+                'project_directory' => $baseRepositoryPath
+            ]);
+            
+            Log::info('InitializeConversationSessionJob: Set project directory for planning mode', [
+                'repository' => $this->conversation->repository,
+                'project_directory' => $baseRepositoryPath,
+                'mode' => 'plan',
+            ]);
+            
+            return;
+        }
+
+        // For coding mode, copy from hot directory as before
         $from = storage_path('app/private/repositories/hot/' . $this->conversation->repository);
 
         if (!File::exists($from)) {
