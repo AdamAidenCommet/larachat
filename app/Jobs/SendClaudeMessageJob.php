@@ -116,6 +116,10 @@ class SendClaudeMessageJob implements ShouldQueue
 
             // Filename is already set at the beginning, no need to update it again
             
+            // Add a small delay to ensure the file has been completely written
+            // This prevents the frontend from seeing is_processing = false before the response is ready
+            sleep(1);
+            
             // Mark conversation as no longer processing
             $this->conversation->update(['is_processing' => false]);
 
