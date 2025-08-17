@@ -120,6 +120,11 @@ class SendClaudeMessageJob implements ShouldQueue
             // This prevents the frontend from seeing is_processing = false before the response is ready
             sleep(1);
             
+            // Capture git diff and save to .git folder
+            if ($this->conversation->project_directory) {
+                $this->captureGitDiff();
+            }
+            
             // Mark conversation as no longer processing
             $this->conversation->update(['is_processing' => false]);
 
@@ -138,6 +143,71 @@ class SendClaudeMessageJob implements ShouldQueue
             ]);
 
             throw $e; // Re-throw to let the queue handle retry logic
+        }
+    }
+
+    protected function captureGitDiff(): void
+    {
+        try {
+            // Determine project path
+            if (str_starts_with($this->conversation->project_directory, '/')) {
+                $projectPath = $this->conversation->project_directory;
+            } else {
+                $projectPath = storage_path($this->conversation->project_directory);
+            }
+            
+            // Check if it's a git repository
+            if (!is_dir($projectPath . '/.git')) {
+                Log::info('Project directory is not a git repository, skipping diff capture', [
+                    'conversation_id' => $this->conversation->id,
+                    'project_path' => $projectPath
+                ]);
+                return;
+            }
+            
+            // Generate filename for the diff
+            $timestamp = now()->format('Y-m-d\TH-i-s');
+            $diffFilename = "claude-diff-{$timestamp}-{$this->conversation->id}.diff";
+            $diffPath = $projectPath . '/.git/' . $diffFilename;
+            
+            // Execute git diff command
+            $command = sprintf(
+                'cd %s && git diff --no-ext-diff --no-color > %s 2>&1',
+                escapeshellarg($projectPath),
+                escapeshellarg($diffPath)
+            );
+            
+            $output = [];
+            $returnCode = null;
+            exec($command, $output, $returnCode);
+            
+            if ($returnCode === 0) {
+                // Check if diff file has content
+                if (filesize($diffPath) > 0) {
+                    Log::info('Git diff captured and saved', [
+                        'conversation_id' => $this->conversation->id,
+                        'diff_path' => $diffPath,
+                        'size' => filesize($diffPath)
+                    ]);
+                } else {
+                    // Remove empty diff file
+                    @unlink($diffPath);
+                    Log::info('No changes detected in git diff', [
+                        'conversation_id' => $this->conversation->id
+                    ]);
+                }
+            } else {
+                Log::warning('Failed to capture git diff', [
+                    'conversation_id' => $this->conversation->id,
+                    'return_code' => $returnCode,
+                    'output' => implode("\n", $output)
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::error('Error capturing git diff', [
+                'conversation_id' => $this->conversation->id,
+                'error' => $e->getMessage()
+            ]);
         }
     }
 
