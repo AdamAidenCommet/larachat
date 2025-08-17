@@ -315,45 +315,51 @@ const loadSessionMessages = async (isPolling = false) => {
                 }
             }
         } else {
-            // Handle polling updates for incomplete conversations
+            // Handle polling updates for conversations
             if (sessionData.length > 0) {
                 const lastConversation = sessionData[sessionData.length - 1];
+                
+                // Check if conversation is incomplete for continued polling
                 if (!lastConversation.isComplete) {
                     incompleteMessageFound.value = true;
+                }
 
-                    // Count existing messages from ALL conversations, not just assistant messages
-                    let totalExistingMessages = 0;
-                    for (let i = 0; i < sessionData.length - 1; i++) {
-                        const conv = sessionData[i];
-                        // Count user message
-                        if (conv.userMessage) totalExistingMessages++;
-                        // Count responses
-                        totalExistingMessages += (conv.rawJsonResponses?.length || 0);
-                    }
-                    
-                    // For the last conversation, check how many messages we already have
-                    const lastConvUserMessageShown = messages.value.some(m => 
-                        m.role === 'user' && m.content === lastConversation.userMessage
-                    );
-                    if (!lastConvUserMessageShown && lastConversation.userMessage) {
-                        // Add the user message if not shown
-                        messages.value.push({
-                            id: Date.now() + Math.random(),
-                            content: lastConversation.userMessage,
-                            role: 'user',
-                            timestamp: new Date(lastConversation.timestamp),
-                        });
-                    }
-                    
-                    // Calculate how many assistant messages from this conversation we already have
-                    const currentConvAssistantCount = messages.value.filter(m => 
-                        m.role === 'assistant' && 
-                        messages.value.indexOf(m) >= totalExistingMessages
-                    ).length;
-                    
-                    // Get new responses from this position
-                    const newResponses = lastConversation.rawJsonResponses?.slice(currentConvAssistantCount) || [];
+                // Count existing messages from ALL conversations, not just assistant messages
+                let totalExistingMessages = 0;
+                for (let i = 0; i < sessionData.length - 1; i++) {
+                    const conv = sessionData[i];
+                    // Count user message
+                    if (conv.userMessage) totalExistingMessages++;
+                    // Count responses
+                    totalExistingMessages += (conv.rawJsonResponses?.length || 0);
+                }
+                
+                // For the last conversation, check how many messages we already have
+                const lastConvUserMessageShown = messages.value.some(m => 
+                    m.role === 'user' && m.content === lastConversation.userMessage
+                );
+                if (!lastConvUserMessageShown && lastConversation.userMessage) {
+                    // Add the user message if not shown
+                    messages.value.push({
+                        id: Date.now() + Math.random(),
+                        content: lastConversation.userMessage,
+                        role: 'user',
+                        timestamp: new Date(lastConversation.timestamp),
+                    });
+                }
+                
+                // Calculate how many assistant messages from this conversation we already have
+                // Start counting from after all previous conversations' messages
+                const lastConvStartIndex = totalExistingMessages + (lastConvUserMessageShown ? 0 : 1);
+                const currentConvAssistantCount = messages.value.slice(lastConvStartIndex).filter(m => 
+                    m.role === 'assistant'
+                ).length;
+                
+                // Get new responses from this position
+                const newResponses = lastConversation.rawJsonResponses?.slice(currentConvAssistantCount) || [];
 
+                // Process any new responses
+                if (newResponses.length > 0) {
                     newResponses.forEach((rawResponseStr: any, i: number) => {
                         let rawResponse: any;
                         
