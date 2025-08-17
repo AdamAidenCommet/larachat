@@ -81,3 +81,9 @@ scripts/refresh-master.sh
 ```
 
 **DO NOT** manually run git checkout master, git pull, etc. The script handles everything correctly.
+
+## Conversation Mode and Project Directory Handling
+**IMPORTANT**: When a new conversation is created:
+- **Planning Mode**: The project directory is set to `repositories/base/<repository>` (the base repository, no copying or moving)
+- **Coding Mode**: A unique project directory is created and the repository is copied from hot storage
+- The mode determines whether Claude has write permissions (coding) or read-only permissions (planning)

@@ -39,6 +39,25 @@ class InitializeConversationSessionJob implements ShouldQueue
 
         Storage::put($this->conversation->filename, json_encode($sessionData, JSON_PRETTY_PRINT));
 
+        // Check if planning mode - if so, set directory to repositories/base/<repository> without copying
+        if ($this->conversation->mode === 'plan') {
+            $baseRepositoryPath = storage_path('app/private/repositories/base/' . $this->conversation->repository);
+            
+            // Update conversation with the base repository path
+            $this->conversation->update([
+                'project_directory' => $baseRepositoryPath
+            ]);
+            
+            Log::info('InitializeConversationSessionJob: Set project directory for planning mode', [
+                'repository' => $this->conversation->repository,
+                'project_directory' => $baseRepositoryPath,
+                'mode' => 'plan',
+            ]);
+            
+            return;
+        }
+
+        // For coding mode, copy from hot directory as before
         $from = storage_path('app/private/repositories/hot/' . $this->conversation->repository);
 
         if (!File::exists($from)) {
@@ -76,51 +95,23 @@ class InitializeConversationSessionJob implements ShouldQueue
         
         File::moveDirectory($from, $to, true);
 
-        // Only run git commands if the directory exists after move
+        // Verify the directory exists after move
         if (!File::exists($to)) {
             Log::error('InitializeConversationSessionJob: Failed to move repository directory', [
                 'from' => $from,
                 'to' => $to,
                 'repository' => $this->conversation->repository,
             ]);
-            return;
-        }
-
-        // Update the Git repository in the moved directory using system-update script
-        try {
-            $scriptPath = base_path('scripts/system-update.sh');
-            
-            // Make sure the script is executable
-            if (File::exists($scriptPath)) {
-                chmod($scriptPath, 0755);
-            }
-            
-            // Run the system-update script in the project directory
-            $result = Process::path($to)
-                ->timeout(120) // 2 minutes timeout
-                ->run('bash ' . escapeshellarg($scriptPath));
-            
-            if (!$result->successful()) {
-                throw new \RuntimeException("system-update script failed. Output: " . $result->errorOutput());
-            }
-            
-            Log::info('InitializeConversationSessionJob: Updated project repository using system-update script', [
-                'repository' => $this->conversation->repository,
-                'project_directory' => $this->conversation->project_directory,
-            ]);
-        } catch (\Exception $e) {
-            Log::error('InitializeConversationSessionJob: Failed to update project repository using system-update script', [
-                'repository' => $this->conversation->repository,
-                'project_directory' => $this->conversation->project_directory,
-                'error' => $e->getMessage(),
-            ]);
             
             // Mark conversation as failed
             $this->conversation->update(['is_processing' => false]);
-            
-            // Re-throw the exception to fail the job
-            throw $e;
+            return;
         }
+        
+        Log::info('InitializeConversationSessionJob: Successfully moved repository', [
+            'repository' => $this->conversation->repository,
+            'project_directory' => $this->conversation->project_directory,
+        ]);
     }
 
 }

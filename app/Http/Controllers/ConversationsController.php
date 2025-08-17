@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Jobs\CopyRepositoryToHotJob;
+use App\Jobs\DeleteProjectDirectoryJob;
 use App\Jobs\InitializeConversationSessionJob;
 use App\Jobs\PrepareProjectDirectoryJob;
 use App\Jobs\SendClaudeMessageJob;
@@ -90,14 +91,22 @@ class ConversationsController extends Controller
         $request->validate([
             'message' => 'required|string',
             'repository' => 'nullable|string',
+            'mode' => 'nullable|string|in:plan,bypassPermissions',
         ]);
 
         $project_id = uniqid();
         $msg = $request->input('message');
+        $mode = $request->input('mode', 'plan');
         
-        // Get base project directory from .env
-        $baseProjectDirectory = env('PROJECTS_DIRECTORY', 'app/private/repositories');
-        $projectDirectory = rtrim($baseProjectDirectory, '/') . '/' . $project_id;
+        // For planning mode, use the base repository path
+        // For coding mode, create a unique project directory
+        if ($mode === 'plan') {
+            $projectDirectory = 'app/private/repositories/base/' . $request->input('repository');
+        } else {
+            // Get base project directory from .env
+            $baseProjectDirectory = env('PROJECTS_DIRECTORY', 'app/private/repositories');
+            $projectDirectory = rtrim($baseProjectDirectory, '/') . '/' . $project_id;
+        }
 
         $conversation = Conversation::query()->create([
             'user_id' => Auth::id(),
@@ -108,6 +117,7 @@ class ConversationsController extends Controller
             'repository' => $request->input('repository'),
             'filename' => 'claude-sessions/' . date('Y-m-d\TH-i-s') . '-session-' . $project_id . '.json',
             'is_processing' => true, // Mark as processing when created
+            'mode' => $mode, // Default to 'plan' if not specified
         ]);
 
         Bus::chain([
@@ -142,6 +152,8 @@ class ConversationsController extends Controller
         $conversation->archived = true;
         $conversation->save();
 
+        DeleteProjectDirectoryJob::dispatch($conversation);
+
         return response()->json(['message' => 'Conversation archived successfully']);
     }
 
@@ -168,6 +180,41 @@ class ConversationsController extends Controller
         $conversation->save();
 
         return response()->json(['message' => 'Conversation unarchived successfully']);
+    }
+
+    /**
+     * Update conversation
+     * 
+     * Update conversation properties like mode
+     * 
+     * @authenticated
+     * 
+     * @urlParam conversation integer required The ID of the conversation. Example: 1
+     * @bodyParam mode string required The conversation mode. Example: plan
+     * 
+     * @response 200 scenario="Success" {
+     *   "message": "Conversation updated successfully"
+     * }
+     * 
+     * @response 403 scenario="Unauthorized" {
+     *   "error": "Unauthorized"
+     * }
+     */
+    public function update(Request $request, Conversation $conversation)
+    {
+        // Check if user owns this conversation
+        if ($conversation->user_id !== Auth::id()) {
+            abort(403, 'Unauthorized');
+        }
+
+        $request->validate([
+            'mode' => 'required|string|in:plan,bypassPermissions',
+        ]);
+
+        $conversation->mode = $request->input('mode');
+        $conversation->save();
+
+        return response()->json(['message' => 'Conversation updated successfully']);
     }
 
     /**
