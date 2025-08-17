@@ -59,5 +59,9 @@ Route::get('claude/conversation/{conversation}', function ($conversation) {
     ]);
 })->middleware(['auth', 'verified'])->name('claude.conversation');
 
+Route::get('claude/conversation/{conversation}/diff', [ConversationsController::class, 'showDiff'])
+    ->middleware(['auth', 'verified'])
+    ->name('claude.conversation.diff');
+
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
