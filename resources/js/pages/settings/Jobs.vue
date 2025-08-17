@@ -70,7 +70,6 @@ const expandedFailedJobs = ref<Set<number>>(new Set());
 const copiedJobId = ref<number | null>(null);
 const retryingJobId = ref<number | null>(null);
 const discardingJobId = ref<number | null>(null);
-const confirmDiscardJobId = ref<number | null>(null);
 const isLoading = ref(false);
 const isStarting = ref(false);
 const isStopping = ref(false);
@@ -118,8 +117,6 @@ const startWorker = () => {
         preserveScroll: true,
         onSuccess: (page: any) => {
             isStarting.value = false;
-            statusType.value = 'success';
-            statusMessage.value = page.props.flash?.message || 'Queue worker started successfully!';
             fetchWorkerStatus();
         },
         onError: (errors: any) => {
@@ -242,15 +239,12 @@ const retryJob = async (jobId: number) => {
 
 const discardJob = async (jobId: number) => {
     discardingJobId.value = jobId;
-    confirmDiscardJobId.value = null;
     statusMessage.value = '';
     
     form.delete(route('settings.jobs.discard', { id: jobId }), {
         preserveScroll: true,
         onSuccess: (page: any) => {
             discardingJobId.value = null;
-            statusType.value = 'success';
-            statusMessage.value = page.props.flash?.message || 'Failed job has been discarded';
             fetchWorkerStatus();
         },
         onError: (errors: any) => {
@@ -450,8 +444,7 @@ onUnmounted(() => {
                                                 <span class="ml-1 text-xs">Retry</span>
                                             </Button>
                                             <Button
-                                                v-if="confirmDiscardJobId !== job.id"
-                                                @click="confirmDiscardJobId = job.id"
+                                                @click="discardJob(job.id)"
                                                 variant="ghost"
                                                 size="sm"
                                                 class="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
@@ -462,19 +455,6 @@ onUnmounted(() => {
                                                 <Trash2 v-else class="h-4 w-4" />
                                                 <span class="ml-1 text-xs">Discard</span>
                                             </Button>
-                                            <div v-else class="flex items-center gap-1">
-                                                <Button
-                                                    @click="discardJob(job.id)"
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    class="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
-                                                    :disabled="discardingJobId === job.id"
-                                                >
-                                                    <Loader2 v-if="discardingJobId === job.id" class="h-3 w-3 animate-spin" />
-                                                    <Check v-else class="h-3 w-3" />
-                                                    <span class="ml-1 text-xs">Confirm</span>
-                                                </Button>
-                                            </div>
                                             <Button
                                                 @click="copyException(job)"
                                                 variant="ghost"
