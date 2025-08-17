@@ -12,15 +12,15 @@ class SystemUpdateController extends Controller
     public function update(Request $request)
     {
         try {
-            // Run the refresh-master.sh script
-            $scriptPath = base_path('scripts/refresh-master.sh');
+            // Run the system-update.sh script
+            $scriptPath = base_path('scripts/system-update.sh');
             
             // Make sure the script is executable
             if (!file_exists($scriptPath)) {
                 throw new \Exception('Update script not found at: ' . $scriptPath);
             }
             
-            // Run the refresh-master.sh script
+            // Run the system-update.sh script
             $process = $this->runCommand('bash ' . escapeshellarg($scriptPath));
             $output = $process->getOutput();
             
