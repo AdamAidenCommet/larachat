@@ -438,7 +438,7 @@ const loadSessionMessages = async (isPolling = false) => {
 };
 
 const sendMessage = async () => {
-    if (!inputMessage.value.trim() || isLoading.value) return;
+    if (!inputMessage.value.trim() || isLoading.value || conversation.value?.is_processing) return;
 
     const messageToSend = inputMessage.value;
     addUserMessage(messageToSend);
@@ -546,7 +546,9 @@ const sendMessage = async () => {
 const handleKeydown = (event: KeyboardEvent) => {
     if (event.key === 'Enter' && !event.shiftKey) {
         event.preventDefault();
-        sendMessage();
+        if (!isLoading.value && !conversation.value?.is_processing) {
+            sendMessage();
+        }
     }
 };
 
@@ -834,7 +836,7 @@ onUnmounted(() => {
                         :show-raw-responses="false"
                     />
 
-                    <div v-if="isLoading" class="flex justify-start">
+                    <div v-if="isLoading || conversation?.is_processing" class="flex justify-start">
                         <div class="max-w-full sm:max-w-[70%] rounded-2xl bg-card px-4 py-2 shadow-sm">
                             <div class="flex space-x-1">
                                 <div class="h-2 w-2 animate-bounce rounded-full bg-muted-foreground/50 [animation-delay:-0.3s]"></div>
@@ -861,9 +863,9 @@ onUnmounted(() => {
                             placeholder="Type a message..."
                             class="max-h-[120px] min-h-[40px] resize-none overflow-y-auto text-sm"
                             :rows="1"
-                            :disabled="isLoading"
+                            :disabled="isLoading || conversation?.is_processing"
                         />
-                        <Button @click="sendMessage" :disabled="!inputMessage.trim() || isLoading" size="icon" class="h-10 w-10 rounded-full">
+                        <Button @click="sendMessage" :disabled="!inputMessage.trim() || isLoading || conversation?.is_processing" size="icon" class="h-10 w-10 rounded-full">
                             <Send class="h-4 w-4" />
                         </Button>
                     </div>
