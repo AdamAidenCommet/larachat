@@ -474,15 +474,6 @@ onUnmounted(() => {
                                                     <Check v-else class="h-3 w-3" />
                                                     <span class="ml-1 text-xs">Confirm</span>
                                                 </Button>
-                                                <Button
-                                                    @click="confirmDiscardJobId = null"
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    class="text-gray-600 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
-                                                >
-                                                    <XCircle class="h-3 w-3" />
-                                                    <span class="ml-1 text-xs">Cancel</span>
-                                                </Button>
                                             </div>
                                             <Button
                                                 @click="copyException(job)"
