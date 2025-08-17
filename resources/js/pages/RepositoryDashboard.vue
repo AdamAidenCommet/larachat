@@ -32,22 +32,8 @@ const props = defineProps<{
     }>;
 }>();
 
-const fileTree = ref<any[]>([]);
-const loadingTree = ref(false);
 const messageInput = ref('');
 const showEnvModal = ref(false);
-
-const fetchFileTree = async () => {
-    loadingTree.value = true;
-    try {
-        const response = await axios.get(`/api/repositories/${props.repository.id}/files`);
-        fileTree.value = response.data.tree || [];
-    } catch (error) {
-        console.error('Failed to fetch file tree:', error);
-    } finally {
-        loadingTree.value = false;
-    }
-};
 
 const startChatWithMessage = (message?: string) => {
     const finalMessage = message || messageInput.value.trim();
@@ -66,10 +52,6 @@ const quickMessages = [
     { text: 'Review recent changes', icon: '🔍' },
     { text: 'Help me debug an issue', icon: '🐛' },
 ];
-
-onMounted(() => {
-    fetchFileTree();
-});
 </script>
 
 <template>
