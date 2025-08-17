@@ -86,30 +86,30 @@ class InitializeConversationSessionJob implements ShouldQueue
             return;
         }
 
-        // Update the Git repository in the moved directory using refresh-master script
+        // Update the Git repository in the moved directory using system-update script
         try {
-            $scriptPath = base_path('scripts/refresh-master.sh');
+            $scriptPath = base_path('scripts/system-update.sh');
             
             // Make sure the script is executable
             if (File::exists($scriptPath)) {
                 chmod($scriptPath, 0755);
             }
             
-            // Run the refresh-master script in the project directory
+            // Run the system-update script in the project directory
             $result = Process::path($to)
                 ->timeout(120) // 2 minutes timeout
                 ->run('bash ' . escapeshellarg($scriptPath));
             
             if (!$result->successful()) {
-                throw new \RuntimeException("refresh-master script failed. Output: " . $result->errorOutput());
+                throw new \RuntimeException("system-update script failed. Output: " . $result->errorOutput());
             }
             
-            Log::info('InitializeConversationSessionJob: Updated project repository using refresh-master script', [
+            Log::info('InitializeConversationSessionJob: Updated project repository using system-update script', [
                 'repository' => $this->conversation->repository,
                 'project_directory' => $this->conversation->project_directory,
             ]);
         } catch (\Exception $e) {
-            Log::error('InitializeConversationSessionJob: Failed to update project repository using refresh-master script', [
+            Log::error('InitializeConversationSessionJob: Failed to update project repository using system-update script', [
                 'repository' => $this->conversation->repository,
                 'project_directory' => $this->conversation->project_directory,
                 'error' => $e->getMessage(),
