@@ -165,9 +165,8 @@ class SendClaudeMessageJob implements ShouldQueue
                 return;
             }
             
-            // Generate filename for the diff
-            $timestamp = now()->format('Y-m-d\TH-i-s');
-            $diffFilename = "claude-diff-{$timestamp}-{$this->conversation->id}.diff";
+            // Use fixed filename for the diff
+            $diffFilename = "project.diff";
             $diffPath = $projectPath . '/.git/' . $diffFilename;
             
             // Execute git diff command

@@ -11,6 +11,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Bus;
+use Inertia\Inertia;
 
 /**
  * @group Conversations
@@ -199,6 +200,51 @@ class ConversationsController extends Controller
             ->get();
 
         return response()->json($conversations);
+    }
+
+    /**
+     * Show diff page
+     * 
+     * Display the git diff for a conversation's project
+     * 
+     * @authenticated
+     * 
+     * @urlParam conversation integer required The ID of the conversation. Example: 1
+     * 
+     * @response 200 scenario="Success" Returns Inertia page with diff content
+     * 
+     * @response 403 scenario="Unauthorized" {
+     *   "error": "Unauthorized"
+     * }
+     */
+    public function showDiff(Conversation $conversation)
+    {
+        // Check if user owns this conversation
+        if ($conversation->user_id !== Auth::id()) {
+            abort(403, 'Unauthorized');
+        }
+
+        // Get the project directory path
+        if (str_starts_with($conversation->project_directory, '/')) {
+            $projectPath = $conversation->project_directory;
+        } else {
+            $projectPath = storage_path($conversation->project_directory);
+        }
+
+        // Check if project.diff exists
+        $diffPath = $projectPath . '/.git/project.diff';
+        $diffContent = '';
+        
+        if (file_exists($diffPath)) {
+            $diffContent = file_get_contents($diffPath);
+        }
+
+        return Inertia::render('ConversationDiff', [
+            'conversationId' => $conversation->id,
+            'diffContent' => $diffContent,
+            'conversationTitle' => $conversation->title,
+            'hasContent' => !empty($diffContent)
+        ]);
     }
 
 }
