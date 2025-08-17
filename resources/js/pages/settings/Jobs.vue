@@ -70,8 +70,7 @@ const expandedFailedJobs = ref<Set<number>>(new Set());
 const copiedJobId = ref<number | null>(null);
 const retryingJobId = ref<number | null>(null);
 const discardingJobId = ref<number | null>(null);
-const jobToDiscard = ref<number | null>(null);
-const showDiscardConfirm = ref(false);
+const confirmDiscardJobId = ref<number | null>(null);
 const isLoading = ref(false);
 const isStarting = ref(false);
 const isStopping = ref(false);
@@ -241,40 +240,25 @@ const retryJob = async (jobId: number) => {
     });
 };
 
-const confirmDiscard = (jobId: number) => {
-    jobToDiscard.value = jobId;
-    showDiscardConfirm.value = true;
-};
-
-const discardJob = async () => {
-    if (!jobToDiscard.value) return;
-    
-    const jobId = jobToDiscard.value;
+const discardJob = async (jobId: number) => {
     discardingJobId.value = jobId;
-    showDiscardConfirm.value = false;
+    confirmDiscardJobId.value = null;
     statusMessage.value = '';
     
     form.delete(route('settings.jobs.discard', { id: jobId }), {
         preserveScroll: true,
         onSuccess: (page: any) => {
             discardingJobId.value = null;
-            jobToDiscard.value = null;
             statusType.value = 'success';
             statusMessage.value = page.props.flash?.message || 'Failed job has been discarded';
             fetchWorkerStatus();
         },
         onError: (errors: any) => {
             discardingJobId.value = null;
-            jobToDiscard.value = null;
             statusType.value = 'error';
             statusMessage.value = errors.message || 'Failed to discard job';
         },
     });
-};
-
-const cancelDiscard = () => {
-    showDiscardConfirm.value = false;
-    jobToDiscard.value = null;
 };
 
 onMounted(() => {
@@ -466,7 +450,8 @@ onUnmounted(() => {
                                                 <span class="ml-1 text-xs">Retry</span>
                                             </Button>
                                             <Button
-                                                @click="confirmDiscard(job.id)"
+                                                v-if="confirmDiscardJobId !== job.id"
+                                                @click="confirmDiscardJobId = job.id"
                                                 variant="ghost"
                                                 size="sm"
                                                 class="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
@@ -477,6 +462,28 @@ onUnmounted(() => {
                                                 <Trash2 v-else class="h-4 w-4" />
                                                 <span class="ml-1 text-xs">Discard</span>
                                             </Button>
+                                            <div v-else class="flex items-center gap-1">
+                                                <Button
+                                                    @click="discardJob(job.id)"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    class="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
+                                                    :disabled="discardingJobId === job.id"
+                                                >
+                                                    <Loader2 v-if="discardingJobId === job.id" class="h-3 w-3 animate-spin" />
+                                                    <Check v-else class="h-3 w-3" />
+                                                    <span class="ml-1 text-xs">Confirm</span>
+                                                </Button>
+                                                <Button
+                                                    @click="confirmDiscardJobId = null"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    class="text-gray-600 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+                                                >
+                                                    <XCircle class="h-3 w-3" />
+                                                    <span class="ml-1 text-xs">Cancel</span>
+                                                </Button>
+                                            </div>
                                             <Button
                                                 @click="copyException(job)"
                                                 variant="ghost"
@@ -558,39 +565,6 @@ onUnmounted(() => {
                         </div>
                     </div>
 
-                    <!-- Discard Confirmation Dialog -->
-                    <div v-if="showDiscardConfirm" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-                        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
-                            <div class="flex items-start gap-3 mb-4">
-                                <AlertCircle class="h-6 w-6 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
-                                <div>
-                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                                        Confirm Discard
-                                    </h3>
-                                    <p class="text-sm text-gray-600 dark:text-gray-400">
-                                        Are you sure you want to discard this failed job? This action cannot be undone.
-                                    </p>
-                                </div>
-                            </div>
-                            <div class="flex justify-end gap-3">
-                                <Button
-                                    @click="cancelDiscard"
-                                    variant="outline"
-                                    size="sm"
-                                >
-                                    Cancel
-                                </Button>
-                                <Button
-                                    @click="discardJob"
-                                    variant="destructive"
-                                    size="sm"
-                                >
-                                    <Trash2 class="h-4 w-4 mr-1" />
-                                    Discard Job
-                                </Button>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </SettingsLayout>
