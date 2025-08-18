@@ -2,9 +2,7 @@ name: Laravel Dusk Tests
 
 on:
   push:
-    branches: [ master, main, develop ]
   pull_request:
-    branches: [ master, main, develop ]
 
 jobs:
   dusk:
