@@ -6,7 +6,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import { router } from '@inertiajs/vue3';
 import { CheckIcon, ChevronDown, ChevronLeft, ChevronRight, CopyIcon, FileIcon, Minus, Plus } from 'lucide-vue-next';
-import { computed, ref } from 'vue';
+import { computed, ref, onUnmounted } from 'vue';
 
 interface Props {
     conversationId: number;
@@ -37,6 +37,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 const copied = ref(false);
 const expandedFiles = ref<Set<string>>(new Set());
 const expandAll = ref(false);
+const scrollContainers = ref<HTMLElement[]>([]);
 
 const fileDiffs = computed(() => {
     if (!props.diffContent) return [];
@@ -135,6 +136,35 @@ const copyToClipboard = async () => {
 const goBack = () => {
     router.visit(`/claude/conversation/${props.conversationId}`);
 };
+
+// Synchronized horizontal scrolling
+const handleScroll = (event: Event) => {
+    const target = event.target as HTMLElement;
+    const scrollLeft = target.scrollLeft;
+    
+    // Sync all scroll containers
+    scrollContainers.value.forEach(container => {
+        if (container !== target && container) {
+            container.scrollLeft = scrollLeft;
+        }
+    });
+};
+
+const registerScrollContainer = (el: HTMLElement | null) => {
+    if (el && !scrollContainers.value.includes(el)) {
+        scrollContainers.value.push(el);
+        el.addEventListener('scroll', handleScroll);
+    }
+};
+
+onUnmounted(() => {
+    scrollContainers.value.forEach(container => {
+        if (container) {
+            container.removeEventListener('scroll', handleScroll);
+        }
+    });
+    scrollContainers.value = [];
+});
 </script>
 
 <template>
@@ -210,28 +240,41 @@ const goBack = () => {
                         </CollapsibleTrigger>
                         <CollapsibleContent>
                             <CardContent class="p-0">
-                                <div class="overflow-x-auto rounded-b-lg border-t border-slate-800 bg-slate-900 dark:bg-slate-950">
-                                    <div class="font-mono text-xs">
+                                <div 
+                                    class="overflow-x-auto rounded-b-lg border-t border-slate-800 bg-slate-900 dark:bg-slate-950 diff-container"
+                                    :ref="(el) => registerScrollContainer(el as HTMLElement | null)"
+                                >
+                                    <div class="font-mono text-xs min-w-fit">
                                         <div
                                             v-for="(line, index) in file.lines"
                                             :key="index"
                                             :class="{
-                                                'border-l-2 border-green-500 bg-green-950/30': line.type === 'addition',
-                                                'border-l-2 border-red-500 bg-red-950/30': line.type === 'deletion',
+                                                'sm:border-l-2 border-green-500 bg-green-950/30': line.type === 'addition',
+                                                'sm:border-l-2 border-red-500 bg-red-950/30': line.type === 'deletion',
                                                 'bg-blue-950/50 px-2 py-1 font-semibold': line.type === 'chunk',
                                                 'bg-yellow-950/30 px-2 py-0.5': line.type === 'header',
                                                 'hover:bg-slate-800/30': line.type === 'normal',
                                             }"
-                                            class="flex transition-colors duration-150"
+                                            class="flex transition-colors duration-150 diff-line"
                                         >
                                             <span
-                                                class="inline-block w-8 flex-shrink-0 py-0.5 pr-1 text-right text-[10px] text-slate-500 select-none"
+                                                class="hidden sm:inline-block w-8 flex-shrink-0 py-0.5 pr-1 text-right text-[10px] text-slate-500 select-none"
                                                 :class="{
                                                     'bg-slate-900/50': line.type === 'addition' || line.type === 'deletion',
                                                 }"
                                                 >{{ line.type !== 'header' && line.type !== 'chunk' ? line.number : '' }}</span
                                             >
-                                            <pre class="flex-1 overflow-x-auto py-0.5 pr-2"><code
+                                            <span 
+                                                v-if="line.type === 'addition' || line.type === 'deletion'"
+                                                class="sm:hidden inline-block w-4 text-center select-none flex-shrink-0 py-0.5 text-xs"
+                                                :class="{
+                                                    'text-green-400 bg-green-950/50': line.type === 'addition',
+                                                    'text-red-400 bg-red-950/50': line.type === 'deletion'
+                                                }"
+                                            >
+                                                {{ line.type === 'addition' ? '+' : '-' }}
+                                            </span>
+                                            <pre class="flex-1 py-0.5 pr-2 whitespace-pre"><code
                                                 :class="{
                                                     'text-green-400': line.type === 'addition',
                                                     'text-red-400': line.type === 'deletion',
@@ -239,7 +282,8 @@ const goBack = () => {
                                                     'text-yellow-500': line.type === 'header',
                                                     'text-slate-300': line.type === 'normal'
                                                 }"
-                                            >{{ line.content }}</code></pre>
+                                                class="diff-code-content"
+                                            ><span class="hidden sm:inline">{{ line.content }}</span><span class="sm:hidden">{{ line.content.replace(/^[\+\-@]|^(index |---|\+\+\+|diff --git).*/, '') }}</span></code></pre>
                                         </div>
                                     </div>
                                 </div>
@@ -256,7 +300,6 @@ const goBack = () => {
 pre {
     white-space: pre;
     word-wrap: normal;
-    overflow-x: auto;
     margin: 0;
 }
 
@@ -268,5 +311,27 @@ code {
 .flex-1 pre {
     background: transparent;
     padding: 0;
+}
+
+/* Synchronized scrolling */
+.diff-container {
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.diff-line {
+    min-width: max-content;
+}
+
+/* Mobile optimizations */
+@media (max-width: 640px) {
+    .diff-code-content {
+        font-size: 0.7rem;
+    }
+    
+    .diff-line {
+        padding-left: 0.25rem;
+    }
 }
 </style>
