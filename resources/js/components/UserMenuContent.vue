@@ -3,7 +3,7 @@ import UserInfo from '@/components/UserInfo.vue';
 import { DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import type { User } from '@/types';
 import { Link, router } from '@inertiajs/vue3';
-import { BookOpen, Briefcase, Download, Lock, LogOut, Palette, User as UserIcon } from 'lucide-vue-next';
+import { BookOpen, Briefcase, Download, Lock, LogOut, Palette, User as UserIcon, Users } from 'lucide-vue-next';
 
 interface Props {
     user: User;
@@ -52,6 +52,12 @@ defineProps<Props>();
             <Link class="block w-full" href="/settings/system-update" prefetch as="button">
                 <Download class="mr-2 h-4 w-4" />
                 System Update
+            </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem :as-child="true">
+            <Link class="block w-full" href="/agents" prefetch as="button">
+                <Users class="mr-2 h-4 w-4" />
+                Manage Agents
             </Link>
         </DropdownMenuItem>
     </DropdownMenuGroup>

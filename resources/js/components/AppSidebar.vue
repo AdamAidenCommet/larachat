@@ -164,17 +164,6 @@ const handleCreateAgent = async () => {
     }
 };
 
-const handleAskLara = () => {
-    if (isMobile.value) {
-        setOpenMobile(false);
-    }
-    // Create a new conversation in planning mode with blank repository
-    const message = btoa('Hello Lara! I need help with my project.');
-    router.visit(`/claude/new?repository=&mode=plan&message=${message}`, {
-        preserveScroll: true,
-        preserveState: true,
-    });
-};
 </script>
 
 <template>
@@ -192,17 +181,6 @@ const handleAskLara = () => {
         </SidebarHeader>
 
         <SidebarContent>
-            <SidebarGroup class="px-2 py-0">
-                <SidebarMenu>
-                    <SidebarMenuItem>
-                        <SidebarMenuButton @click="handleAskLara" class="w-full">
-                            <Bot />
-                            <span>Ask Lara</span>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                </SidebarMenu>
-            </SidebarGroup>
-
             <SidebarGroup class="px-2 py-0">
                 <div class="flex items-center justify-between">
                     <SidebarGroupLabel>Agents</SidebarGroupLabel>
@@ -228,14 +206,6 @@ const handleAskLara = () => {
                             </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
-                    <SidebarMenuItem>
-                        <SidebarMenuButton as-child :is-active="page.url === '/agents'">
-                            <Link href="/agents" :preserve-scroll="true" :preserve-state="true" @click="handleLinkClick">
-                                <Users />
-                                <span>Manage All Agents</span>
-                            </Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
                 </SidebarMenu>
             </SidebarGroup>
 
@@ -250,12 +220,6 @@ const handleAskLara = () => {
                     </button>
                 </div>
                 <SidebarMenu>
-                    <SidebarMenuItem>
-                        <SidebarMenuButton @click="handleRepositoryClick('')" :tooltip="'Start without a specific repository'">
-                            <FileText />
-                            <span class="flex-1 truncate">Blank Repository</span>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
                     <SidebarMenuItem v-if="repositories.length === 0">
                         <SidebarMenuButton disabled>
                             <GitBranch />
