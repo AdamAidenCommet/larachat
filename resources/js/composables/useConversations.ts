@@ -29,7 +29,7 @@ export function useConversations() {
             return;
         }
         lastFetchTime = now;
-        
+
         // Skip fetching if already initialized and not forcing or silent refresh
         if (hasInitialized && !force && !silent && conversations.value.length > 0) {
             return;
@@ -83,7 +83,7 @@ export function useConversations() {
             fetchConversations(true, true); // Silent refresh, forced
         }, intervalMs);
     };
-    
+
     // Stop polling
     const stopPolling = () => {
         if (refreshInterval) {
@@ -91,7 +91,7 @@ export function useConversations() {
             refreshInterval = null;
         }
     };
-    
+
     // Clean up interval on component unmount
     const cleanup = () => {
         stopPolling();

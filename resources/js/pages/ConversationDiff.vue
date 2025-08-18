@@ -1,16 +1,12 @@
 <script setup lang="ts">
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
-import { ref, computed } from 'vue';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { router } from '@inertiajs/vue3';
-import { FileIcon, ChevronLeft, CopyIcon, CheckIcon, ChevronDown, ChevronRight, Plus, Minus } from 'lucide-vue-next';
-import {
-    Collapsible,
-    CollapsibleContent,
-    CollapsibleTrigger,
-} from '@/components/ui/collapsible';
+import { CheckIcon, ChevronDown, ChevronLeft, ChevronRight, CopyIcon, FileIcon, Minus, Plus } from 'lucide-vue-next';
+import { computed, ref } from 'vue';
 
 interface Props {
     conversationId: number;
@@ -44,28 +40,28 @@ const expandAll = ref(false);
 
 const fileDiffs = computed(() => {
     if (!props.diffContent) return [];
-    
+
     const files: FileDiff[] = [];
     const lines = props.diffContent.split('\n');
     let currentFile: FileDiff | null = null;
     let lineNumber = 0;
-    
+
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
-        
+
         if (line.startsWith('diff --git')) {
             if (currentFile) {
                 files.push(currentFile);
             }
-            
+
             const fileNameMatch = line.match(/diff --git a\/(.*?) b\/(.*)/);
             const fileName = fileNameMatch ? fileNameMatch[2] : 'Unknown file';
-            
+
             currentFile = {
                 fileName,
                 additions: 0,
                 deletions: 0,
-                lines: []
+                lines: [],
             };
             lineNumber = 0;
         } else if (currentFile) {
@@ -73,13 +69,17 @@ const fileDiffs = computed(() => {
             currentFile.lines.push({
                 number: lineNumber,
                 content: line,
-                type: line.startsWith('+') ? 'addition' : 
-                      line.startsWith('-') ? 'deletion' : 
-                      line.startsWith('@@') ? 'chunk' :
-                      line.startsWith('index ') || line.startsWith('---') || line.startsWith('+++') ? 'header' :
-                      'normal'
+                type: line.startsWith('+')
+                    ? 'addition'
+                    : line.startsWith('-')
+                      ? 'deletion'
+                      : line.startsWith('@@')
+                        ? 'chunk'
+                        : line.startsWith('index ') || line.startsWith('---') || line.startsWith('+++')
+                          ? 'header'
+                          : 'normal',
             });
-            
+
             if (line.startsWith('+') && !line.startsWith('+++')) {
                 currentFile.additions++;
             } else if (line.startsWith('-') && !line.startsWith('---')) {
@@ -87,16 +87,16 @@ const fileDiffs = computed(() => {
             }
         }
     }
-    
+
     if (currentFile) {
         files.push(currentFile);
     }
-    
+
     // Auto-expand if only one file
     if (files.length === 1 && expandedFiles.value.size === 0) {
         expandedFiles.value = new Set([files[0].fileName]);
     }
-    
+
     return files;
 });
 
@@ -115,7 +115,7 @@ const toggleAll = () => {
         expandedFiles.value = new Set();
         expandAll.value = false;
     } else {
-        expandedFiles.value = new Set(fileDiffs.value.map(f => f.fileName));
+        expandedFiles.value = new Set(fileDiffs.value.map((f) => f.fileName));
         expandAll.value = true;
     }
 };
@@ -139,39 +139,22 @@ const goBack = () => {
 
 <template>
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="container mx-auto px-2 py-2 max-w-7xl">
+        <div class="container mx-auto max-w-7xl px-2 py-2">
             <div class="mb-2 flex items-center justify-between">
                 <div class="flex items-center gap-4">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        @click="goBack"
-                        class="flex items-center gap-2"
-                    >
+                    <Button variant="outline" size="sm" @click="goBack" class="flex items-center gap-2">
                         <ChevronLeft class="h-4 w-4" />
                         Back to Conversation
                     </Button>
                     <h1 class="text-lg font-bold">Git Diff</h1>
                 </div>
                 <div class="flex items-center gap-2">
-                    <Button
-                        v-if="hasContent && fileDiffs.length > 1"
-                        variant="outline"
-                        size="sm"
-                        @click="toggleAll"
-                        class="flex items-center gap-2"
-                    >
+                    <Button v-if="hasContent && fileDiffs.length > 1" variant="outline" size="sm" @click="toggleAll" class="flex items-center gap-2">
                         <ChevronDown v-if="!expandAll" class="h-4 w-4" />
                         <ChevronRight v-else class="h-4 w-4" />
                         {{ expandAll ? 'Collapse All' : 'Expand All' }}
                     </Button>
-                    <Button
-                        v-if="hasContent"
-                        variant="outline"
-                        size="sm"
-                        @click="copyToClipboard"
-                        class="flex items-center gap-2"
-                    >
+                    <Button v-if="hasContent" variant="outline" size="sm" @click="copyToClipboard" class="flex items-center gap-2">
                         <CopyIcon v-if="!copied" class="h-4 w-4" />
                         <CheckIcon v-else class="h-4 w-4 text-green-600" />
                         {{ copied ? 'Copied!' : 'Copy Diff' }}
@@ -179,19 +162,17 @@ const goBack = () => {
                 </div>
             </div>
 
-            <div v-if="!hasContent" class="text-center py-12 text-muted-foreground">
+            <div v-if="!hasContent" class="py-12 text-center text-muted-foreground">
                 <Card>
                     <CardContent class="pt-12">
                         <p class="text-lg">No diff available</p>
-                        <p class="text-sm mt-2">
-                            The diff will appear here after Claude makes changes to your project.
-                        </p>
+                        <p class="mt-2 text-sm">The diff will appear here after Claude makes changes to your project.</p>
                     </CardContent>
                 </Card>
             </div>
-            
+
             <div v-else class="space-y-2">
-                <div class="text-xs text-muted-foreground mb-2">
+                <div class="mb-2 text-xs text-muted-foreground">
                     <span class="font-medium">{{ fileDiffs.length }} file{{ fileDiffs.length === 1 ? '' : 's' }} changed</span>
                     <span v-if="fileDiffs.reduce((sum, f) => sum + f.additions, 0) > 0" class="ml-4">
                         <Plus class="inline h-3 w-3 text-green-600" />
@@ -205,30 +186,21 @@ const goBack = () => {
 
                 <Card v-for="file in fileDiffs" :key="file.fileName" class="overflow-hidden">
                     <Collapsible :open="expandedFiles.has(file.fileName)">
-                        <CollapsibleTrigger
-                            @click="toggleFile(file.fileName)"
-                            class="w-full"
-                        >
-                            <CardHeader class="hover:bg-muted/50 transition-colors cursor-pointer p-2">
+                        <CollapsibleTrigger @click="toggleFile(file.fileName)" class="w-full">
+                            <CardHeader class="cursor-pointer p-2 transition-colors hover:bg-muted/50">
                                 <div class="flex items-center justify-between">
                                     <div class="flex items-center gap-2">
-                                        <ChevronRight 
-                                            v-if="!expandedFiles.has(file.fileName)" 
-                                            class="h-4 w-4 transition-transform" 
-                                        />
-                                        <ChevronDown 
-                                            v-else 
-                                            class="h-4 w-4 transition-transform" 
-                                        />
+                                        <ChevronRight v-if="!expandedFiles.has(file.fileName)" class="h-4 w-4 transition-transform" />
+                                        <ChevronDown v-else class="h-4 w-4 transition-transform" />
                                         <FileIcon class="h-4 w-4" />
                                         <span class="font-mono text-xs">{{ file.fileName }}</span>
                                     </div>
                                     <div class="flex items-center gap-3 text-xs">
-                                        <span v-if="file.additions > 0" class="text-green-600 flex items-center gap-1">
+                                        <span v-if="file.additions > 0" class="flex items-center gap-1 text-green-600">
                                             <Plus class="h-3 w-3" />
                                             {{ file.additions }}
                                         </span>
-                                        <span v-if="file.deletions > 0" class="text-red-600 flex items-center gap-1">
+                                        <span v-if="file.deletions > 0" class="flex items-center gap-1 text-red-600">
                                             <Minus class="h-3 w-3" />
                                             {{ file.deletions }}
                                         </span>
@@ -238,26 +210,27 @@ const goBack = () => {
                         </CollapsibleTrigger>
                         <CollapsibleContent>
                             <CardContent class="p-0">
-                                <div class="overflow-x-auto bg-slate-900 dark:bg-slate-950 rounded-b-lg border-t border-slate-800">
+                                <div class="overflow-x-auto rounded-b-lg border-t border-slate-800 bg-slate-900 dark:bg-slate-950">
                                     <div class="font-mono text-xs">
-                                        <div 
-                                            v-for="(line, index) in file.lines" 
-                                            :key="index" 
+                                        <div
+                                            v-for="(line, index) in file.lines"
+                                            :key="index"
                                             :class="{
-                                                'bg-green-950/30 border-l-2 border-green-500': line.type === 'addition',
-                                                'bg-red-950/30 border-l-2 border-red-500': line.type === 'deletion',
+                                                'border-l-2 border-green-500 bg-green-950/30': line.type === 'addition',
+                                                'border-l-2 border-red-500 bg-red-950/30': line.type === 'deletion',
                                                 'bg-blue-950/50 px-2 py-1 font-semibold': line.type === 'chunk',
                                                 'bg-yellow-950/30 px-2 py-0.5': line.type === 'header',
-                                                'hover:bg-slate-800/30': line.type === 'normal'
+                                                'hover:bg-slate-800/30': line.type === 'normal',
                                             }"
                                             class="flex transition-colors duration-150"
                                         >
-                                            <span 
-                                                class="inline-block w-8 text-right pr-1 select-none text-slate-500 flex-shrink-0 py-0.5 text-[10px]"
+                                            <span
+                                                class="inline-block w-8 flex-shrink-0 py-0.5 pr-1 text-right text-[10px] text-slate-500 select-none"
                                                 :class="{
-                                                    'bg-slate-900/50': line.type === 'addition' || line.type === 'deletion'
+                                                    'bg-slate-900/50': line.type === 'addition' || line.type === 'deletion',
                                                 }"
-                                            >{{ line.type !== 'header' && line.type !== 'chunk' ? line.number : '' }}</span>
+                                                >{{ line.type !== 'header' && line.type !== 'chunk' ? line.number : '' }}</span
+                                            >
                                             <pre class="flex-1 overflow-x-auto py-0.5 pr-2"><code
                                                 :class="{
                                                     'text-green-400': line.type === 'addition',

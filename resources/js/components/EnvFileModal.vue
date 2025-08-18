@@ -1,13 +1,6 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui/button';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import axios from 'axios';
 import { FileKey2, Loader2, Save } from 'lucide-vue-next';
@@ -65,15 +58,18 @@ watch(envContent, (newVal) => {
     hasChanges.value = newVal !== originalContent.value;
 });
 
-watch(() => props.modelValue, (isOpen) => {
-    if (isOpen) {
-        fetchEnvFile();
-    } else {
-        envContent.value = '';
-        originalContent.value = '';
-        hasChanges.value = false;
-    }
-});
+watch(
+    () => props.modelValue,
+    (isOpen) => {
+        if (isOpen) {
+            fetchEnvFile();
+        } else {
+            envContent.value = '';
+            originalContent.value = '';
+            hasChanges.value = false;
+        }
+    },
+);
 
 const handleClose = () => {
     if (hasChanges.value) {
@@ -88,19 +84,17 @@ const handleClose = () => {
 
 <template>
     <Dialog :open="modelValue" @update:open="handleClose">
-        <DialogContent class="max-w-3xl max-h-[80vh] overflow-hidden flex flex-col">
+        <DialogContent class="flex max-h-[80vh] max-w-3xl flex-col overflow-hidden">
             <DialogHeader>
                 <DialogTitle class="flex items-center gap-2">
                     <FileKey2 class="h-5 w-5" />
                     Environment Variables
                 </DialogTitle>
-                <DialogDescription>
-                    Edit your repository's .env file. Be careful with sensitive information.
-                </DialogDescription>
+                <DialogDescription> Edit your repository's .env file. Be careful with sensitive information. </DialogDescription>
             </DialogHeader>
-            
+
             <div class="flex-1 overflow-auto py-4">
-                <div v-if="loading" class="flex items-center justify-center h-64">
+                <div v-if="loading" class="flex h-64 items-center justify-center">
                     <Loader2 class="h-8 w-8 animate-spin text-muted-foreground" />
                 </div>
                 <Textarea
@@ -111,19 +105,10 @@ const handleClose = () => {
                     :disabled="saving"
                 />
             </div>
-            
+
             <DialogFooter>
-                <Button
-                    variant="outline"
-                    @click="handleClose"
-                    :disabled="saving"
-                >
-                    Cancel
-                </Button>
-                <Button
-                    @click="saveEnvFile"
-                    :disabled="!hasChanges || saving"
-                >
+                <Button variant="outline" @click="handleClose" :disabled="saving"> Cancel </Button>
+                <Button @click="saveEnvFile" :disabled="!hasChanges || saving">
                     <Loader2 v-if="saving" class="mr-2 h-4 w-4 animate-spin" />
                     <Save v-else class="mr-2 h-4 w-4" />
                     Save Changes

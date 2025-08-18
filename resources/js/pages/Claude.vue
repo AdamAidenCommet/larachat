@@ -14,7 +14,7 @@ import { type BreadcrumbItem } from '@/types';
 import { extractTextFromResponse } from '@/utils/claudeResponseParser';
 import { router } from '@inertiajs/vue3';
 import axios from 'axios';
-import { Archive, ArchiveRestore, Eye, EyeOff, ExternalLink, GitBranch, Send, Code, MapPin, GitPullRequest } from 'lucide-vue-next';
+import { Archive, ArchiveRestore, Code, ExternalLink, Eye, EyeOff, GitBranch, GitPullRequest, MapPin, Send } from 'lucide-vue-next';
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 
 // Constants
@@ -322,7 +322,7 @@ const loadSessionMessages = async (isPolling = false) => {
             // Handle polling updates for conversations
             if (sessionData.length > 0) {
                 const lastConversation = sessionData[sessionData.length - 1];
-                
+
                 // Check if conversation is incomplete for continued polling
                 if (!lastConversation.isComplete) {
                     incompleteMessageFound.value = true;
@@ -335,13 +335,11 @@ const loadSessionMessages = async (isPolling = false) => {
                     // Count user message
                     if (conv.userMessage) totalExistingMessages++;
                     // Count responses
-                    totalExistingMessages += (conv.rawJsonResponses?.length || 0);
+                    totalExistingMessages += conv.rawJsonResponses?.length || 0;
                 }
-                
+
                 // For the last conversation, check how many messages we already have
-                const lastConvUserMessageShown = messages.value.some(m => 
-                    m.role === 'user' && m.content === lastConversation.userMessage
-                );
+                const lastConvUserMessageShown = messages.value.some((m) => m.role === 'user' && m.content === lastConversation.userMessage);
                 if (!lastConvUserMessageShown && lastConversation.userMessage) {
                     // Add the user message if not shown
                     messages.value.push({
@@ -351,14 +349,12 @@ const loadSessionMessages = async (isPolling = false) => {
                         timestamp: new Date(lastConversation.timestamp),
                     });
                 }
-                
+
                 // Calculate how many assistant messages from this conversation we already have
                 // Start counting from after all previous conversations' messages
                 const lastConvStartIndex = totalExistingMessages + (lastConvUserMessageShown ? 0 : 1);
-                const currentConvAssistantCount = messages.value.slice(lastConvStartIndex).filter(m => 
-                    m.role === 'assistant'
-                ).length;
-                
+                const currentConvAssistantCount = messages.value.slice(lastConvStartIndex).filter((m) => m.role === 'assistant').length;
+
                 // Get new responses from this position
                 const newResponses = lastConversation.rawJsonResponses?.slice(currentConvAssistantCount) || [];
 
@@ -366,7 +362,7 @@ const loadSessionMessages = async (isPolling = false) => {
                 if (newResponses.length > 0) {
                     newResponses.forEach((rawResponseStr: any, i: number) => {
                         let rawResponse: any;
-                        
+
                         // Parse if it's a string, otherwise use as-is
                         if (typeof rawResponseStr === 'string') {
                             try {
@@ -378,7 +374,7 @@ const loadSessionMessages = async (isPolling = false) => {
                         } else {
                             rawResponse = rawResponseStr;
                         }
-                        
+
                         const content = extractTextFromResponse(rawResponse);
                         const newMessage = {
                             id: Date.now() + Math.random() + i,
@@ -387,7 +383,7 @@ const loadSessionMessages = async (isPolling = false) => {
                             timestamp: new Date(lastConversation.timestamp),
                             rawResponses: [rawResponse],
                         };
-                        
+
                         // Add or queue the message
                         if (isUserInteracting.value) {
                             pendingUpdates.value.push({ type: 'append', data: [newMessage] });
@@ -512,10 +508,10 @@ const sendMessage = async () => {
                     window.history.replaceState({}, '', targetPath);
                 }
             }
-            
+
             // Immediately refresh conversations to show in sidebar
             await fetchConversations(true, true); // Force refresh silently
-            
+
             // Start temporary conversation polling to ensure sidebar updates
             startConversationPolling(1000); // Poll every 1 second temporarily
             setTimeout(() => stopConversationPolling(), 5000); // Stop after 5 seconds
@@ -523,7 +519,7 @@ const sendMessage = async () => {
         if (result?.sessionFilename && !sessionFilename.value) {
             sessionFilename.value = result.sessionFilename;
         }
-        
+
         // Always start polling after sending a message to get server updates
         startPolling(POLLING_INTERVAL_MS);
     } catch (error) {
@@ -558,9 +554,9 @@ const archiveConversation = async () => {
     isArchiving.value = true;
     try {
         // Find the current index and next conversation BEFORE archiving
-        const currentIndex = conversations.value.findIndex(c => c.id === conversationId.value);
+        const currentIndex = conversations.value.findIndex((c) => c.id === conversationId.value);
         let nextConversationId: number | null = null;
-        
+
         // Determine which conversation to navigate to after archiving
         if (currentIndex !== -1) {
             if (currentIndex < conversations.value.length - 1) {
@@ -613,10 +609,10 @@ const unarchiveConversation = async () => {
 
 const openPreview = () => {
     if (!conversationId.value) return;
-    
-    const conversation = conversations.value.find(c => c.id === conversationId.value);
+
+    const conversation = conversations.value.find((c) => c.id === conversationId.value);
     if (!conversation?.project_directory) return;
-    
+
     const subdomain = conversation.project_directory.split('/').pop();
     const url = `https://${subdomain}.larachat-restricted.coding.cab`;
     window.open(url, '_blank');
@@ -624,13 +620,13 @@ const openPreview = () => {
 
 const updateConversationMode = async (mode: 'coding' | 'planning') => {
     if (!conversationId.value) return;
-    
+
     try {
         await axios.put(`/api/conversations/${conversationId.value}`, {
             mode: mode === 'coding' ? 'bypassPermissions' : 'plan',
         });
         selectedMode.value = mode;
-        
+
         // Update local conversation object
         if (conversation.value) {
             conversation.value.mode = mode === 'coding' ? 'bypassPermissions' : 'plan';
@@ -642,7 +638,7 @@ const updateConversationMode = async (mode: 'coding' | 'planning') => {
 
 const fetchGitInfo = async () => {
     if (!conversationId.value) return;
-    
+
     try {
         const response = await axios.get(`/api/conversations/${conversationId.value}/git-info`);
         gitBranch.value = response.data.git_branch;
@@ -713,7 +709,7 @@ watch(
     conversations,
     () => {
         if (conversationId.value) {
-            const updatedConv = conversations.value.find(c => c.id === conversationId.value);
+            const updatedConv = conversations.value.find((c) => c.id === conversationId.value);
             if (updatedConv) {
                 conversation.value = updatedConv;
                 // Update selectedMode based on conversation mode
@@ -721,14 +717,14 @@ watch(
             }
         }
     },
-    { deep: true }
+    { deep: true },
 );
 
 // Function to fetch a specific conversation
 const fetchConversation = async (id: number) => {
     try {
         // First try to find it in the conversations list
-        const foundConv = conversations.value.find(c => c.id === id);
+        const foundConv = conversations.value.find((c) => c.id === id);
         if (foundConv) {
             conversation.value = foundConv;
             // Update selectedMode based on conversation mode
@@ -738,7 +734,7 @@ const fetchConversation = async (id: number) => {
         } else {
             // If not found, fetch conversations and try again
             await fetchConversations(true, true);
-            const foundConvAfterFetch = conversations.value.find(c => c.id === id);
+            const foundConvAfterFetch = conversations.value.find((c) => c.id === id);
             if (foundConvAfterFetch) {
                 conversation.value = foundConvAfterFetch;
                 // Update selectedMode based on conversation mode
@@ -823,14 +819,14 @@ onUnmounted(() => {
 <template>
     <AppLayout :breadcrumbs="breadcrumbs">
         <template #header-actions>
-            <div class="flex items-center gap-2 flex-wrap">
+            <div class="flex flex-wrap items-center gap-2">
                 <!-- Git Info - Only on larger screens -->
-                <div v-if="gitBranch || prNumber" class="hidden sm:flex items-center gap-1.5 text-sm text-muted-foreground">
+                <div v-if="gitBranch || prNumber" class="hidden items-center gap-1.5 text-sm text-muted-foreground sm:flex">
                     <GitBranch v-if="gitBranch" class="h-3.5 w-3.5" />
                     <span v-if="gitBranch" class="max-w-[120px] truncate">{{ gitBranch }}</span>
                     <span v-if="prNumber" class="rounded bg-muted px-1.5 py-0.5 text-xs">#{{ prNumber }}</span>
                 </div>
-                
+
                 <!-- Mode Switcher - Grouped together -->
                 <div v-if="conversationId && !isArchived" class="inline-flex rounded-md border">
                     <Button
@@ -854,7 +850,7 @@ onUnmounted(() => {
                         <span class="ml-1.5 hidden sm:inline">Plan</span>
                     </Button>
                 </div>
-                
+
                 <!-- Action Buttons Group -->
                 <div class="inline-flex items-center gap-1">
                     <Button
@@ -868,21 +864,24 @@ onUnmounted(() => {
                         <GitPullRequest class="h-3.5 w-3.5" />
                         <span class="ml-1.5 hidden lg:inline">PR</span>
                     </Button>
-                    
+
                     <Button
-                        v-if="conversationId && conversations.find(c => c.id === conversationId)?.project_directory"
+                        v-if="conversationId && conversations.find((c) => c.id === conversationId)?.project_directory"
                         @click="openPreview"
                         variant="ghost"
                         size="sm"
-                        :title="`Preview ${conversations.find(c => c.id === conversationId)?.project_directory.split('/').pop()}`"
+                        :title="`Preview ${conversations
+                            .find((c) => c.id === conversationId)
+                            ?.project_directory.split('/')
+                            .pop()}`"
                         class="px-2"
                     >
                         <ExternalLink class="h-3.5 w-3.5" />
                         <span class="ml-1.5 hidden lg:inline">Preview</span>
                     </Button>
-                    
-                    <div class="h-4 w-px bg-border hidden sm:block" />
-                    
+
+                    <div class="hidden h-4 w-px bg-border sm:block" />
+
                     <Button
                         v-if="conversationId && !showArchiveConfirm"
                         @click="isArchived ? unarchiveConversation() : (showArchiveConfirm = true)"
@@ -894,7 +893,7 @@ onUnmounted(() => {
                     >
                         <component :is="isArchived ? ArchiveRestore : Archive" class="h-3.5 w-3.5" />
                     </Button>
-                    
+
                     <Button
                         @click="hideSystemMessages = !hideSystemMessages"
                         variant="ghost"
@@ -905,26 +904,13 @@ onUnmounted(() => {
                         <component :is="hideSystemMessages ? EyeOff : Eye" class="h-3.5 w-3.5" />
                     </Button>
                 </div>
-                
+
                 <!-- Archive Confirmation - Separate row on small screens -->
-                <div v-if="conversationId && showArchiveConfirm && !isArchived" class="flex gap-2 w-full sm:w-auto">
-                    <Button
-                        @click="archiveConversation()"
-                        variant="destructive"
-                        size="sm"
-                        :disabled="isArchiving"
-                        class="text-xs"
-                    >
+                <div v-if="conversationId && showArchiveConfirm && !isArchived" class="flex w-full gap-2 sm:w-auto">
+                    <Button @click="archiveConversation()" variant="destructive" size="sm" :disabled="isArchiving" class="text-xs">
                         Confirm Archive
                     </Button>
-                    <Button
-                        @click="showArchiveConfirm = false"
-                        variant="outline"
-                        size="sm"
-                        class="text-xs"
-                    >
-                        Cancel
-                    </Button>
+                    <Button @click="showArchiveConfirm = false" variant="outline" size="sm" class="text-xs"> Cancel </Button>
                 </div>
             </div>
         </template>
@@ -941,7 +927,7 @@ onUnmounted(() => {
                     />
 
                     <div v-if="conversation?.is_processing" id="processing-indicator" class="flex justify-start">
-                        <div class="max-w-full sm:max-w-[70%] rounded-2xl bg-card px-4 py-2 shadow-sm">
+                        <div class="max-w-full rounded-2xl bg-card px-4 py-2 shadow-sm sm:max-w-[70%]">
                             <div class="flex space-x-1">
                                 <div class="h-2 w-2 animate-bounce rounded-full bg-muted-foreground/50 [animation-delay:-0.3s]"></div>
                                 <div class="h-2 w-2 animate-bounce rounded-full bg-muted-foreground/50 [animation-delay:-0.15s]"></div>
@@ -969,7 +955,12 @@ onUnmounted(() => {
                             :rows="1"
                             :disabled="conversation?.is_processing"
                         />
-                        <Button @click="sendMessage" :disabled="!inputMessage.trim() || conversation?.is_processing" size="icon" class="h-10 w-10 rounded-full">
+                        <Button
+                            @click="sendMessage"
+                            :disabled="!inputMessage.trim() || conversation?.is_processing"
+                            size="icon"
+                            class="h-10 w-10 rounded-full"
+                        >
                             <Send class="h-4 w-4" />
                         </Button>
                     </div>

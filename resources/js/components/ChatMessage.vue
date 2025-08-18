@@ -38,7 +38,7 @@ const toggleRawResponse = () => {
     <div :class="['flex', message.role === 'user' ? 'justify-end' : 'justify-start']">
         <div
             :class="[
-                'max-w-full sm:max-w-[70%] rounded-2xl px-4 py-2',
+                'max-w-full rounded-2xl px-4 py-2 sm:max-w-[70%]',
                 message.role === 'user' ? 'bg-muted text-foreground' : 'border bg-card text-card-foreground',
             ]"
         >

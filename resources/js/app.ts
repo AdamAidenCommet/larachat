@@ -40,12 +40,12 @@ if ('serviceWorker' in navigator) {
             .register('/service-worker.js')
             .then((registration) => {
                 console.log('Service Worker registered successfully:', registration);
-                
+
                 // Check for updates periodically
                 setInterval(() => {
                     registration.update();
                 }, 60000); // Check every minute
-                
+
                 // Handle updates
                 registration.addEventListener('updatefound', () => {
                     const newWorker = registration.installing;

@@ -13,10 +13,10 @@ import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
+    useSidebar,
 } from '@/components/ui/sidebar';
 import { useConversations } from '@/composables/useConversations';
 import { useRepositories } from '@/composables/useRepositories';
-import { useSidebar } from '@/components/ui/sidebar';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import { Bot, FileText, GitBranch, Loader2, MessageSquarePlus, Plus, Users } from 'lucide-vue-next';
 import { onMounted, onUnmounted, ref, watch } from 'vue';
@@ -40,7 +40,7 @@ const startSidebarRefresh = () => {
     if (sidebarRefreshInterval.value) {
         clearInterval(sidebarRefreshInterval.value);
     }
-    
+
     // Start new interval for 10 seconds
     sidebarRefreshInterval.value = window.setInterval(() => {
         // Only refresh if sidebar is visible
@@ -72,7 +72,7 @@ const handleSidebarVisibilityChange = () => {
         // Sidebar is hidden, stop refreshing
         stopSidebarRefresh();
     }
-    
+
     // Track mobile open state
     if (isMobile.value) {
         lastMobileOpenState.value = open.value;
@@ -82,25 +82,25 @@ const handleSidebarVisibilityChange = () => {
 onMounted(async () => {
     await fetchRepositories();
     await fetchConversations(false, true); // Force initial fetch
-    
+
     // Set up visibility-based refresh
     if (open.value) {
         startSidebarRefresh();
     }
-    
+
     // Watch for sidebar visibility changes
     const unwatch = watch(() => open.value, handleSidebarVisibilityChange);
-    
+
     // Store unwatch function for cleanup
     (window as any).__sidebarUnwatch = unwatch;
 });
 
 onUnmounted(() => {
     cleanup(); // Clean up the refresh interval when component unmounts
-    
+
     // Clean up sidebar refresh interval
     stopSidebarRefresh();
-    
+
     // Clean up watcher
     if ((window as any).__sidebarUnwatch) {
         (window as any).__sidebarUnwatch();
@@ -180,7 +180,7 @@ const handleAskLara = () => {
                     </SidebarMenuItem>
                 </SidebarMenu>
             </SidebarGroup>
-            
+
             <SidebarGroup class="px-2 py-0">
                 <SidebarGroupLabel>Agents</SidebarGroupLabel>
                 <SidebarMenu>
@@ -194,7 +194,7 @@ const handleAskLara = () => {
                     </SidebarMenuItem>
                 </SidebarMenu>
             </SidebarGroup>
-            
+
             <SidebarGroup class="px-2 py-0">
                 <div class="flex items-center justify-between">
                     <SidebarGroupLabel>Repositories</SidebarGroupLabel>

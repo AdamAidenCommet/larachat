@@ -1,28 +1,16 @@
 <script setup lang="ts">
+import EnvFileModal from '@/components/EnvFileModal.vue';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import EnvFileModal from '@/components/EnvFileModal.vue';
+import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { router } from '@inertiajs/vue3';
 import axios from 'axios';
 import { Activity, ArrowRight, Code2, FileCode, FileKey2, Lightbulb, MessageSquare, Send, Settings, Sparkles, Trash2 } from 'lucide-vue-next';
-import { onMounted, ref } from 'vue';
+import { ref } from 'vue';
 
 const props = defineProps<{
     repository: {
@@ -82,11 +70,11 @@ const handleDelete = async () => {
         alert('Cannot delete blank repository');
         return;
     }
-    
+
     if (deleteConfirmation.value !== props.repository.name) {
         return;
     }
-    
+
     isDeleting.value = true;
     try {
         await axios.delete(`/api/repositories/${props.repository.id}`);
@@ -103,16 +91,11 @@ const handleDelete = async () => {
 <template>
     <AppLayout>
         <template #header-actions>
-            <Button
-                v-if="!repository.is_blank"
-                @click="showEnvModal = true"
-                variant="outline"
-                size="sm"
-            >
+            <Button v-if="!repository.is_blank" @click="showEnvModal = true" variant="outline" size="sm">
                 <FileKey2 class="mr-2 h-4 w-4" />
                 Environment
             </Button>
-            
+
             <DropdownMenu v-if="!repository.is_blank">
                 <DropdownMenuTrigger as-child>
                     <Button variant="outline" size="sm">
@@ -120,17 +103,14 @@ const handleDelete = async () => {
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                    <DropdownMenuItem
-                        @click="showDeleteModal = true"
-                        class="text-destructive focus:text-destructive"
-                    >
+                    <DropdownMenuItem @click="showDeleteModal = true" class="text-destructive focus:text-destructive">
                         <Trash2 class="mr-2 h-4 w-4" />
                         Delete Repository
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
         </template>
-        
+
         <div class="container mx-auto py-6">
             <!-- Main CTA Section -->
             <div class="flex min-h-[60vh] flex-col items-center justify-center">
@@ -159,12 +139,12 @@ const handleDelete = async () => {
                                 @click="startChatWithMessage()"
                                 :disabled="!messageInput.trim()"
                                 size="icon"
-                                class="absolute bottom-2 right-2 h-10 w-10 rounded-full"
+                                class="absolute right-2 bottom-2 h-10 w-10 rounded-full"
                             >
                                 <Send class="h-4 w-4" />
                             </Button>
                         </div>
-                        
+
                         <!-- Mode Selection -->
                         <div class="flex items-center justify-center gap-2">
                             <div class="inline-flex rounded-lg border p-1">
@@ -188,8 +168,8 @@ const handleDelete = async () => {
                                 </Button>
                             </div>
                         </div>
-                        
-                        <p class="text-xs text-muted-foreground text-center">Cmd+Enter / Alt+Enter</p>
+
+                        <p class="text-center text-xs text-muted-foreground">Cmd+Enter / Alt+Enter</p>
                     </div>
 
                     <!-- Quick Messages -->
@@ -229,13 +209,10 @@ const handleDelete = async () => {
                 </div>
             </div>
         </div>
-        
+
         <!-- Environment Variables Modal -->
-        <EnvFileModal
-            v-model="showEnvModal"
-            :repository-id="repository.id"
-        />
-        
+        <EnvFileModal v-model="showEnvModal" :repository-id="repository.id" />
+
         <!-- Delete Confirmation Modal -->
         <Dialog v-model:open="showDeleteModal">
             <DialogContent>
@@ -246,34 +223,19 @@ const handleDelete = async () => {
                         <strong>{{ repository.name }}</strong> repository and all associated data.
                     </DialogDescription>
                 </DialogHeader>
-                
+
                 <div class="space-y-4 py-4">
                     <div class="space-y-2">
                         <Label for="delete-confirm">
                             Type <strong>{{ repository.name }}</strong> to confirm
                         </Label>
-                        <Input
-                            id="delete-confirm"
-                            v-model="deleteConfirmation"
-                            placeholder="Enter repository name"
-                            @keydown.enter="handleDelete"
-                        />
+                        <Input id="delete-confirm" v-model="deleteConfirmation" placeholder="Enter repository name" @keydown.enter="handleDelete" />
                     </div>
                 </div>
-                
+
                 <DialogFooter>
-                    <Button
-                        variant="outline"
-                        @click="showDeleteModal = false"
-                        :disabled="isDeleting"
-                    >
-                        Cancel
-                    </Button>
-                    <Button
-                        variant="destructive"
-                        @click="handleDelete"
-                        :disabled="deleteConfirmation !== repository.name || isDeleting"
-                    >
+                    <Button variant="outline" @click="showDeleteModal = false" :disabled="isDeleting"> Cancel </Button>
+                    <Button variant="destructive" @click="handleDelete" :disabled="deleteConfirmation !== repository.name || isDeleting">
                         {{ isDeleting ? 'Deleting...' : 'Delete Repository' }}
                     </Button>
                 </DialogFooter>
