@@ -139,8 +139,8 @@ const goBack = () => {
 
 <template>
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="container mx-auto px-4 py-6 max-w-7xl">
-            <div class="mb-6 flex items-center justify-between">
+        <div class="container mx-auto px-2 py-2 max-w-7xl">
+            <div class="mb-2 flex items-center justify-between">
                 <div class="flex items-center gap-4">
                     <Button
                         variant="outline"
@@ -151,7 +151,7 @@ const goBack = () => {
                         <ChevronLeft class="h-4 w-4" />
                         Back to Conversation
                     </Button>
-                    <h1 class="text-2xl font-bold">Git Diff</h1>
+                    <h1 class="text-lg font-bold">Git Diff</h1>
                 </div>
                 <div class="flex items-center gap-2">
                     <Button
@@ -190,8 +190,8 @@ const goBack = () => {
                 </Card>
             </div>
             
-            <div v-else class="space-y-4">
-                <div class="text-sm text-muted-foreground mb-4">
+            <div v-else class="space-y-2">
+                <div class="text-xs text-muted-foreground mb-2">
                     <span class="font-medium">{{ fileDiffs.length }} file{{ fileDiffs.length === 1 ? '' : 's' }} changed</span>
                     <span v-if="fileDiffs.reduce((sum, f) => sum + f.additions, 0) > 0" class="ml-4">
                         <Plus class="inline h-3 w-3 text-green-600" />
@@ -209,7 +209,7 @@ const goBack = () => {
                             @click="toggleFile(file.fileName)"
                             class="w-full"
                         >
-                            <CardHeader class="hover:bg-muted/50 transition-colors cursor-pointer">
+                            <CardHeader class="hover:bg-muted/50 transition-colors cursor-pointer p-2">
                                 <div class="flex items-center justify-between">
                                     <div class="flex items-center gap-2">
                                         <ChevronRight 
@@ -221,7 +221,7 @@ const goBack = () => {
                                             class="h-4 w-4 transition-transform" 
                                         />
                                         <FileIcon class="h-4 w-4" />
-                                        <span class="font-mono text-sm">{{ file.fileName }}</span>
+                                        <span class="font-mono text-xs">{{ file.fileName }}</span>
                                     </div>
                                     <div class="flex items-center gap-3 text-xs">
                                         <span v-if="file.additions > 0" class="text-green-600 flex items-center gap-1">
@@ -239,26 +239,26 @@ const goBack = () => {
                         <CollapsibleContent>
                             <CardContent class="p-0">
                                 <div class="overflow-x-auto bg-slate-900 dark:bg-slate-950 rounded-b-lg border-t border-slate-800">
-                                    <div class="font-mono text-sm">
+                                    <div class="font-mono text-xs">
                                         <div 
                                             v-for="(line, index) in file.lines" 
                                             :key="index" 
                                             :class="{
-                                                'bg-green-950/30 border-l-4 border-green-500': line.type === 'addition',
-                                                'bg-red-950/30 border-l-4 border-red-500': line.type === 'deletion',
-                                                'bg-blue-950/50 px-4 py-2 font-semibold': line.type === 'chunk',
-                                                'bg-yellow-950/30 px-4 py-1': line.type === 'header',
+                                                'bg-green-950/30 border-l-2 border-green-500': line.type === 'addition',
+                                                'bg-red-950/30 border-l-2 border-red-500': line.type === 'deletion',
+                                                'bg-blue-950/50 px-2 py-1 font-semibold': line.type === 'chunk',
+                                                'bg-yellow-950/30 px-2 py-0.5': line.type === 'header',
                                                 'hover:bg-slate-800/30': line.type === 'normal'
                                             }"
                                             class="flex transition-colors duration-150"
                                         >
                                             <span 
-                                                class="inline-block w-14 text-right pr-4 select-none text-slate-500 flex-shrink-0 py-1"
+                                                class="inline-block w-8 text-right pr-1 select-none text-slate-500 flex-shrink-0 py-0.5 text-[10px]"
                                                 :class="{
                                                     'bg-slate-900/50': line.type === 'addition' || line.type === 'deletion'
                                                 }"
                                             >{{ line.type !== 'header' && line.type !== 'chunk' ? line.number : '' }}</span>
-                                            <pre class="flex-1 overflow-x-auto py-1 pr-4"><code
+                                            <pre class="flex-1 overflow-x-auto py-0.5 pr-2"><code
                                                 :class="{
                                                     'text-green-400': line.type === 'addition',
                                                     'text-red-400': line.type === 'deletion',
