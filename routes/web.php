@@ -4,6 +4,7 @@ use App\Http\Controllers\ConversationsController;
 use App\Http\Controllers\DocsController;
 use App\Http\Controllers\RepositoryDashboardController;
 use App\Http\Controllers\ClaudeController;
+use App\Http\Controllers\AgentController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -28,6 +29,14 @@ Route::get('/dashboard', function () {
 Route::get('repository', [RepositoryDashboardController::class, 'show'])
     ->middleware(['auth', 'verified'])
     ->name('repository.dashboard');
+
+// Agents routes
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('agents', [AgentController::class, 'index'])->name('agents.index');
+    Route::post('agents', [AgentController::class, 'store'])->name('agents.store');
+    Route::put('agents/{agent}', [AgentController::class, 'update'])->name('agents.update');
+    Route::delete('agents/{agent}', [AgentController::class, 'destroy'])->name('agents.destroy');
+});
 
 Route::get('claude', function () {
     return Inertia::render('Claude', [

@@ -18,7 +18,7 @@ import { useConversations } from '@/composables/useConversations';
 import { useRepositories } from '@/composables/useRepositories';
 import { useSidebar } from '@/components/ui/sidebar';
 import { Link, router, usePage } from '@inertiajs/vue3';
-import { Bot, FileText, GitBranch, Loader2, MessageSquarePlus, Plus } from 'lucide-vue-next';
+import { Bot, FileText, GitBranch, Loader2, MessageSquarePlus, Plus, Users } from 'lucide-vue-next';
 import { onMounted, onUnmounted, ref, watch } from 'vue';
 import AppLogo from './AppLogo.vue';
 
@@ -176,6 +176,20 @@ const handleAskLara = () => {
                         <SidebarMenuButton @click="handleAskLara" class="w-full">
                             <Bot />
                             <span>Ask Lara</span>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                </SidebarMenu>
+            </SidebarGroup>
+            
+            <SidebarGroup class="px-2 py-0">
+                <SidebarGroupLabel>Agents</SidebarGroupLabel>
+                <SidebarMenu>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton as-child :is-active="page.url === '/agents'">
+                            <Link href="/agents" :preserve-scroll="true" :preserve-state="true" @click="handleLinkClick">
+                                <Users />
+                                <span>Manage Agents</span>
+                            </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                 </SidebarMenu>
