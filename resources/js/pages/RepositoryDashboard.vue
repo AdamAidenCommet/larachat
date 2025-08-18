@@ -34,6 +34,7 @@ const props = defineProps<{
         has_hot_folder: boolean;
         created_at: string;
         updated_at: string;
+        is_blank?: boolean;
     };
     stats?: {
         files_count: number;
@@ -59,9 +60,10 @@ const startChatWithMessage = (message?: string) => {
     const finalMessage = message || messageInput.value.trim();
     if (finalMessage) {
         // Use router.get with data to properly send parameters
+        // For blank repositories, send empty string or don't send repository parameter
         router.get('/claude/new', {
             message: finalMessage,
-            repository: props.repository.name,
+            repository: props.repository.is_blank ? '' : props.repository.name,
             mode: selectedMode.value === 'coding' ? 'bypassPermissions' : 'plan',
         });
     }
@@ -75,6 +77,12 @@ const quickMessages = [
 ];
 
 const handleDelete = async () => {
+    // Don't allow deletion of blank repository
+    if (props.repository.is_blank) {
+        alert('Cannot delete blank repository');
+        return;
+    }
+    
     if (deleteConfirmation.value !== props.repository.name) {
         return;
     }
@@ -96,6 +104,7 @@ const handleDelete = async () => {
     <AppLayout>
         <template #header-actions>
             <Button
+                v-if="!repository.is_blank"
                 @click="showEnvModal = true"
                 variant="outline"
                 size="sm"
@@ -104,7 +113,7 @@ const handleDelete = async () => {
                 Environment
             </Button>
             
-            <DropdownMenu>
+            <DropdownMenu v-if="!repository.is_blank">
                 <DropdownMenuTrigger as-child>
                     <Button variant="outline" size="sm">
                         <Settings class="h-4 w-4" />
@@ -132,7 +141,8 @@ const handleDelete = async () => {
                             <Sparkles class="h-8 w-8 text-primary" />
                         </div>
                         <h2 class="text-2xl font-semibold">Start a conversation</h2>
-                        <p class="mt-2 text-muted-foreground">Ask Claude about your {{ repository.name }} codebase</p>
+                        <p class="mt-2 text-muted-foreground" v-if="repository.is_blank">Start a new conversation without a specific codebase</p>
+                        <p class="mt-2 text-muted-foreground" v-else>Ask Claude about your {{ repository.name }} codebase</p>
                     </div>
 
                     <!-- Main Input -->

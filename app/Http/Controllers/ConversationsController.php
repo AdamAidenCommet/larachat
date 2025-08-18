@@ -94,10 +94,13 @@ class ConversationsController extends Controller
             'mode' => 'nullable|string|in:plan,bypassPermissions',
         ]);
 
-        // Only allow blank repository when in plan mode
-        if (empty($request->input('repository')) && $request->input('mode', 'plan') !== 'plan') {
-            return back()->withErrors(['repository' => 'A repository is required when not in planning mode.']);
-        }
+        // Allow blank repository in both plan mode and when explicitly requested
+        // This enables users to work with blank repositories for general tasks
+        $isBlankRepositoryRequest = empty($request->input('repository')) || $request->input('repository') === '';
+        $mode = $request->input('mode', 'plan');
+        
+        // For now, allow blank repositories in both modes to give users flexibility
+        // Users can start conversations without a specific codebase
 
         $project_id = uniqid();
         $msg = $request->input('message');

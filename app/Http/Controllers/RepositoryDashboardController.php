@@ -12,8 +12,33 @@ class RepositoryDashboardController extends Controller
     {
         $repositoryName = request()->query('repository');
         
-        if (!$repositoryName) {
-            abort(404, 'Repository parameter is required');
+        // Allow blank repository (when no repository parameter is provided or it's empty)
+        if (!$repositoryName || $repositoryName === '') {
+            // Return a blank repository dashboard
+            return Inertia::render('RepositoryDashboard', [
+                'repository' => [
+                    'id' => 0,
+                    'name' => 'Blank Repository',
+                    'slug' => 'blank',
+                    'url' => '',
+                    'branch' => '',
+                    'path' => storage_path('app/private/repositories/base'),
+                    'has_hot_folder' => false,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                    'is_blank' => true,
+                ],
+                'stats' => [
+                    'files_count' => 0,
+                    'directories_count' => 0,
+                    'total_size' => '0 B',
+                ],
+                'recent_conversations' => Conversation::where('repository', '')
+                    ->orWhereNull('repository')
+                    ->orderBy('created_at', 'desc')
+                    ->take(10)
+                    ->get(['id', 'title', 'created_at']),
+            ]);
         }
         
         $repository = Repository::where('name', $repositoryName)->firstOrFail();

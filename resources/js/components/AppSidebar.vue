@@ -18,7 +18,7 @@ import { useConversations } from '@/composables/useConversations';
 import { useRepositories } from '@/composables/useRepositories';
 import { useSidebar } from '@/components/ui/sidebar';
 import { Link, router, usePage } from '@inertiajs/vue3';
-import { Bot, GitBranch, Loader2, MessageSquarePlus, Plus } from 'lucide-vue-next';
+import { Bot, FileText, GitBranch, Loader2, MessageSquarePlus, Plus } from 'lucide-vue-next';
 import { onMounted, onUnmounted, ref, watch } from 'vue';
 import AppLogo from './AppLogo.vue';
 
@@ -192,10 +192,16 @@ const handleAskLara = () => {
                     </button>
                 </div>
                 <SidebarMenu>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton @click="handleRepositoryClick('')" :tooltip="'Start without a specific repository'">
+                            <FileText />
+                            <span class="flex-1 truncate">Blank Repository</span>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
                     <SidebarMenuItem v-if="repositories.length === 0">
-                        <SidebarMenuButton>
+                        <SidebarMenuButton disabled>
                             <GitBranch />
-                            <span>No repositories yet</span>
+                            <span>No repositories cloned yet</span>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                     <SidebarMenuItem v-for="repo in repositories" :key="repo.id">
