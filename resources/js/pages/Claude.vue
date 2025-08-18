@@ -914,9 +914,9 @@ onUnmounted(() => {
                 </div>
             </div>
         </template>
-        <div class="flex h-[calc(100dvh-4rem)] flex-col bg-background">
+        <div class="relative flex h-[calc(100dvh-4rem)] flex-col bg-background">
             <!-- Chat Messages -->
-            <ScrollArea ref="messagesContainer" class="flex-1 p-4">
+            <ScrollArea ref="messagesContainer" class="flex-1 p-4 pb-20">
                 <div class="space-y-2">
                     <ChatMessage
                         v-for="message in filteredMessages"
@@ -938,8 +938,8 @@ onUnmounted(() => {
                 </div>
             </ScrollArea>
 
-            <!-- Input Area -->
-            <div class="border-t bg-background p-4">
+            <!-- Input Area - Fixed at bottom -->
+            <div class="absolute bottom-0 left-0 right-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 p-4">
                 <div v-if="isArchived" class="text-center text-muted-foreground">
                     This conversation is archived. Unarchive it to continue the conversation.
                 </div>
