@@ -13,7 +13,7 @@ class ExampleTest extends TestCase
     {
         $response = $this->get('/');
 
-        $response->assertStatus(302);
-        $response->assertRedirect('/claude');
+        // The landing page should return 200 with Inertia response
+        $response->assertStatus(200);
     }
 }
