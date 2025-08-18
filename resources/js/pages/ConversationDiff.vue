@@ -170,25 +170,27 @@ onUnmounted(() => {
 <template>
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="container mx-auto max-w-7xl px-2 py-2">
-            <div class="mb-2 flex items-center justify-between">
+            <div class="mb-2 space-y-2">
                 <div class="flex items-center gap-4">
+                    <h1 class="text-lg font-bold">Git Diff</h1>
+                </div>
+                <div class="flex items-center justify-between">
                     <Button variant="outline" size="sm" @click="goBack" class="flex items-center gap-2">
                         <ChevronLeft class="h-4 w-4" />
                         Back to Conversation
                     </Button>
-                    <h1 class="text-lg font-bold">Git Diff</h1>
-                </div>
-                <div class="flex items-center gap-2">
-                    <Button v-if="hasContent && fileDiffs.length > 1" variant="outline" size="sm" @click="toggleAll" class="flex items-center gap-2">
-                        <ChevronDown v-if="!expandAll" class="h-4 w-4" />
-                        <ChevronRight v-else class="h-4 w-4" />
-                        {{ expandAll ? 'Collapse All' : 'Expand All' }}
-                    </Button>
-                    <Button v-if="hasContent" variant="outline" size="sm" @click="copyToClipboard" class="flex items-center gap-2">
-                        <CopyIcon v-if="!copied" class="h-4 w-4" />
-                        <CheckIcon v-else class="h-4 w-4 text-green-600" />
-                        {{ copied ? 'Copied!' : 'Copy Diff' }}
-                    </Button>
+                    <div class="flex items-center gap-2">
+                        <Button v-if="hasContent && fileDiffs.length > 1" variant="outline" size="sm" @click="toggleAll" class="flex items-center gap-2">
+                            <ChevronDown v-if="!expandAll" class="h-4 w-4" />
+                            <ChevronRight v-else class="h-4 w-4" />
+                            {{ expandAll ? 'Collapse All' : 'Expand All' }}
+                        </Button>
+                        <Button v-if="hasContent" variant="outline" size="sm" @click="copyToClipboard" class="flex items-center gap-2">
+                            <CopyIcon v-if="!copied" class="h-4 w-4" />
+                            <CheckIcon v-else class="h-4 w-4 text-green-600" />
+                            {{ copied ? 'Copied!' : 'Copy Diff' }}
+                        </Button>
+                    </div>
                 </div>
             </div>
 
