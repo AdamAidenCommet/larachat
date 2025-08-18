@@ -70,54 +70,97 @@ class InitializeConversationSessionJob implements ShouldQueue
             // Handle non-blank repositories
             $from = storage_path('app/private/repositories/hot/' . $this->conversation->repository);
 
-        if (!File::exists($from)) {
-            CopyRepositoryToHotJob::dispatchSync($this->conversation->repository);
-            
-            // Check again after the copy job
             if (!File::exists($from)) {
-                Log::error('InitializeConversationSessionJob: Repository not found after copy attempt', [
-                    'repository' => $this->conversation->repository,
+                // Check if the base repository exists before trying to copy
+                $basePath = storage_path('app/private/repositories/base/' . $this->conversation->repository);
+                if (!File::exists($basePath)) {
+                    Log::error('InitializeConversationSessionJob: Base repository does not exist', [
+                        'repository' => $this->conversation->repository,
+                        'base_path' => $basePath,
+                    ]);
+                    
+                    // Mark conversation as failed with error message
+                    $this->conversation->update([
+                        'is_processing' => false,
+                        'error_message' => "Repository '{$this->conversation->repository}' not found. It may have been deleted."
+                    ]);
+                    
+                    // Clean up the repository record if it exists
+                    $repository = \App\Models\Repository::where('name', $this->conversation->repository)->first();
+                    if ($repository) {
+                        $repository->delete();
+                        Log::info('InitializeConversationSessionJob: Cleaned up orphaned repository record', [
+                            'repository_name' => $this->conversation->repository,
+                        ]);
+                    }
+                    
+                    return;
+                }
+                
+                // Try to copy from base to hot
+                try {
+                    CopyRepositoryToHotJob::dispatchSync($this->conversation->repository);
+                } catch (\Exception $e) {
+                    Log::error('InitializeConversationSessionJob: Failed to copy repository to hot', [
+                        'repository' => $this->conversation->repository,
+                        'error' => $e->getMessage(),
+                    ]);
+                    
+                    $this->conversation->update([
+                        'is_processing' => false,
+                        'error_message' => 'Failed to prepare repository: ' . $e->getMessage()
+                    ]);
+                    return;
+                }
+                
+                // Check again after the copy job
+                if (!File::exists($from)) {
+                    Log::error('InitializeConversationSessionJob: Repository not found after copy attempt', [
+                        'repository' => $this->conversation->repository,
+                        'from' => $from,
+                    ]);
+                    
+                    // Mark conversation as failed
+                    $this->conversation->update([
+                        'is_processing' => false,
+                        'error_message' => 'Failed to prepare repository for conversation'
+                    ]);
+                    return;
+                }
+            }
+
+            // If project_directory starts with absolute path from PROJECT_DIRECTORY env, use it directly
+            // Otherwise treat it as relative to storage_path
+            $projectDir = $this->conversation->project_directory;
+            if (str_starts_with($projectDir, '/')) {
+                $to = $projectDir;
+            } else {
+                $to = storage_path($projectDir);
+            }
+
+            ray($from, $to);
+            
+            // Ensure the parent directory exists
+            $parentDir = dirname($to);
+            if (!File::exists($parentDir)) {
+                File::makeDirectory($parentDir, 0755, true);
+            }
+            
+            File::moveDirectory($from, $to, true);
+
+            // Verify the directory exists after move
+            if (!File::exists($to)) {
+                Log::error('InitializeConversationSessionJob: Failed to move repository directory', [
                     'from' => $from,
+                    'to' => $to,
+                    'repository' => $this->conversation->repository,
                 ]);
                 
                 // Mark conversation as failed
                 $this->conversation->update(['is_processing' => false]);
                 return;
             }
-        }
-
-        // If project_directory starts with absolute path from PROJECT_DIRECTORY env, use it directly
-        // Otherwise treat it as relative to storage_path
-        $projectDir = $this->conversation->project_directory;
-        if (str_starts_with($projectDir, '/')) {
-            $to = $projectDir;
-        } else {
-            $to = storage_path($projectDir);
-        }
-
-        ray($from, $to);
-        
-        // Ensure the parent directory exists
-        $parentDir = dirname($to);
-        if (!File::exists($parentDir)) {
-            File::makeDirectory($parentDir, 0755, true);
-        }
-        
-        File::moveDirectory($from, $to, true);
-
-        // Verify the directory exists after move
-        if (!File::exists($to)) {
-            Log::error('InitializeConversationSessionJob: Failed to move repository directory', [
-                'from' => $from,
-                'to' => $to,
-                'repository' => $this->conversation->repository,
-            ]);
             
-            // Mark conversation as failed
-            $this->conversation->update(['is_processing' => false]);
-            return;
-        }
-        
             Log::info('InitializeConversationSessionJob: Successfully moved repository', [
                 'repository' => $this->conversation->repository,
                 'project_directory' => $this->conversation->project_directory,

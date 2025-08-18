@@ -39,7 +39,7 @@ class CopyRepositoryToHotJob implements ShouldQueue
         $hotPath = storage_path('app/private/repositories/hot/' . $this->repository);
 
         if (!is_dir($basePath)) {
-            Log::error('CopyRepositoryToHot: Missing repository directory, deleting from database', [
+            Log::error('CopyRepositoryToHot: Missing repository directory, cleaning up', [
                 'repository' => $this->repository,
                 'path' => $basePath,
             ]);
@@ -57,8 +57,12 @@ class CopyRepositoryToHotJob implements ShouldQueue
                 ]);
             }
 
-            // Fail the job to trigger retry mechanism if needed
-            throw new \Exception('Base repository directory does not exist: ' . $basePath);
+            // Don't retry this job since the repository doesn't exist
+            // Mark as successfully handled to prevent retries
+            Log::info('CopyRepositoryToHot: Job completed - repository no longer exists', [
+                'repository' => $this->repository,
+            ]);
+            return;
         }
 
         try {
