@@ -70,6 +70,8 @@ const isArchived = ref(props.isArchived || false);
 const isArchiving = ref(false);
 const showArchiveConfirm = ref(false);
 const selectedMode = ref<'coding' | 'planning'>('coding');
+const gitBranch = ref<string | null>(null);
+const prNumber = ref<number | null>(null);
 
 // Polling state
 const pollingInterval = ref<number | null>(null);
@@ -638,6 +640,18 @@ const updateConversationMode = async (mode: 'coding' | 'planning') => {
     }
 };
 
+const fetchGitInfo = async () => {
+    if (!conversationId.value) return;
+    
+    try {
+        const response = await axios.get(`/api/conversations/${conversationId.value}/git-info`);
+        gitBranch.value = response.data.git_branch;
+        prNumber.value = response.data.pr_number;
+    } catch (error) {
+        console.error('Error fetching git info:', error);
+    }
+};
+
 // Watchers
 watch(
     () => props.sessionFile,
@@ -719,6 +733,8 @@ const fetchConversation = async (id: number) => {
             conversation.value = foundConv;
             // Update selectedMode based on conversation mode
             selectedMode.value = foundConv.mode === 'bypassPermissions' ? 'coding' : 'planning';
+            // Fetch git info for the conversation
+            await fetchGitInfo();
         } else {
             // If not found, fetch conversations and try again
             await fetchConversations(true, true);
@@ -727,6 +743,8 @@ const fetchConversation = async (id: number) => {
                 conversation.value = foundConvAfterFetch;
                 // Update selectedMode based on conversation mode
                 selectedMode.value = foundConvAfterFetch.mode === 'bypassPermissions' ? 'coding' : 'planning';
+                // Fetch git info for the conversation
+                await fetchGitInfo();
             }
         }
     } catch (error) {
@@ -805,6 +823,11 @@ onUnmounted(() => {
 <template>
     <AppLayout :breadcrumbs="breadcrumbs">
         <template #header-actions>
+            <div v-if="gitBranch || prNumber" class="mr-3 flex items-center gap-2 text-sm text-muted-foreground">
+                <GitBranch v-if="gitBranch" class="h-4 w-4" />
+                <span v-if="gitBranch">{{ gitBranch }}</span>
+                <span v-if="prNumber" class="ml-1 rounded bg-muted px-2 py-0.5 text-xs">#{{ prNumber }}</span>
+            </div>
             <div v-if="conversationId && !isArchived" class="mr-2 inline-flex rounded-lg border p-1">
                 <Button
                     @click="updateConversationMode('coding')"

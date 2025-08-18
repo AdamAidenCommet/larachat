@@ -306,4 +306,58 @@ class ConversationsController extends Controller
         ]);
     }
 
+    /**
+     * Get git information for conversation
+     * 
+     * Fetches current git branch and PR number for a conversation's project directory
+     * 
+     * @authenticated
+     * 
+     * @urlParam conversation integer required The ID of the conversation. Example: 1
+     * 
+     * @response 200 scenario="Success" {
+     *   "git_branch": "feature-auth",
+     *   "pr_number": 123
+     * }
+     * 
+     * @response 403 scenario="Unauthorized" {
+     *   "error": "Unauthorized"
+     * }
+     */
+    public function getGitInfo(Conversation $conversation)
+    {
+        // Check if user owns this conversation
+        if ($conversation->user_id !== Auth::id()) {
+            abort(403, 'Unauthorized');
+        }
+
+        $gitBranch = null;
+        $prNumber = null;
+
+        // Get git branch from project directory
+        if ($conversation->project_directory && is_dir($conversation->project_directory)) {
+            $gitBranchCommand = "cd " . escapeshellarg($conversation->project_directory) . " && git rev-parse --abbrev-ref HEAD 2>/dev/null";
+            $gitBranch = trim(shell_exec($gitBranchCommand));
+            
+            if ($gitBranch) {
+                // Try to get PR number from GitHub
+                $prCommand = "cd " . escapeshellarg($conversation->project_directory) . " && gh pr view --json number 2>/dev/null | jq -r '.number // empty' 2>/dev/null";
+                $prNumber = trim(shell_exec($prCommand));
+                $prNumber = $prNumber ? (int)$prNumber : null;
+            }
+        }
+
+        // Update conversation with git info
+        if ($gitBranch !== $conversation->git_branch || $prNumber !== $conversation->pr_number) {
+            $conversation->git_branch = $gitBranch ?: null;
+            $conversation->pr_number = $prNumber;
+            $conversation->save();
+        }
+
+        return response()->json([
+            'git_branch' => $conversation->git_branch,
+            'pr_number' => $conversation->pr_number
+        ]);
+    }
+
 }

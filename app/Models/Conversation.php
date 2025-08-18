@@ -20,6 +20,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property bool $is_processing
  * @property bool $archived
  * @property string $mode
+ * @property string|null $git_branch
+ * @property int|null $pr_number
  */
 class Conversation extends Model
 {
@@ -35,6 +37,8 @@ class Conversation extends Model
         'is_processing',
         'archived',
         'mode',
+        'git_branch',
+        'pr_number',
     ];
 
     protected $casts = [
