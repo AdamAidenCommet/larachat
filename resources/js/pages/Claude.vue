@@ -823,79 +823,110 @@ onUnmounted(() => {
 <template>
     <AppLayout :breadcrumbs="breadcrumbs">
         <template #header-actions>
-            <div v-if="gitBranch || prNumber" class="mr-3 flex items-center gap-2 text-sm text-muted-foreground">
-                <GitBranch v-if="gitBranch" class="h-4 w-4" />
-                <span v-if="gitBranch">{{ gitBranch }}</span>
-                <span v-if="prNumber" class="ml-1 rounded bg-muted px-2 py-0.5 text-xs">#{{ prNumber }}</span>
+            <div class="flex items-center gap-2 flex-wrap">
+                <!-- Git Info - Only on larger screens -->
+                <div v-if="gitBranch || prNumber" class="hidden sm:flex items-center gap-1.5 text-sm text-muted-foreground">
+                    <GitBranch v-if="gitBranch" class="h-3.5 w-3.5" />
+                    <span v-if="gitBranch" class="max-w-[120px] truncate">{{ gitBranch }}</span>
+                    <span v-if="prNumber" class="rounded bg-muted px-1.5 py-0.5 text-xs">#{{ prNumber }}</span>
+                </div>
+                
+                <!-- Mode Switcher - Grouped together -->
+                <div v-if="conversationId && !isArchived" class="inline-flex rounded-md border">
+                    <Button
+                        @click="updateConversationMode('coding')"
+                        :variant="selectedMode === 'coding' ? 'default' : 'ghost'"
+                        size="sm"
+                        :title="'Coding Mode'"
+                        class="rounded-r-none border-0"
+                    >
+                        <Code class="h-3.5 w-3.5" />
+                        <span class="ml-1.5 hidden sm:inline">Code</span>
+                    </Button>
+                    <Button
+                        @click="updateConversationMode('planning')"
+                        :variant="selectedMode === 'planning' ? 'default' : 'ghost'"
+                        size="sm"
+                        :title="'Planning Mode'"
+                        class="rounded-l-none border-0 border-l"
+                    >
+                        <MapPin class="h-3.5 w-3.5" />
+                        <span class="ml-1.5 hidden sm:inline">Plan</span>
+                    </Button>
+                </div>
+                
+                <!-- Action Buttons Group -->
+                <div class="inline-flex items-center gap-1">
+                    <Button
+                        v-if="conversationId"
+                        @click="() => router.visit(`/claude/conversation/${conversationId}/diff`)"
+                        variant="ghost"
+                        size="sm"
+                        title="View Diff / Create PR"
+                        class="px-2"
+                    >
+                        <GitPullRequest class="h-3.5 w-3.5" />
+                        <span class="ml-1.5 hidden lg:inline">PR</span>
+                    </Button>
+                    
+                    <Button
+                        v-if="conversationId && conversations.find(c => c.id === conversationId)?.project_directory"
+                        @click="openPreview"
+                        variant="ghost"
+                        size="sm"
+                        :title="`Preview ${conversations.find(c => c.id === conversationId)?.project_directory.split('/').pop()}`"
+                        class="px-2"
+                    >
+                        <ExternalLink class="h-3.5 w-3.5" />
+                        <span class="ml-1.5 hidden lg:inline">Preview</span>
+                    </Button>
+                    
+                    <div class="h-4 w-px bg-border hidden sm:block" />
+                    
+                    <Button
+                        v-if="conversationId && !showArchiveConfirm"
+                        @click="isArchived ? unarchiveConversation() : (showArchiveConfirm = true)"
+                        variant="ghost"
+                        size="sm"
+                        :title="isArchived ? 'Unarchive' : 'Archive'"
+                        :disabled="isArchiving"
+                        class="px-2"
+                    >
+                        <component :is="isArchived ? ArchiveRestore : Archive" class="h-3.5 w-3.5" />
+                    </Button>
+                    
+                    <Button
+                        @click="hideSystemMessages = !hideSystemMessages"
+                        variant="ghost"
+                        size="sm"
+                        :title="hideSystemMessages ? 'Show System Messages' : 'Hide System Messages'"
+                        class="px-2"
+                    >
+                        <component :is="hideSystemMessages ? EyeOff : Eye" class="h-3.5 w-3.5" />
+                    </Button>
+                </div>
+                
+                <!-- Archive Confirmation - Separate row on small screens -->
+                <div v-if="conversationId && showArchiveConfirm && !isArchived" class="flex gap-2 w-full sm:w-auto">
+                    <Button
+                        @click="archiveConversation()"
+                        variant="destructive"
+                        size="sm"
+                        :disabled="isArchiving"
+                        class="text-xs"
+                    >
+                        Confirm Archive
+                    </Button>
+                    <Button
+                        @click="showArchiveConfirm = false"
+                        variant="outline"
+                        size="sm"
+                        class="text-xs"
+                    >
+                        Cancel
+                    </Button>
+                </div>
             </div>
-            <div v-if="conversationId && !isArchived" class="mr-2 inline-flex rounded-lg border p-1">
-                <Button
-                    @click="updateConversationMode('coding')"
-                    :variant="selectedMode === 'coding' ? 'default' : 'ghost'"
-                    size="sm"
-                    :title="'Coding Mode'"
-                >
-                    <Code class="h-4 w-4" />
-                </Button>
-                <Button
-                    @click="updateConversationMode('planning')"
-                    :variant="selectedMode === 'planning' ? 'default' : 'ghost'"
-                    size="sm"
-                    :title="'Planning Mode'"
-                >
-                    <MapPin class="h-4 w-4" />
-                </Button>
-            </div>
-            <Button
-                v-if="conversationId"
-                @click="() => router.visit(`/claude/conversation/${conversationId}/diff`)"
-                variant="ghost"
-                size="icon"
-                title="View Diff / Create PR"
-                class="mr-2"
-            >
-                <GitPullRequest class="h-4 w-4" />
-            </Button>
-            <Button
-                v-if="conversationId && conversations.find(c => c.id === conversationId)?.project_directory"
-                @click="openPreview"
-                variant="ghost"
-                size="icon"
-                :title="`Preview ${conversations.find(c => c.id === conversationId)?.project_directory.split('/').pop()}`"
-                class="mr-2"
-            >
-                <ExternalLink class="h-4 w-4" />
-            </Button>
-            <Button
-                v-if="conversationId && !showArchiveConfirm"
-                @click="isArchived ? unarchiveConversation() : (showArchiveConfirm = true)"
-                variant="ghost"
-                size="icon"
-                :title="isArchived ? 'Unarchive Conversation' : 'Archive Conversation'"
-                :disabled="isArchiving"
-                class="mr-2"
-            >
-                <component :is="isArchived ? ArchiveRestore : Archive" class="h-4 w-4" />
-            </Button>
-            <div v-if="conversationId && showArchiveConfirm && !isArchived" class="mr-2 flex gap-2">
-                <Button
-                    @click="archiveConversation()"
-                    variant="destructive"
-                    size="sm"
-                    :disabled="isArchiving"
-                >
-                    Confirm Archive
-                </Button>
-            </div>
-            <Button
-                @click="hideSystemMessages = !hideSystemMessages"
-                variant="ghost"
-                size="icon"
-                :title="hideSystemMessages ? 'Show System Messages' : 'Hide System Messages'"
-                class="mr-2"
-            >
-                <component :is="hideSystemMessages ? EyeOff : Eye" class="h-4 w-4" />
-            </Button>
         </template>
         <div class="flex h-[calc(100dvh-4rem)] flex-col bg-background">
             <!-- Chat Messages -->
