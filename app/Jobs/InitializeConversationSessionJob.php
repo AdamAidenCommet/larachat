@@ -65,10 +65,10 @@ class InitializeConversationSessionJob implements ShouldQueue
             Log::info('InitializeConversationSessionJob: Using base directory for blank repository', [
                 'project_directory' => $this->conversation->project_directory,
             ]);
-            return;
-        }
-
-        $from = storage_path('app/private/repositories/hot/' . $this->conversation->repository);
+            // For blank repositories, we're done - the base directory is already set up
+        } else {
+            // Handle non-blank repositories
+            $from = storage_path('app/private/repositories/hot/' . $this->conversation->repository);
 
         if (!File::exists($from)) {
             CopyRepositoryToHotJob::dispatchSync($this->conversation->repository);
@@ -118,10 +118,11 @@ class InitializeConversationSessionJob implements ShouldQueue
             return;
         }
         
-        Log::info('InitializeConversationSessionJob: Successfully moved repository', [
-            'repository' => $this->conversation->repository,
-            'project_directory' => $this->conversation->project_directory,
-        ]);
+            Log::info('InitializeConversationSessionJob: Successfully moved repository', [
+                'repository' => $this->conversation->repository,
+                'project_directory' => $this->conversation->project_directory,
+            ]);
+        }
     }
 
 }

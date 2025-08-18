@@ -48,9 +48,9 @@ cd "$PROJECT_DIR" || exit 1
 
 # Set up environment for Claude CLI
 # Use the actual user's environment
-export PATH="/opt/homebrew/bin:$PATH"
-export HOME="${HOME:-/Users/arturhanusek}"
-export USER="${USER:-arturhanusek}"
+export PATH="/Users/customer/Library/Application Support/Herd/config/nvm/versions/node/v20.19.4/bin:/opt/homebrew/bin:$PATH"
+export HOME="${HOME:-/Users/customer}"
+export USER="${USER:-customer}"
 
 # Execute claude with all arguments from the project directory
 exec claude "$@"

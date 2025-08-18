@@ -128,7 +128,10 @@ class ConversationsController extends Controller
             new SendClaudeMessageJob($conversation, $msg)
         ])->dispatch();
 
-        CopyRepositoryToHotJob::dispatch($conversation->repository);
+        // Only copy repository if it's not blank
+        if (!empty($conversation->repository)) {
+            CopyRepositoryToHotJob::dispatch($conversation->repository);
+        }
 
         return redirect()->route('claude.conversation', $conversation->id);
     }
