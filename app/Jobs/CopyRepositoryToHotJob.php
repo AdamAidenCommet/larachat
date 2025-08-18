@@ -89,6 +89,14 @@ class CopyRepositoryToHotJob implements ShouldQueue
             // Continue with copying even if git operations fail
         }
 
+        // Remove existing hot directory if it exists
+        if (File::exists($hotPath)) {
+            File::deleteDirectory($hotPath);
+            Log::info('CopyRepositoryToHot: Removed existing hot directory', [
+                'repository' => $this->repository,
+            ]);
+        }
+        
         File::copyDirectory($basePath, $hotPath);
         
         Log::info('CopyRepositoryToHot: Successfully copied repository to hot', [
