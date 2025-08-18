@@ -14,7 +14,7 @@ import { type BreadcrumbItem } from '@/types';
 import { extractTextFromResponse } from '@/utils/claudeResponseParser';
 import { router } from '@inertiajs/vue3';
 import axios from 'axios';
-import { Archive, ArchiveRestore, Eye, EyeOff, ExternalLink, GitBranch, Send, Code, MapPin } from 'lucide-vue-next';
+import { Archive, ArchiveRestore, Eye, EyeOff, ExternalLink, GitBranch, Send, Code, MapPin, GitPullRequest } from 'lucide-vue-next';
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 
 // Constants
@@ -846,6 +846,16 @@ onUnmounted(() => {
                     <MapPin class="h-4 w-4" />
                 </Button>
             </div>
+            <Button
+                v-if="conversationId"
+                @click="() => router.visit(`/claude/conversation/${conversationId}/diff`)"
+                variant="ghost"
+                size="icon"
+                title="View Diff / Create PR"
+                class="mr-2"
+            >
+                <GitPullRequest class="h-4 w-4" />
+            </Button>
             <Button
                 v-if="conversationId && conversations.find(c => c.id === conversationId)?.project_directory"
                 @click="openPreview"
