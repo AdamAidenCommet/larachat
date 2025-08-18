@@ -107,3 +107,6 @@ echo "Using npm from: $NPM_CMD"
 "$NPM_CMD" install
 "$NPM_CMD" run build
 rm -rf public/hot
+
+# Run database migrations
+php artisan migrate --force
