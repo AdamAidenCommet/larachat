@@ -3,6 +3,8 @@ import NavUser from '@/components/NavUser.vue';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
     Sidebar,
     SidebarContent,
@@ -16,6 +18,7 @@ import {
     useSidebar,
 } from '@/components/ui/sidebar';
 import { useConversations } from '@/composables/useConversations';
+import { useAgents } from '@/composables/useAgents';
 import { useRepositories } from '@/composables/useRepositories';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import { Bot, FileText, GitBranch, Loader2, MessageSquarePlus, Plus, Users } from 'lucide-vue-next';
@@ -25,12 +28,16 @@ import AppLogo from './AppLogo.vue';
 const page = usePage();
 const { conversations, fetchConversations, startPolling, stopPolling, cleanup } = useConversations();
 const { repositories, fetchRepositories, cloneRepository, loading } = useRepositories();
+const { agents, fetchAgents, createAgent, showCreateDialog: showCreateAgentDialog, createError: createAgentError } = useAgents();
 const { isMobile, setOpenMobile, open } = useSidebar();
 
 const showCloneDialog = ref(false);
 const repositoryUrl = ref('');
 const branch = ref('');
 const cloneError = ref('');
+const newAgentName = ref('');
+const newAgentPrompt = ref('');
+const creatingAgent = ref(false);
 const sidebarRefreshInterval = ref<number | null>(null);
 const lastMobileOpenState = ref(false);
 
@@ -81,6 +88,7 @@ const handleSidebarVisibilityChange = () => {
 
 onMounted(async () => {
     await fetchRepositories();
+    await fetchAgents();
     await fetchConversations(false, true); // Force initial fetch
 
     // Set up visibility-based refresh
@@ -142,6 +150,20 @@ const handleLinkClick = () => {
     }
 };
 
+const handleCreateAgent = async () => {
+    creatingAgent.value = true;
+    try {
+        await createAgent(newAgentName.value, newAgentPrompt.value);
+        newAgentName.value = '';
+        newAgentPrompt.value = '';
+        showCreateAgentDialog.value = false;
+    } catch (err) {
+        // Error is handled in the composable
+    } finally {
+        creatingAgent.value = false;
+    }
+};
+
 const handleAskLara = () => {
     if (isMobile.value) {
         setOpenMobile(false);
@@ -182,13 +204,35 @@ const handleAskLara = () => {
             </SidebarGroup>
 
             <SidebarGroup class="px-2 py-0">
-                <SidebarGroupLabel>Agents</SidebarGroupLabel>
+                <div class="flex items-center justify-between">
+                    <SidebarGroupLabel>Agents</SidebarGroupLabel>
+                    <button
+                        class="flex h-5 w-5 items-center justify-center rounded-sm transition-colors hover:bg-accent hover:text-accent-foreground"
+                        @click="showCreateAgentDialog = true"
+                    >
+                        <Plus class="h-3 w-3" />
+                    </button>
+                </div>
                 <SidebarMenu>
+                    <SidebarMenuItem v-if="agents.length === 0">
+                        <SidebarMenuButton disabled>
+                            <Users />
+                            <span>No agents created yet</span>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem v-for="agent in agents" :key="agent.id">
+                        <SidebarMenuButton as-child>
+                            <Link href="/agents" :preserve-scroll="true" :preserve-state="true" @click="handleLinkClick">
+                                <Users />
+                                <span class="flex-1 truncate">{{ agent.name }}</span>
+                            </Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
                     <SidebarMenuItem>
                         <SidebarMenuButton as-child :is-active="page.url === '/agents'">
                             <Link href="/agents" :preserve-scroll="true" :preserve-state="true" @click="handleLinkClick">
                                 <Users />
-                                <span>Manage Agents</span>
+                                <span>Manage All Agents</span>
                             </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -292,6 +336,48 @@ const handleAskLara = () => {
                 <Button @click="handleCloneRepository" :disabled="loading || !repositoryUrl">
                     <Loader2 v-if="loading" class="mr-2 h-4 w-4 animate-spin" />
                     Clone Repository
+                </Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
+
+    <Dialog v-model:open="showCreateAgentDialog">
+        <DialogContent class="sm:max-w-[625px]">
+            <DialogHeader>
+                <DialogTitle>Create New Agent</DialogTitle>
+                <DialogDescription>Add a new AI agent with a custom prompt</DialogDescription>
+            </DialogHeader>
+            <div class="space-y-4 py-4">
+                <div class="space-y-2">
+                    <Label for="agent-name">Name</Label>
+                    <Input
+                        id="agent-name"
+                        v-model="newAgentName"
+                        placeholder="Agent name"
+                        :disabled="creatingAgent"
+                    />
+                </div>
+                <div class="space-y-2">
+                    <Label for="agent-prompt">Prompt</Label>
+                    <Textarea
+                        id="agent-prompt"
+                        v-model="newAgentPrompt"
+                        placeholder="Enter the agent's prompt..."
+                        rows="8"
+                        :disabled="creatingAgent"
+                    />
+                </div>
+                <div v-if="createAgentError" class="text-sm text-destructive">
+                    {{ createAgentError }}
+                </div>
+            </div>
+            <DialogFooter>
+                <Button variant="outline" @click="showCreateAgentDialog = false" :disabled="creatingAgent">
+                    Cancel
+                </Button>
+                <Button @click="handleCreateAgent" :disabled="creatingAgent || !newAgentName || !newAgentPrompt">
+                    <Loader2 v-if="creatingAgent" class="mr-2 h-4 w-4 animate-spin" />
+                    Create Agent
                 </Button>
             </DialogFooter>
         </DialogContent>

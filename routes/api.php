@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AgentController;
 use App\Http\Controllers\ClaudeController;
 use App\Http\Controllers\CommandController;
 use App\Http\Controllers\ConversationsController;
@@ -29,6 +30,9 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::post('/conversations/{conversation}/archive', [ConversationsController::class, 'archive']);
     Route::post('/conversations/{conversation}/unarchive', [ConversationsController::class, 'unarchive']);
     Route::get('/conversations/{conversation}/git-info', [ConversationsController::class, 'getGitInfo']);
+
+    Route::get('/agents', [AgentController::class, 'index']);
+    Route::post('/agents', [AgentController::class, 'store']);
 
     Route::get('/claude/conversations', [ConversationsController::class, 'index']); // TODO: deprecated, replace usage with /conversations
 });

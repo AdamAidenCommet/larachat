@@ -8,9 +8,15 @@ use Inertia\Inertia;
 
 class AgentController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $agents = Agent::orderBy('created_at', 'desc')->get();
+        
+        // If it's an API request, return JSON
+        if ($request->is('api/*')) {
+            return response()->json(['agents' => $agents]);
+        }
+        
         return Inertia::render('Agents/Index', [
             'agents' => $agents,
         ]);
@@ -24,6 +30,11 @@ class AgentController extends Controller
         ]);
 
         $agent = Agent::create($validated);
+
+        // If it's an API request, return JSON
+        if ($request->is('api/*')) {
+            return response()->json(['agent' => $agent, 'message' => 'Agent created successfully']);
+        }
 
         return redirect()->route('agents.index');
     }

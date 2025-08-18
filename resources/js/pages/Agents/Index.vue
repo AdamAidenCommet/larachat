@@ -88,7 +88,7 @@ const deleteAgent = (agent: Agent) => {
                 </div>
 
                 <Dialog v-model:open="isCreateDialogOpen">
-                    <DialogTrigger asChild>
+                    <DialogTrigger as-child>
                         <Button>
                             <Plus class="mr-2 h-4 w-4" />
                             New Agent
