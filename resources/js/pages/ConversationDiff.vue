@@ -4,8 +4,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
-import { router } from '@inertiajs/vue3';
-import { CheckIcon, ChevronDown, ChevronLeft, ChevronRight, CopyIcon, FileIcon, Minus, Plus } from 'lucide-vue-next';
+import { CheckIcon, ChevronDown, ChevronRight, CopyIcon, FileIcon, Minus, Plus } from 'lucide-vue-next';
 import { computed, ref, onUnmounted } from 'vue';
 
 interface Props {
@@ -133,10 +132,6 @@ const copyToClipboard = async () => {
     }
 };
 
-const goBack = () => {
-    router.visit(`/claude/conversation/${props.conversationId}`);
-};
-
 // Synchronized horizontal scrolling
 const handleScroll = (event: Event) => {
     const target = event.target as HTMLElement;
@@ -170,27 +165,19 @@ onUnmounted(() => {
 <template>
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="container mx-auto max-w-7xl px-2 py-2">
-            <div class="mb-2 space-y-2">
-                <div class="flex items-center gap-4">
-                    <h1 class="text-lg font-bold">Git Diff</h1>
-                </div>
-                <div class="flex items-center justify-between">
-                    <Button variant="outline" size="sm" @click="goBack" class="flex items-center gap-2">
-                        <ChevronLeft class="h-4 w-4" />
-                        Back to Conversation
+            <div class="mb-1 flex items-center justify-between">
+                <h1 class="text-lg font-bold">Git Diff</h1>
+                <div class="flex items-center gap-2">
+                    <Button v-if="hasContent && fileDiffs.length > 1" variant="outline" size="sm" @click="toggleAll" class="flex items-center gap-2">
+                        <ChevronDown v-if="!expandAll" class="h-4 w-4" />
+                        <ChevronRight v-else class="h-4 w-4" />
+                        {{ expandAll ? 'Collapse All' : 'Expand All' }}
                     </Button>
-                    <div class="flex items-center gap-2">
-                        <Button v-if="hasContent && fileDiffs.length > 1" variant="outline" size="sm" @click="toggleAll" class="flex items-center gap-2">
-                            <ChevronDown v-if="!expandAll" class="h-4 w-4" />
-                            <ChevronRight v-else class="h-4 w-4" />
-                            {{ expandAll ? 'Collapse All' : 'Expand All' }}
-                        </Button>
-                        <Button v-if="hasContent" variant="outline" size="sm" @click="copyToClipboard" class="flex items-center gap-2">
-                            <CopyIcon v-if="!copied" class="h-4 w-4" />
-                            <CheckIcon v-else class="h-4 w-4 text-green-600" />
-                            {{ copied ? 'Copied!' : 'Copy Diff' }}
-                        </Button>
-                    </div>
+                    <Button v-if="hasContent" variant="outline" size="sm" @click="copyToClipboard" class="flex items-center gap-2">
+                        <CopyIcon v-if="!copied" class="h-4 w-4" />
+                        <CheckIcon v-else class="h-4 w-4 text-green-600" />
+                        {{ copied ? 'Copied!' : 'Copy Diff' }}
+                    </Button>
                 </div>
             </div>
 
@@ -218,30 +205,31 @@ onUnmounted(() => {
 
                 <Card v-for="file in fileDiffs" :key="file.fileName" class="overflow-hidden">
                     <Collapsible :open="expandedFiles.has(file.fileName)">
-                        <CollapsibleTrigger @click="toggleFile(file.fileName)" class="w-full">
-                            <CardHeader class="cursor-pointer p-2 transition-colors hover:bg-muted/50">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center gap-2">
-                                        <ChevronRight v-if="!expandedFiles.has(file.fileName)" class="h-4 w-4 transition-transform" />
-                                        <ChevronDown v-else class="h-4 w-4 transition-transform" />
-                                        <FileIcon class="h-4 w-4" />
-                                        <span class="font-mono text-xs">{{ file.fileName }}</span>
+                        <div class="relative">
+                            <CollapsibleTrigger @click="toggleFile(file.fileName)" class="w-full sticky top-0 z-10 bg-background">
+                                <CardHeader class="cursor-pointer p-2 transition-colors hover:bg-muted/50">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-2">
+                                            <ChevronRight v-if="!expandedFiles.has(file.fileName)" class="h-4 w-4 transition-transform" />
+                                            <ChevronDown v-else class="h-4 w-4 transition-transform" />
+                                            <FileIcon class="h-4 w-4" />
+                                            <span class="font-mono text-xs">{{ file.fileName }}</span>
+                                        </div>
+                                        <div class="flex items-center gap-3 text-xs">
+                                            <span v-if="file.additions > 0" class="flex items-center gap-1 text-green-600">
+                                                <Plus class="h-3 w-3" />
+                                                {{ file.additions }}
+                                            </span>
+                                            <span v-if="file.deletions > 0" class="flex items-center gap-1 text-red-600">
+                                                <Minus class="h-3 w-3" />
+                                                {{ file.deletions }}
+                                            </span>
+                                        </div>
                                     </div>
-                                    <div class="flex items-center gap-3 text-xs">
-                                        <span v-if="file.additions > 0" class="flex items-center gap-1 text-green-600">
-                                            <Plus class="h-3 w-3" />
-                                            {{ file.additions }}
-                                        </span>
-                                        <span v-if="file.deletions > 0" class="flex items-center gap-1 text-red-600">
-                                            <Minus class="h-3 w-3" />
-                                            {{ file.deletions }}
-                                        </span>
-                                    </div>
-                                </div>
-                            </CardHeader>
-                        </CollapsibleTrigger>
-                        <CollapsibleContent>
-                            <CardContent class="p-0">
+                                </CardHeader>
+                            </CollapsibleTrigger>
+                            <CollapsibleContent>
+                                <CardContent class="p-0">
                                 <div 
                                     class="overflow-x-auto rounded-b-lg border-t border-slate-800 bg-slate-900 dark:bg-slate-950 diff-container"
                                     :ref="(el) => registerScrollContainer(el as HTMLElement | null)"
@@ -289,8 +277,9 @@ onUnmounted(() => {
                                         </div>
                                     </div>
                                 </div>
-                            </CardContent>
-                        </CollapsibleContent>
+                                </CardContent>
+                            </CollapsibleContent>
+                        </div>
                     </Collapsible>
                 </Card>
             </div>
