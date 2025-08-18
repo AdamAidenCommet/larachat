@@ -79,10 +79,10 @@ export function useChatUI() {
         });
     };
 
-    const focusInput = (isLoading: boolean = false) => {
+    const focusInput = () => {
         nextTick(() => {
             const textareaComponent = textareaRef.value;
-            if (textareaComponent && !isLoading) {
+            if (textareaComponent) {
                 const textarea = textareaComponent.$el as HTMLTextAreaElement;
                 if (textarea) {
                     textarea.focus();
@@ -91,7 +91,7 @@ export function useChatUI() {
         });
     };
 
-    const handlePageClick = (e: MouseEvent, isLoading: boolean) => {
+    const handlePageClick = (e: MouseEvent) => {
         const target = e.target as HTMLElement;
         // Don't auto-focus if user is selecting text or interacting with content
         const selection = window.getSelection();
@@ -105,12 +105,12 @@ export function useChatUI() {
             if (target.closest('.p-4, [class*="container"], [class*="scroll"]')) {
                 return; // Clicking in content areas, don't auto-focus
             }
-            focusInput(isLoading);
+            focusInput();
         }
     };
 
-    const setupFocusHandlers = (isLoading: { value: boolean }) => {
-        const pageClickHandler = (e: MouseEvent) => handlePageClick(e, isLoading.value);
+    const setupFocusHandlers = () => {
+        const pageClickHandler = (e: MouseEvent) => handlePageClick(e);
 
         onMounted(() => {
             document.addEventListener('click', pageClickHandler);

@@ -1,10 +1,7 @@
 import type { ClaudeApiRequest, SessionConversation } from '@/types/claude';
 import axios from 'axios';
-import { ref } from 'vue';
 
 export function useClaudeApi() {
-    const isLoading = ref(false);
-
     const sendMessageToApi = async (
         request: ClaudeApiRequest,
         onChunk: (text: string, rawResponse: any) => void,
@@ -56,7 +53,6 @@ export function useClaudeApi() {
     };
 
     return {
-        isLoading,
         sendMessageToApi,
         loadSession,
     };

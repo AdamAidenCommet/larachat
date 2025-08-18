@@ -51,7 +51,7 @@ const breadcrumbs = computed<BreadcrumbItem[]>(() => {
 const { messagesContainer, textareaRef, scrollToBottom, isAtBottom, adjustTextareaHeight, resetTextareaHeight, focusInput, setupFocusHandlers } =
     useChatUI();
 const { messages, addUserMessage, addAssistantMessage, appendToMessage, formatTime } = useChatMessages();
-const { isLoading, sendMessageToApi, loadSession } = useClaudeApi();
+const { sendMessageToApi, loadSession } = useClaudeApi();
 const { claudeSessions, refreshSessions } = useClaudeSessions();
 const { conversations, fetchConversations, startPolling: startConversationPolling, stopPolling: stopConversationPolling } = useConversations();
 const { repositories, fetchRepositories } = useRepositories();
@@ -110,7 +110,7 @@ const applyPendingUpdates = () => {
 };
 
 // Setup focus handlers
-setupFocusHandlers(isLoading);
+setupFocusHandlers();
 
 // Computed properties
 const selectedRepositoryData = computed(() => {
@@ -426,9 +426,7 @@ const loadSessionMessages = async (isPolling = false) => {
             console.log('Session file not found yet, starting polling to retry...');
 
             // Show loading state while waiting for session file
-            if (messages.value.length === 0) {
-                isLoading.value = true;
-            }
+            // (handled by conversation?.is_processing now)
 
             // Keep trying to load the session file
             if (!pollingInterval.value) {
@@ -439,13 +437,12 @@ const loadSessionMessages = async (isPolling = false) => {
 };
 
 const sendMessage = async () => {
-    if (!inputMessage.value.trim() || isLoading.value || conversation.value?.is_processing) return;
+    if (!inputMessage.value.trim() || conversation.value?.is_processing) return;
 
     const messageToSend = inputMessage.value;
     addUserMessage(messageToSend);
     inputMessage.value = '';
     resetTextareaHeight();
-    isLoading.value = true;
     await scrollToBottom(true); // Force scroll when user sends a message
 
     // Initialize session if needed
@@ -532,7 +529,6 @@ const sendMessage = async () => {
         const errorMessage = addAssistantMessage();
         appendToMessage(errorMessage.id, 'Sorry, I encountered an error. Please try again.');
     } finally {
-        isLoading.value = false;
         await scrollToBottom(false); // Smart scroll after message completes
 
         if (!props.sessionFile) {
@@ -548,7 +544,7 @@ const sendMessage = async () => {
 const handleKeydown = (event: KeyboardEvent) => {
     if (event.key === 'Enter' && !event.shiftKey) {
         event.preventDefault();
-        if (!isLoading.value && !conversation.value?.is_processing) {
+        if (!conversation.value?.is_processing) {
             sendMessage();
         }
     }
@@ -793,7 +789,7 @@ onMounted(async () => {
         messages.value = [];
         sessionFilename.value = null;
         sessionId.value = null;
-        focusInput(false);
+        focusInput();
     }
 });
 
@@ -907,9 +903,9 @@ onUnmounted(() => {
                             placeholder="Type a message..."
                             class="max-h-[120px] min-h-[40px] resize-none overflow-y-auto text-sm"
                             :rows="1"
-                            :disabled="isLoading || conversation?.is_processing"
+                            :disabled="conversation?.is_processing"
                         />
-                        <Button @click="sendMessage" :disabled="!inputMessage.trim() || isLoading || conversation?.is_processing" size="icon" class="h-10 w-10 rounded-full">
+                        <Button @click="sendMessage" :disabled="!inputMessage.trim() || conversation?.is_processing" size="icon" class="h-10 w-10 rounded-full">
                             <Send class="h-4 w-4" />
                         </Button>
                     </div>
