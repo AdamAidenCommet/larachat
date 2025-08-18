@@ -89,6 +89,18 @@ class CopyRepositoryToHotJob implements ShouldQueue
             // Continue with copying even if git operations fail
         }
 
+        // Generate a temporary directory name with random suffix
+        $tempName = $this->repository . '_temp_' . uniqid();
+        $tempPath = storage_path('app/private/repositories/hot/' . $tempName);
+        
+        // Copy to temporary directory first
+        File::copyDirectory($basePath, $tempPath);
+        
+        Log::info('CopyRepositoryToHot: Copied repository to temporary directory', [
+            'repository' => $this->repository,
+            'temp_path' => $tempPath,
+        ]);
+        
         // Remove existing hot directory if it exists
         if (File::exists($hotPath)) {
             File::deleteDirectory($hotPath);
@@ -97,9 +109,16 @@ class CopyRepositoryToHotJob implements ShouldQueue
             ]);
         }
         
-        File::copyDirectory($basePath, $hotPath);
+        // Rename temporary directory to final hot directory
+        if (!rename($tempPath, $hotPath)) {
+            // If rename fails, clean up temp directory and throw exception
+            if (File::exists($tempPath)) {
+                File::deleteDirectory($tempPath);
+            }
+            throw new \Exception('Failed to rename temporary directory to hot directory');
+        }
         
-        Log::info('CopyRepositoryToHot: Successfully copied repository to hot', [
+        Log::info('CopyRepositoryToHot: Successfully renamed temporary directory to hot', [
             'repository' => $this->repository,
         ]);
     }
