@@ -18,8 +18,9 @@ class WebhookController extends Controller
         $payload = $request->getContent();
         $signature = $request->header('X-Webhook-Signature');
 
-        if (!$this->verifyWebhookSignature($payload, $signature)) {
+        if (! $this->verifyWebhookSignature($payload, $signature)) {
             Log::warning('Webhook signature verification failed');
+
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
@@ -27,6 +28,7 @@ class WebhookController extends Controller
 
         if (json_last_error() !== JSON_ERROR_NONE) {
             Log::warning('Webhook received invalid JSON payload');
+
             return response()->json(['error' => 'Invalid JSON payload'], 400);
         }
 
@@ -38,12 +40,12 @@ class WebhookController extends Controller
         try {
             // Get the user for the conversation - either from the webhook data or use a default webhook user
             $user = null;
-            if (!empty($data['user_email'])) {
+            if (! empty($data['user_email'])) {
                 $user = User::where('email', $data['user_email'])->first();
             }
-            
+
             // If no user found, use or create a default webhook user
-            if (!$user) {
+            if (! $user) {
                 $user = User::firstOrCreate(
                     ['email' => 'webhook@system.local'],
                     [
@@ -56,27 +58,27 @@ class WebhookController extends Controller
             $project_id = uniqid();
             $message = $data['message'];
             $repository = $data['repository'] ?? null;
-            
+
             // Get base project directory from .env
             $baseProjectDirectory = env('PROJECTS_DIRECTORY', 'app/private/repositories');
-            $projectDirectory = rtrim($baseProjectDirectory, '/') . '/' . $project_id;
+            $projectDirectory = rtrim($baseProjectDirectory, '/').'/'.$project_id;
 
             // Create conversation
             $conversation = Conversation::create([
                 'user_id' => $user->id,
-                'title' => substr($message, 0, 100) . (strlen($message) > 100 ? '...' : ''),
+                'title' => substr($message, 0, 100).(strlen($message) > 100 ? '...' : ''),
                 'message' => $message,
                 'claude_session_id' => null, // Let Claude generate this
                 'project_directory' => $projectDirectory,
                 'repository' => $repository,
-                'filename' => 'claude-sessions/' . date('Y-m-d\TH-i-s') . '-session-' . $project_id . '.json',
+                'filename' => 'claude-sessions/'.date('Y-m-d\TH-i-s').'-session-'.$project_id.'.json',
                 'is_processing' => true, // Mark as processing when created
             ]);
 
             // Dispatch jobs to process the conversation
             Bus::chain([
                 new InitializeConversationSessionJob($conversation, $message),
-                new SendClaudeMessageJob($conversation, $message)
+                new SendClaudeMessageJob($conversation, $message),
             ])->dispatch();
 
             if ($repository) {
@@ -114,13 +116,15 @@ class WebhookController extends Controller
         $secret = config('services.webhook.secret');
         if (empty($secret)) {
             Log::warning('Webhook secret not configured');
+
             return false;
         }
 
         // Support both plain secret comparison and HMAC signatures
         // For HMAC: signature should be in format "sha256=<hash>"
         if (strpos($signature, 'sha256=') === 0) {
-            $expected = 'sha256=' . hash_hmac('sha256', $payload, $secret);
+            $expected = 'sha256='.hash_hmac('sha256', $payload, $secret);
+
             return hash_equals($expected, $signature);
         }
 

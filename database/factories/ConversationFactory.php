@@ -16,10 +16,10 @@ class ConversationFactory extends Factory
             'user_id' => User::factory(),
             'title' => $this->faker->sentence(3),
             'message' => $this->faker->paragraph(),
-            'repository' => $this->faker->userName() . '/' . $this->faker->word(),
-            'project_directory' => '/var/www/' . $this->faker->word(),
+            'repository' => $this->faker->userName().'/'.$this->faker->word(),
+            'project_directory' => '/var/www/'.$this->faker->word(),
             'claude_session_id' => $this->faker->uuid(),
-            'filename' => 'session_' . $this->faker->uuid() . '.json',
+            'filename' => 'session_'.$this->faker->uuid().'.json',
             'is_processing' => false,
             'archived' => false,
         ];

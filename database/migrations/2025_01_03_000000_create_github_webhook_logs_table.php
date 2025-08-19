@@ -17,7 +17,7 @@ return new class extends Migration
             $table->enum('status', ['success', 'failed', 'processing'])->default('processing');
             $table->text('error_message')->nullable();
             $table->timestamps();
-            
+
             $table->index(['event_type', 'created_at']);
             $table->index(['status', 'created_at']);
         });

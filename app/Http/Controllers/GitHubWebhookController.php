@@ -14,19 +14,21 @@ class GitHubWebhookController extends Controller
         $payload = $request->getContent();
         $signature = $request->header('X-Hub-Signature-256');
 
-        if (!$this->verifyWebhookSignature($payload, $signature)) {
+        if (! $this->verifyWebhookSignature($payload, $signature)) {
             Log::warning('GitHub webhook signature verification failed');
+
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
         $event = $request->header('X-GitHub-Event');
         $data = json_decode($payload, true);
-        
+
         if (json_last_error() !== JSON_ERROR_NONE) {
             Log::error('GitHub webhook invalid JSON', [
                 'error' => json_last_error_msg(),
                 'payload' => substr($payload, 0, 100),
             ]);
+
             return response()->json(['error' => 'Invalid JSON payload'], 400);
         }
 
@@ -73,10 +75,11 @@ class GitHubWebhookController extends Controller
         $secret = config('services.github.webhook_secret');
         if (empty($secret)) {
             Log::warning('GitHub webhook secret not configured');
+
             return false;
         }
 
-        $expected = 'sha256=' . hash_hmac('sha256', $payload, $secret);
+        $expected = 'sha256='.hash_hmac('sha256', $payload, $secret);
 
         return hash_equals($expected, $signature);
     }

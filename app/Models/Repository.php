@@ -9,6 +9,7 @@ use Illuminate\Support\Str;
 class Repository extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'name',
         'slug',
@@ -16,9 +17,9 @@ class Repository extends Model
         'local_path',
         'branch',
         'deploy_script',
-        'last_pulled_at'
+        'last_pulled_at',
     ];
-    
+
     protected $attributes = [
         'branch' => 'main',
     ];
@@ -26,7 +27,7 @@ class Repository extends Model
     protected $casts = [
         'last_pulled_at' => 'datetime',
     ];
-    
+
     /**
      * Get the route key for the model.
      */
@@ -34,40 +35,40 @@ class Repository extends Model
     {
         return 'slug';
     }
-    
+
     /**
      * Boot function to auto-generate slug.
      */
     protected static function boot()
     {
         parent::boot();
-        
+
         static::creating(function ($repository) {
-            if (!$repository->slug) {
+            if (! $repository->slug) {
                 $slug = Str::slug($repository->name);
                 $originalSlug = $slug;
                 $count = 1;
-                
+
                 while (static::where('slug', $slug)->exists()) {
-                    $slug = $originalSlug . '-' . $count;
+                    $slug = $originalSlug.'-'.$count;
                     $count++;
                 }
-                
+
                 $repository->slug = $slug;
             }
         });
-        
+
         static::updating(function ($repository) {
-            if ($repository->isDirty('name') && !$repository->isDirty('slug')) {
+            if ($repository->isDirty('name') && ! $repository->isDirty('slug')) {
                 $slug = Str::slug($repository->name);
                 $originalSlug = $slug;
                 $count = 1;
-                
+
                 while (static::where('slug', $slug)->where('id', '!=', $repository->id)->exists()) {
-                    $slug = $originalSlug . '-' . $count;
+                    $slug = $originalSlug.'-'.$count;
                     $count++;
                 }
-                
+
                 $repository->slug = $slug;
             }
         });

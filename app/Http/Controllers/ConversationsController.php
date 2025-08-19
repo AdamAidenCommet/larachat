@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Jobs\CopyRepositoryToHotJob;
 use App\Jobs\DeleteProjectDirectoryJob;
 use App\Jobs\InitializeConversationSessionJob;
-use App\Jobs\PrepareProjectDirectoryJob;
 use App\Jobs\SendClaudeMessageJob;
 use App\Models\Conversation;
 use Illuminate\Http\RedirectResponse;
@@ -16,18 +15,18 @@ use Inertia\Inertia;
 
 /**
  * @group Conversations
- * 
+ *
  * APIs for managing Claude AI conversations
  */
 class ConversationsController extends Controller
 {
     /**
      * List conversations
-     * 
+     *
      * Get a list of all non-archived conversations for the authenticated user
-     * 
+     *
      * @authenticated
-     * 
+     *
      * @response 200 scenario="Success" [{
      *   "id": 1,
      *   "user_id": 1,
@@ -54,18 +53,17 @@ class ConversationsController extends Controller
 
     /**
      * Create conversation
-     * 
+     *
      * Start a new conversation with Claude AI
-     * 
+     *
      * @authenticated
-     * 
+     *
      * @bodyParam message string required The initial message to send to Claude. Can be base64 encoded. Example: How do I implement authentication?
      * @bodyParam repository string optional The repository to use for this conversation. Example: myapp
-     * 
+     *
      * @response 302 scenario="Success" {
      *   "redirect": "/claude/1"
      * }
-     * 
      * @response 422 scenario="Validation Error" {
      *   "message": "The message field is required.",
      *   "errors": {
@@ -99,30 +97,30 @@ class ConversationsController extends Controller
         // This enables users to work with blank repositories for general tasks
         $isBlankRepositoryRequest = empty($request->input('repository')) || $request->input('repository') === '';
         $mode = $request->input('mode', 'plan');
-        
+
         // For now, allow blank repositories in both modes to give users flexibility
         // Users can start conversations without a specific codebase
 
         $project_id = uniqid();
         $msg = $request->input('message');
-        
+
         // For blank repository, use the base directory
         if (empty($request->input('repository'))) {
             $projectDirectory = 'app/private/repositories/base';
         } else {
             // Get base project directory from .env
             $baseProjectDirectory = env('PROJECTS_DIRECTORY', 'app/private/repositories');
-            $projectDirectory = rtrim($baseProjectDirectory, '/') . '/' . $project_id;
+            $projectDirectory = rtrim($baseProjectDirectory, '/').'/'.$project_id;
         }
 
         $conversation = Conversation::query()->create([
             'user_id' => Auth::id(),
-            'title' => substr($msg, 0, 100) . (strlen($msg) > 100 ? '...' : ''),
+            'title' => substr($msg, 0, 100).(strlen($msg) > 100 ? '...' : ''),
             'message' => $msg,
             'claude_session_id' => null, // Let Claude generate this
             'project_directory' => $projectDirectory,
             'repository' => $request->input('repository'),
-            'filename' => 'claude-sessions/' . date('Y-m-d\TH-i-s') . '-session-' . $project_id . '.json',
+            'filename' => 'claude-sessions/'.date('Y-m-d\TH-i-s').'-session-'.$project_id.'.json',
             'is_processing' => true, // Mark as processing when created
             'mode' => $request->input('mode', 'plan'), // Default to 'plan' if not specified
             'agent_id' => $request->input('agent_id') ? (int)$request->input('agent_id') : null,
@@ -130,11 +128,11 @@ class ConversationsController extends Controller
 
         Bus::chain([
             new InitializeConversationSessionJob($conversation, $msg),
-            new SendClaudeMessageJob($conversation, $msg)
+            new SendClaudeMessageJob($conversation, $msg),
         ])->dispatch();
 
         // Only copy repository if it's not blank
-        if (!empty($conversation->repository)) {
+        if (! empty($conversation->repository)) {
             CopyRepositoryToHotJob::dispatch($conversation->repository);
         }
 
@@ -143,17 +141,16 @@ class ConversationsController extends Controller
 
     /**
      * Archive conversation
-     * 
+     *
      * Archive a conversation to hide it from the main list
-     * 
+     *
      * @authenticated
-     * 
+     *
      * @urlParam conversation integer required The ID of the conversation. Example: 1
-     * 
+     *
      * @response 200 scenario="Success" {
      *   "message": "Conversation archived successfully"
      * }
-     * 
      * @response 403 scenario="Unauthorized" {
      *   "error": "Unauthorized"
      * }
@@ -164,7 +161,7 @@ class ConversationsController extends Controller
         $conversation->save();
 
         // Only dispatch delete job if conversation has a non-blank repository
-        if (!empty($conversation->repository)) {
+        if (! empty($conversation->repository)) {
             DeleteProjectDirectoryJob::dispatch($conversation);
         }
 
@@ -173,17 +170,16 @@ class ConversationsController extends Controller
 
     /**
      * Unarchive conversation
-     * 
+     *
      * Restore an archived conversation to the main list
-     * 
+     *
      * @authenticated
-     * 
+     *
      * @urlParam conversation integer required The ID of the conversation. Example: 1
-     * 
+     *
      * @response 200 scenario="Success" {
      *   "message": "Conversation unarchived successfully"
      * }
-     * 
      * @response 403 scenario="Unauthorized" {
      *   "error": "Unauthorized"
      * }
@@ -198,18 +194,18 @@ class ConversationsController extends Controller
 
     /**
      * Update conversation
-     * 
+     *
      * Update conversation properties like mode
-     * 
+     *
      * @authenticated
-     * 
+     *
      * @urlParam conversation integer required The ID of the conversation. Example: 1
+     *
      * @bodyParam mode string required The conversation mode. Example: plan
-     * 
+     *
      * @response 200 scenario="Success" {
      *   "message": "Conversation updated successfully"
      * }
-     * 
      * @response 403 scenario="Unauthorized" {
      *   "error": "Unauthorized"
      * }
@@ -233,11 +229,11 @@ class ConversationsController extends Controller
 
     /**
      * List archived conversations
-     * 
+     *
      * Get a list of all archived conversations for the authenticated user
-     * 
+     *
      * @authenticated
-     * 
+     *
      * @response 200 scenario="Success" [{
      *   "id": 2,
      *   "user_id": 1,
@@ -265,15 +261,14 @@ class ConversationsController extends Controller
 
     /**
      * Show diff page
-     * 
+     *
      * Display the git diff for a conversation's project
-     * 
+     *
      * @authenticated
-     * 
+     *
      * @urlParam conversation integer required The ID of the conversation. Example: 1
-     * 
+     *
      * @response 200 scenario="Success" Returns Inertia page with diff content
-     * 
      * @response 403 scenario="Unauthorized" {
      *   "error": "Unauthorized"
      * }
@@ -293,9 +288,9 @@ class ConversationsController extends Controller
         }
 
         // Check if project.diff exists
-        $diffPath = $projectPath . '/.git/project.diff';
+        $diffPath = $projectPath.'/.git/project.diff';
         $diffContent = '';
-        
+
         if (file_exists($diffPath)) {
             $diffContent = file_get_contents($diffPath);
         }
@@ -304,24 +299,23 @@ class ConversationsController extends Controller
             'conversationId' => $conversation->id,
             'diffContent' => $diffContent,
             'conversationTitle' => $conversation->title,
-            'hasContent' => !empty($diffContent)
+            'hasContent' => ! empty($diffContent),
         ]);
     }
 
     /**
      * Get git information for conversation
-     * 
+     *
      * Fetches current git branch and PR number for a conversation's project directory
-     * 
+     *
      * @authenticated
-     * 
+     *
      * @urlParam conversation integer required The ID of the conversation. Example: 1
-     * 
+     *
      * @response 200 scenario="Success" {
      *   "git_branch": "feature-auth",
      *   "pr_number": 123
      * }
-     * 
      * @response 403 scenario="Unauthorized" {
      *   "error": "Unauthorized"
      * }
@@ -338,14 +332,14 @@ class ConversationsController extends Controller
 
         // Get git branch from project directory
         if ($conversation->project_directory && is_dir($conversation->project_directory)) {
-            $gitBranchCommand = "cd " . escapeshellarg($conversation->project_directory) . " && git rev-parse --abbrev-ref HEAD 2>/dev/null";
+            $gitBranchCommand = 'cd '.escapeshellarg($conversation->project_directory).' && git rev-parse --abbrev-ref HEAD 2>/dev/null';
             $gitBranch = trim(shell_exec($gitBranchCommand));
-            
+
             if ($gitBranch) {
                 // Try to get PR number from GitHub
-                $prCommand = "cd " . escapeshellarg($conversation->project_directory) . " && gh pr view --json number 2>/dev/null | jq -r '.number // empty' 2>/dev/null";
+                $prCommand = 'cd '.escapeshellarg($conversation->project_directory)." && gh pr view --json number 2>/dev/null | jq -r '.number // empty' 2>/dev/null";
                 $prNumber = trim(shell_exec($prCommand));
-                $prNumber = $prNumber ? (int)$prNumber : null;
+                $prNumber = $prNumber ? (int) $prNumber : null;
             }
         }
 
@@ -358,8 +352,7 @@ class ConversationsController extends Controller
 
         return response()->json([
             'git_branch' => $conversation->git_branch,
-            'pr_number' => $conversation->pr_number
+            'pr_number' => $conversation->pr_number,
         ]);
     }
-
 }

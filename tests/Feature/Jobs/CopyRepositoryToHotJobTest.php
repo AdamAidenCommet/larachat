@@ -16,7 +16,7 @@ class CopyRepositoryToHotJobTest extends TestCase
     {
         $repository = Repository::factory()->create();
         $job = new CopyRepositoryToHotJob($repository);
-        
+
         $this->assertInstanceOf(CopyRepositoryToHotJob::class, $job);
     }
 
@@ -37,7 +37,7 @@ class CopyRepositoryToHotJobTest extends TestCase
         // Run the job - it should complete successfully but delete the repository
         $job = new CopyRepositoryToHotJob('test-repo-missing');
         $job->handle();
-        
+
         // Check that the repository was deleted from the database
         $this->assertDatabaseMissing('repositories', [
             'id' => $repository->id,
@@ -47,10 +47,10 @@ class CopyRepositoryToHotJobTest extends TestCase
     public function test_job_skips_blank_repository()
     {
         $job = new CopyRepositoryToHotJob('');
-        
+
         // This should not throw an exception
         $job->handle();
-        
+
         $this->assertTrue(true); // Just to have an assertion
     }
 }

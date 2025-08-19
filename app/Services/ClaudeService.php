@@ -2,10 +2,10 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Cache;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\Process\Process;
 
@@ -39,7 +39,7 @@ class ClaudeService
 
             $wrapperPath = base_path('claude-wrapper.sh');
             $command = [$wrapperPath];
-            
+
             // Add project ID as first argument if available
             if ($projectId) {
                 $command[] = $projectId;
@@ -47,7 +47,7 @@ class ClaudeService
                 // Default project ID if none specified
                 $command[] = 'default';
             }
-            
+
             // Add Claude CLI arguments
             $command = array_merge($command, ['--print', '--verbose', '--output-format', 'stream-json']);
 
@@ -76,7 +76,7 @@ class ClaudeService
             self::$runningProcesses[$processId] = $process;
 
             // Send process ID to frontend
-            echo json_encode(['type' => 'process_started', 'processId' => $processId]) . "\n";
+            echo json_encode(['type' => 'process_started', 'processId' => $processId])."\n";
             flush();
 
             // Initialize session data
@@ -85,7 +85,7 @@ class ClaudeService
             $filename = $sessionFilename;
 
             // Generate filename if not provided
-            if (!$filename) {
+            if (! $filename) {
                 $timestamp = date('Y-m-d_H-i-s');
                 $filename = "{$timestamp}-claude-chat.json";
             }
@@ -94,7 +94,7 @@ class ClaudeService
                 'prompt' => $prompt,
                 'sessionId' => $sessionId,
                 'filename' => $filename,
-                'repositoryPath' => $repositoryPath
+                'repositoryPath' => $repositoryPath,
             ]);
 
             // Buffer for incomplete JSON lines
@@ -121,11 +121,11 @@ class ClaudeService
                                     \Log::info('Parsed JSON response', [
                                         'type' => $jsonData['type'] ?? 'unknown',
                                         'has_content' => isset($jsonData['content']),
-                                        'response_sample' => substr(json_encode($jsonData), 0, 200)
+                                        'response_sample' => substr(json_encode($jsonData), 0, 200),
                                     ]);
 
                                     // Extract session ID if not provided
-                                    if (!$extractedSessionId) {
+                                    if (! $extractedSessionId) {
                                         $extractedSessionId = self::extractSessionId($jsonData);
                                         if ($extractedSessionId) {
                                             \Log::info('Extracted session ID', ['sessionId' => $extractedSessionId]);
@@ -140,14 +140,14 @@ class ClaudeService
                             } catch (\Exception $e) {
                                 \Log::error('JSON parsing error', [
                                     'error' => $e->getMessage(),
-                                    'line' => $line
+                                    'line' => $line,
                                 ]);
                             }
                         }
                     }
                 } else {
                     // Send error as JSON
-                    $errorJson = json_encode(['error' => $data]) . "\n";
+                    $errorJson = json_encode(['error' => $data])."\n";
                     echo $errorJson;
                     flush();
 
@@ -176,11 +176,11 @@ class ClaudeService
             unset(self::$runningProcesses[$processId]);
 
             // Send process ended signal
-            echo json_encode(['type' => 'process_ended', 'processId' => $processId]) . "\n";
+            echo json_encode(['type' => 'process_ended', 'processId' => $processId])."\n";
             flush();
 
-            if (!$process->isSuccessful()) {
-                echo json_encode(['error' => "Process exited with code: " . $process->getExitCode()]) . "\n";
+            if (! $process->isSuccessful()) {
+                echo json_encode(['error' => 'Process exited with code: '.$process->getExitCode()])."\n";
                 flush();
             }
         }, 200, [
@@ -217,13 +217,13 @@ class ClaudeService
     private static function extractAllTextContent(array $rawResponses): string
     {
         $content = '';
-        
+
         foreach ($rawResponses as $response) {
             // Skip system messages
             if (isset($response['type']) && $response['type'] === 'system') {
                 continue;
             }
-            
+
             // Handle content blocks (streaming format from Claude CLI)
             if (isset($response['type']) && $response['type'] === 'content' && isset($response['content'])) {
                 if (is_array($response['content']) && isset($response['content']['type']) && $response['content']['type'] === 'text' && isset($response['content']['text'])) {
@@ -232,7 +232,7 @@ class ClaudeService
                     $content .= $response['content'];
                 }
             }
-            
+
             // Handle Claude Code CLI assistant response format
             if (isset($response['type']) && $response['type'] === 'assistant' && isset($response['message'])) {
                 $message = $response['message'];
@@ -245,7 +245,7 @@ class ClaudeService
                 }
             }
         }
-        
+
         return $content;
     }
 
@@ -269,7 +269,7 @@ class ClaudeService
 
         $wrapperPath = base_path('claude-wrapper.sh');
         $command = [$wrapperPath];
-        
+
         // Add project ID as first argument if available
         if ($projectId) {
             $command[] = $projectId;
@@ -277,7 +277,7 @@ class ClaudeService
             // Default project ID if none specified
             $command[] = 'default';
         }
-        
+
         // Add Claude CLI arguments
         $command = array_merge($command, ['--print', '--verbose', '--output-format', 'stream-json']);
 
@@ -306,7 +306,7 @@ class ClaudeService
         $filename = $sessionFilename;
 
         // Generate filename if not provided
-        if (!$filename) {
+        if (! $filename) {
             $timestamp = date('Y-m-d_H-i-s');
             $filename = "{$timestamp}-claude-chat.json";
         }
@@ -315,13 +315,13 @@ class ClaudeService
             'prompt' => $prompt,
             'sessionId' => $sessionId,
             'filename' => $filename,
-            'repositoryPath' => $repositoryPath
+            'repositoryPath' => $repositoryPath,
         ]);
 
         // Run the process with real-time output processing
         $process->run(function ($type, $buffer) use (&$rawJsonResponses, &$extractedSessionId, $prompt, $filename, $sessionId, $repositoryPath, $progressCallback) {
             $lines = explode("\n", $buffer);
-            
+
             foreach ($lines as $line) {
                 if (trim($line)) {
                     try {
@@ -330,9 +330,9 @@ class ClaudeService
                             $rawJsonResponses[] = $jsonData;
 
                             // Extract session ID if not provided
-                            if (!$extractedSessionId) {
+                            if (! $extractedSessionId) {
                                 $extractedSessionId = self::extractSessionId($jsonData);
-                                
+
                                 // Notify about session ID extraction
                                 if ($progressCallback && $extractedSessionId) {
                                     $progressCallback('sessionId', $extractedSessionId);
@@ -342,16 +342,16 @@ class ClaudeService
                             // Save response incrementally after each message
                             if ($filename) {
                                 self::saveResponse($prompt, $filename, $sessionId, $extractedSessionId, $rawJsonResponses, false, $repositoryPath);
-                                
+
                                 // Notify about progress with accumulated content
                                 if ($progressCallback) {
                                     // Extract all text content from responses
                                     $allContent = self::extractAllTextContent($rawJsonResponses);
-                                    
+
                                     $progressCallback('response', [
                                         'filename' => $filename,
                                         'responseCount' => count($rawJsonResponses),
-                                        'content' => $allContent
+                                        'content' => $allContent,
                                     ]);
                                 }
                             }
@@ -359,7 +359,7 @@ class ClaudeService
                     } catch (\Exception $e) {
                         \Log::error('JSON parsing error in background job', [
                             'error' => $e->getMessage(),
-                            'line' => $line
+                            'line' => $line,
                         ]);
                     }
                 }
@@ -373,7 +373,7 @@ class ClaudeService
             // If no responses, keep it incomplete so it can be retried
             \Log::warning('No responses from Claude process', [
                 'filename' => $filename,
-                'process_successful' => $process->isSuccessful()
+                'process_successful' => $process->isSuccessful(),
             ]);
             self::saveResponse($prompt, $filename, $sessionId, $extractedSessionId, $rawJsonResponses, false, $repositoryPath);
         }
@@ -382,7 +382,7 @@ class ClaudeService
             'success' => $process->isSuccessful(),
             'sessionId' => $extractedSessionId,
             'filename' => $filename,
-            'responses' => $rawJsonResponses
+            'responses' => $rawJsonResponses,
         ];
     }
 
@@ -403,7 +403,7 @@ class ClaudeService
             $directory = 'claude-sessions';
         } else {
             $directory = 'claude-sessions';
-            $path = $directory . '/' . $filename;
+            $path = $directory.'/'.$filename;
         }
 
         \Log::info('Saving response', [
@@ -411,15 +411,15 @@ class ClaudeService
             'path' => $path,
             'sessionId' => $sessionId,
             'response_count' => count($rawJsonResponses),
-            'isComplete' => $isComplete
+            'isComplete' => $isComplete,
         ]);
 
         // Create directory if it doesn't exist
-        if (!Storage::exists($directory)) {
+        if (! Storage::exists($directory)) {
             Storage::makeDirectory($directory);
             \Log::info('Created claude-sessions directory');
         }
-        $lockKey = 'file_lock_' . md5($path);
+        $lockKey = 'file_lock_'.md5($path);
 
         // Use cache lock to prevent concurrent writes
         $lock = Cache::lock($lockKey, 10);
@@ -440,14 +440,14 @@ class ClaudeService
                     'timestamp' => now()->toIso8601String(),
                     'isComplete' => $isComplete,
                     'rawJsonResponses' => $rawJsonResponses,
-                    'repositoryPath' => $repositoryPath
+                    'repositoryPath' => $repositoryPath,
                 ];
 
                 // Check if this is a new conversation or an update to the current one
                 $isNewConversation = true;
 
                 // Only update if it's the last conversation and it's not complete
-                if (!empty($data)) {
+                if (! empty($data)) {
                     $lastIndex = count($data) - 1;
                     $lastConversation = &$data[$lastIndex];
 
@@ -455,10 +455,10 @@ class ClaudeService
                         'lastIsComplete' => $lastConversation['isComplete'],
                         'lastUserMessage' => $lastConversation['userMessage'],
                         'currentUserMessage' => $userMessage,
-                        'match' => (!$lastConversation['isComplete'] && $lastConversation['userMessage'] === $userMessage)
+                        'match' => (! $lastConversation['isComplete'] && $lastConversation['userMessage'] === $userMessage),
                     ]);
-                    
-                    if (!$lastConversation['isComplete'] &&
+
+                    if (! $lastConversation['isComplete'] &&
                         $lastConversation['userMessage'] === $userMessage) {
                         // Update the existing conversation with new responses
                         // Preserve the role field if it exists
@@ -472,7 +472,7 @@ class ClaudeService
                             'timestamp' => $messageData['timestamp'],
                             'sessionId' => $messageData['sessionId'] ?? $lastConversation['sessionId'],
                             'repositoryPath' => $messageData['repositoryPath'] ?? $lastConversation['repositoryPath'],
-                            'role' => $lastConversation['role'] ?? $messageData['role'] ?? null
+                            'role' => $lastConversation['role'] ?? $messageData['role'] ?? null,
                         ]);
                         $isNewConversation = false;
                     }
@@ -509,8 +509,9 @@ class ClaudeService
             } catch (\Exception $e) {
                 \Log::error('Error stopping Claude process', [
                     'processId' => $processId,
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ]);
+
                 return false;
             }
         }
@@ -520,7 +521,7 @@ class ClaudeService
 
     public static function moveDirectory(string $source, string $destination): void
     {
-        if (!File::exists($source)) {
+        if (! File::exists($source)) {
             throw new \Exception("Source directory does not exist: {$source}");
         }
 
@@ -548,9 +549,10 @@ class ClaudeService
             throw new \Exception("Failed to move directory: {$error}");
         }
     }
+
     private static function copyDirectory(string $source, string $destination): void
     {
-        if (!File::exists($source)) {
+        if (! File::exists($source)) {
             throw new \Exception("Source directory does not exist: {$source}");
         }
 
@@ -558,7 +560,7 @@ class ClaudeService
 
         $command = sprintf(
             'cp -r %s %s 2>&1',
-            escapeshellarg($source . '/.'),
+            escapeshellarg($source.'/.'),
             escapeshellarg($destination)
         );
 

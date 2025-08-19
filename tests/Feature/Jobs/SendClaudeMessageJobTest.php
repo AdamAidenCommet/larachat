@@ -15,7 +15,7 @@ class SendClaudeMessageJobTest extends TestCase
     {
         $conversation = Conversation::factory()->create();
         $job = new SendClaudeMessageJob($conversation, 'test message');
-        
+
         $this->assertInstanceOf(SendClaudeMessageJob::class, $job);
     }
 }

@@ -26,31 +26,33 @@ class DeleteProjectDirectoryJob implements ShouldQueue
     {
         // Only delete project directory if repository is not blank
         if (empty($this->conversation->repository)) {
-            Log::info('DeleteProjectDirectoryJob: Skipping deletion - conversation has blank repository (conversation ' . $this->conversation->id . ')');
+            Log::info('DeleteProjectDirectoryJob: Skipping deletion - conversation has blank repository (conversation '.$this->conversation->id.')');
+
             return;
         }
 
         $projectDirectory = $this->conversation->project_directory;
-        
+
         if (empty($projectDirectory)) {
-            Log::warning('DeleteProjectDirectoryJob: Project directory is empty for conversation ' . $this->conversation->id);
+            Log::warning('DeleteProjectDirectoryJob: Project directory is empty for conversation '.$this->conversation->id);
+
             return;
         }
 
-        if (!str_starts_with($projectDirectory, '/')) {
+        if (! str_starts_with($projectDirectory, '/')) {
             $projectDirectory = storage_path($projectDirectory);
         }
 
         if (File::exists($projectDirectory)) {
             try {
                 File::deleteDirectory($projectDirectory);
-                Log::info('DeleteProjectDirectoryJob: Successfully deleted project directory: ' . $projectDirectory);
+                Log::info('DeleteProjectDirectoryJob: Successfully deleted project directory: '.$projectDirectory);
             } catch (\Exception $e) {
-                Log::error('DeleteProjectDirectoryJob: Failed to delete project directory: ' . $projectDirectory . '. Error: ' . $e->getMessage());
+                Log::error('DeleteProjectDirectoryJob: Failed to delete project directory: '.$projectDirectory.'. Error: '.$e->getMessage());
                 throw $e;
             }
         } else {
-            Log::info('DeleteProjectDirectoryJob: Project directory does not exist: ' . $projectDirectory);
+            Log::info('DeleteProjectDirectoryJob: Project directory does not exist: '.$projectDirectory);
         }
     }
 }

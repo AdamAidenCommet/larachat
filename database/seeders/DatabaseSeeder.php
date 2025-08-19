@@ -14,7 +14,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // Only create a user if none exists
-        if (!User::exists()) {
+        if (! User::exists()) {
             User::factory()->create([
                 'name' => 'Test User',
                 'email' => 'test@example.com',

@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import {
     Sidebar,
     SidebarContent,
@@ -17,8 +16,9 @@ import {
     SidebarMenuItem,
     useSidebar,
 } from '@/components/ui/sidebar';
-import { useConversations } from '@/composables/useConversations';
+import { Textarea } from '@/components/ui/textarea';
 import { useAgents } from '@/composables/useAgents';
+import { useConversations } from '@/composables/useConversations';
 import { useRepositories } from '@/composables/useRepositories';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import { Bot, FileText, GitBranch, Loader2, MessageSquarePlus, Plus, Users } from 'lucide-vue-next';
@@ -26,7 +26,7 @@ import { onMounted, onUnmounted, ref, watch } from 'vue';
 import AppLogo from './AppLogo.vue';
 
 const page = usePage();
-const { conversations, fetchConversations, startPolling, stopPolling, cleanup } = useConversations();
+const { conversations, fetchConversations, cleanup } = useConversations();
 const { repositories, fetchRepositories, cloneRepository, loading } = useRepositories();
 const { agents, fetchAgents, createAgent, showCreateDialog: showCreateAgentDialog, createError: createAgentError } = useAgents();
 const { isMobile, setOpenMobile, open } = useSidebar();
@@ -138,7 +138,7 @@ const handleRepositoryClick = (repositoryName: string) => {
     });
 };
 
-const handleConversationClick = (conversationId: number) => {
+const handleConversationClick = () => {
     if (isMobile.value) {
         setOpenMobile(false);
     }
@@ -157,7 +157,7 @@ const handleCreateAgent = async () => {
         newAgentName.value = '';
         newAgentPrompt.value = '';
         showCreateAgentDialog.value = false;
-    } catch (err) {
+    } catch {
         // Error is handled in the composable
     } finally {
         creatingAgent.value = false;
@@ -314,12 +314,7 @@ const handleCreateAgent = async () => {
             <div class="space-y-4 py-4">
                 <div class="space-y-2">
                     <Label for="agent-name">Name</Label>
-                    <Input
-                        id="agent-name"
-                        v-model="newAgentName"
-                        placeholder="Agent name"
-                        :disabled="creatingAgent"
-                    />
+                    <Input id="agent-name" v-model="newAgentName" placeholder="Agent name" :disabled="creatingAgent" />
                 </div>
                 <div class="space-y-2">
                     <Label for="agent-prompt">Prompt</Label>
@@ -336,9 +331,7 @@ const handleCreateAgent = async () => {
                 </div>
             </div>
             <DialogFooter>
-                <Button variant="outline" @click="showCreateAgentDialog = false" :disabled="creatingAgent">
-                    Cancel
-                </Button>
+                <Button variant="outline" @click="showCreateAgentDialog = false" :disabled="creatingAgent"> Cancel </Button>
                 <Button @click="handleCreateAgent" :disabled="creatingAgent || !newAgentName || !newAgentPrompt">
                     <Loader2 v-if="creatingAgent" class="mr-2 h-4 w-4 animate-spin" />
                     Create Agent

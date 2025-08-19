@@ -1,10 +1,9 @@
 <?php
 
+use App\Http\Controllers\AgentController;
 use App\Http\Controllers\ConversationsController;
 use App\Http\Controllers\DocsController;
 use App\Http\Controllers\RepositoryDashboardController;
-use App\Http\Controllers\ClaudeController;
-use App\Http\Controllers\AgentController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -40,7 +39,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 Route::get('claude', function () {
     return Inertia::render('Claude', [
-        'repository' => request()->query('repository')
+        'repository' => request()->query('repository'),
     ]);
 })->middleware(['auth', 'verified'])->name('claude');
 
@@ -48,14 +47,14 @@ Route::get('claude/new', [ConversationsController::class, 'store'])
     ->middleware(['auth', 'verified'])
     ->name('claude.new');
 
-////
-////Route::get('claude/{session}', function ($session) {
-////    return Inertia::render('Claude', [
-////        'sessionFile' => $session,
-////        'repository' => request()->query('repository')
-////    ]);
-////})->middleware(['auth', 'verified'])->name('claude.session');
-//a
+// //
+// //Route::get('claude/{session}', function ($session) {
+// //    return Inertia::render('Claude', [
+// //        'sessionFile' => $session,
+// //        'repository' => request()->query('repository')
+// //    ]);
+// //})->middleware(['auth', 'verified'])->name('claude.session');
+// a
 
 Route::get('claude/conversation/{conversation}', function ($conversation) {
     $conv = \App\Models\Conversation::with('agent')->findOrFail($conversation);

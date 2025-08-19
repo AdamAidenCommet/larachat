@@ -19,7 +19,7 @@ interface Agent {
     updated_at: string;
 }
 
-const props = defineProps<{
+defineProps<{
     agents: Agent[];
 }>();
 

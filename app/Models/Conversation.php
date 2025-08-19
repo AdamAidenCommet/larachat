@@ -27,6 +27,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Conversation extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'user_id',
         'title',

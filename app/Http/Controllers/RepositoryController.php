@@ -8,18 +8,18 @@ use Illuminate\Support\Facades\Process;
 
 /**
  * @group Repository Management
- * 
+ *
  * APIs for managing Git repositories
  */
 class RepositoryController extends Controller
 {
     /**
      * List repositories
-     * 
+     *
      * Get a list of all repositories with their hot folder status
-     * 
+     *
      * @authenticated
-     * 
+     *
      * @response 200 scenario="Success" [{
      *   "id": 1,
      *   "name": "my-project",
@@ -41,11 +41,12 @@ class RepositoryController extends Controller
         // Check hot folder status for each repository and ensure slug is included
         $repositories->transform(function ($repository) {
             $repoName = $this->extractRepoName($repository->url);
-            $hotPattern = storage_path('app/private/repositories/hot/' . $repoName);
+            $hotPattern = storage_path('app/private/repositories/hot/'.$repoName);
             $hotFolders = glob($hotPattern);
-            $repository->has_hot_folder = !empty($hotFolders);
+            $repository->has_hot_folder = ! empty($hotFolders);
             // Ensure slug is included in the response
             $repository->makeVisible('slug');
+
             return $repository;
         });
 
@@ -54,14 +55,14 @@ class RepositoryController extends Controller
 
     /**
      * Clone repository
-     * 
+     *
      * Clone a new Git repository to the local system
-     * 
+     *
      * @authenticated
-     * 
+     *
      * @bodyParam url string required The Git repository URL. Example: https://github.com/user/repo.git
      * @bodyParam branch string optional The branch to clone. If not specified, the default branch will be used. Example: develop
-     * 
+     *
      * @response 200 scenario="Success" {
      *   "message": "Repository cloned successfully",
      *   "repository": {
@@ -73,12 +74,10 @@ class RepositoryController extends Controller
      *     "last_pulled_at": "2024-01-15T10:30:00.000000Z"
      *   }
      * }
-     * 
      * @response 409 scenario="Repository Exists" {
      *   "message": "Repository already exists",
      *   "repository": {}
      * }
-     * 
      * @response 422 scenario="Clone Failed" {
      *   "message": "Failed to clone repository",
      *   "error": "fatal: repository not found"
@@ -101,7 +100,7 @@ class RepositoryController extends Controller
         if ($existingRepository) {
             return response()->json([
                 'message' => 'Repository already exists',
-                'repository' => $existingRepository
+                'repository' => $existingRepository,
             ], 409);
         }
 
@@ -109,11 +108,11 @@ class RepositoryController extends Controller
         $repoName = $this->extractRepoName($url);
 
         // Generate local path in base directory using repository name
-        $localPath = 'repositories/base/' . $repoName;
-        $fullPath = storage_path('app/private/' . $localPath);
+        $localPath = 'repositories/base/'.$repoName;
+        $fullPath = storage_path('app/private/'.$localPath);
 
         // Create directory if it doesn't exist
-        if (!file_exists(dirname($fullPath))) {
+        if (! file_exists(dirname($fullPath))) {
             mkdir(dirname($fullPath), 0755, true);
         }
 
@@ -122,7 +121,7 @@ class RepositoryController extends Controller
             // If branch is specified, try to clone with that branch
             $result = Process::run("git clone --depth=1 --branch {$branch} {$url} {$fullPath}");
 
-            if (!$result->successful() && str_contains($result->errorOutput(), 'Remote branch')) {
+            if (! $result->successful() && str_contains($result->errorOutput(), 'Remote branch')) {
                 // If the branch doesn't exist, try cloning without specifying branch
                 $result = Process::run("git clone {$url} {$fullPath} --depth=1");
             }
@@ -131,7 +130,7 @@ class RepositoryController extends Controller
             $result = Process::run("git clone {$url} {$fullPath} --depth=1");
         }
 
-        if (!$result->successful()) {
+        if (! $result->successful()) {
             // Clean up if directory was created
             if (file_exists($fullPath)) {
                 Process::run("rm -rf {$fullPath}");
@@ -139,7 +138,7 @@ class RepositoryController extends Controller
 
             return response()->json([
                 'message' => 'Failed to clone repository',
-                'error' => $result->errorOutput()
+                'error' => $result->errorOutput(),
             ], 422);
         }
 
@@ -158,19 +157,19 @@ class RepositoryController extends Controller
 
         return response()->json([
             'message' => 'Repository cloned successfully',
-            'repository' => $repository
+            'repository' => $repository,
         ]);
     }
 
     /**
      * Delete repository
-     * 
+     *
      * Remove a repository from the system
-     * 
+     *
      * @authenticated
-     * 
+     *
      * @urlParam repository integer required The ID of the repository. Example: 1
-     * 
+     *
      * @response 200 scenario="Success" {
      *   "message": "Repository deleted successfully"
      * }
@@ -178,14 +177,14 @@ class RepositoryController extends Controller
     public function destroy(Repository $repository)
     {
         // Delete base repository folder
-        $fullPath = storage_path('app/private/' . $repository->local_path);
+        $fullPath = storage_path('app/private/'.$repository->local_path);
         if (file_exists($fullPath)) {
             Process::run("rm -rf {$fullPath}");
         }
-        
+
         // Delete hot folders if they exist
         $repoName = $this->extractRepoName($repository->url);
-        $hotPattern = storage_path('app/private/repositories/hot/' . $repoName);
+        $hotPattern = storage_path('app/private/repositories/hot/'.$repoName);
         $hotFolders = glob($hotPattern);
         foreach ($hotFolders as $hotFolder) {
             if (file_exists($hotFolder)) {
@@ -197,19 +196,19 @@ class RepositoryController extends Controller
         $repository->delete();
 
         return response()->json([
-            'message' => 'Repository deleted successfully'
+            'message' => 'Repository deleted successfully',
         ]);
     }
 
     /**
      * Pull repository updates
-     * 
+     *
      * Pull the latest changes from the remote repository
-     * 
+     *
      * @authenticated
-     * 
+     *
      * @urlParam repository integer required The ID of the repository. Example: 1
-     * 
+     *
      * @response 200 scenario="Success" {
      *   "message": "Repository updated successfully",
      *   "repository": {
@@ -221,7 +220,6 @@ class RepositoryController extends Controller
      *     "last_pulled_at": "2024-01-15T11:00:00.000000Z"
      *   }
      * }
-     * 
      * @response 422 scenario="Pull Failed" {
      *   "message": "Failed to pull repository",
      *   "error": "error: Your local changes would be overwritten"
@@ -229,15 +227,15 @@ class RepositoryController extends Controller
      */
     public function pull(Repository $repository)
     {
-        $fullPath = storage_path('app/private/' . $repository->local_path);
+        $fullPath = storage_path('app/private/'.$repository->local_path);
 
         // Pull latest changes
         $result = Process::path($fullPath)->run('git pull');
 
-        if (!$result->successful()) {
+        if (! $result->successful()) {
             return response()->json([
                 'message' => 'Failed to pull repository',
-                'error' => $result->errorOutput()
+                'error' => $result->errorOutput(),
             ], 422);
         }
 
@@ -246,24 +244,23 @@ class RepositoryController extends Controller
 
         return response()->json([
             'message' => 'Repository updated successfully',
-            'repository' => $repository
+            'repository' => $repository,
         ]);
     }
 
     /**
      * Copy repository to hot folder
-     * 
+     *
      * Check if a hot folder exists for the repository or trigger creation
-     * 
+     *
      * @authenticated
-     * 
+     *
      * @urlParam repository integer required The ID of the repository. Example: 1
-     * 
+     *
      * @response 200 scenario="Hot Folder Exists" {
      *   "message": "Hot folder already exists",
      *   "has_hot_folder": true
      * }
-     * 
      * @response 200 scenario="Copy Job Dispatched" {
      *   "message": "Repository copy job dispatched",
      *   "has_hot_folder": false
@@ -273,69 +270,68 @@ class RepositoryController extends Controller
     {
         // Check if hot folder already exists
         $repoName = $this->extractRepoName($repository->url);
-        $hotPattern = storage_path('app/private/repositories/hot/' . $repoName . '/' . $repoName . '_*');
+        $hotPattern = storage_path('app/private/repositories/hot/'.$repoName.'/'.$repoName.'_*');
         $hotFolders = glob($hotPattern);
-        if (!empty($hotFolders)) {
+        if (! empty($hotFolders)) {
             return response()->json([
                 'message' => 'Hot folder already exists',
-                'has_hot_folder' => true
+                'has_hot_folder' => true,
             ]);
         }
 
         return response()->json([
             'message' => 'Repository copy job dispatched',
-            'has_hot_folder' => false
+            'has_hot_folder' => false,
         ]);
     }
 
     /**
      * Get .env file content
-     * 
+     *
      * Retrieve the contents of the repository's .env file
-     * 
+     *
      * @authenticated
-     * 
+     *
      * @urlParam repository integer required The ID of the repository. Example: 1
-     * 
+     *
      * @response 200 scenario="Success" {
      *   "content": "APP_NAME=Laravel\nAPP_ENV=local\nAPP_KEY=base64:...\nAPP_DEBUG=true"
      * }
-     * 
      * @response 404 scenario=".env File Not Found" {
      *   "message": ".env file not found"
      * }
      */
     public function getEnvFile(Repository $repository)
     {
-        $envPath = storage_path('app/private/' . $repository->local_path . '/.env');
-        
-        if (!file_exists($envPath)) {
+        $envPath = storage_path('app/private/'.$repository->local_path.'/.env');
+
+        if (! file_exists($envPath)) {
             return response()->json([
-                'content' => ''
+                'content' => '',
             ]);
         }
-        
+
         $content = file_get_contents($envPath);
-        
+
         return response()->json([
-            'content' => $content
+            'content' => $content,
         ]);
     }
-    
+
     /**
      * Update .env file content
-     * 
+     *
      * Update the contents of the repository's .env file
-     * 
+     *
      * @authenticated
-     * 
+     *
      * @urlParam repository integer required The ID of the repository. Example: 1
+     *
      * @bodyParam content string required The new content for the .env file. Example: APP_NAME=MyApp\nAPP_ENV=production
-     * 
+     *
      * @response 200 scenario="Success" {
      *   "message": ".env file updated successfully"
      * }
-     * 
      * @response 422 scenario="Update Failed" {
      *   "message": "Failed to update .env file"
      * }
@@ -343,28 +339,28 @@ class RepositoryController extends Controller
     public function updateEnvFile(Request $request, Repository $repository)
     {
         $request->validate([
-            'content' => 'required|string'
+            'content' => 'required|string',
         ]);
-        
-        $envPath = storage_path('app/private/' . $repository->local_path . '/.env');
-        
+
+        $envPath = storage_path('app/private/'.$repository->local_path.'/.env');
+
         // Create backup of existing .env file if it exists
         if (file_exists($envPath)) {
-            $backupPath = storage_path('app/private/' . $repository->local_path . '/.env.backup');
+            $backupPath = storage_path('app/private/'.$repository->local_path.'/.env.backup');
             copy($envPath, $backupPath);
         }
-        
+
         // Write new content
         $result = file_put_contents($envPath, $request->input('content'));
-        
+
         if ($result === false) {
             return response()->json([
-                'message' => 'Failed to update .env file'
+                'message' => 'Failed to update .env file',
             ], 422);
         }
-        
+
         return response()->json([
-            'message' => '.env file updated successfully'
+            'message' => '.env file updated successfully',
         ]);
     }
 
@@ -412,6 +408,7 @@ class RepositoryController extends Controller
 
         // Extract repository name from URL
         $parts = explode('/', $url);
+
         return end($parts);
     }
 }

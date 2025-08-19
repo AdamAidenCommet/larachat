@@ -27,12 +27,18 @@ class AppServiceProvider extends ServiceProvider
             \URL::forceScheme('https');
         }
 
+        // Load Dusk routes if running Dusk tests
+        if ((app()->environment('testing') || app()->environment('dusk.local')) && class_exists(\Laravel\Dusk\DuskServiceProvider::class)) {
+            Route::middleware('web')->group(base_path('routes/dusk.php'));
+        }
+
         // Custom route model binding for API routes
         Route::bind('repository', function ($value) {
             // If the current route is an API route and value is numeric, bind by ID
             if (request()->is('api/*') && is_numeric($value)) {
                 return Repository::findOrFail($value);
             }
+
             // Otherwise, use the default behavior (slug)
             return Repository::where('slug', $value)->firstOrFail();
         });

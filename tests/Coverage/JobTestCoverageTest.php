@@ -17,14 +17,14 @@ class JobTestCoverageTest extends TestCase
         foreach ($jobClasses as $jobClass) {
             $expectedTestClass = $this->getExpectedTestClassName($jobClass);
 
-            if (!in_array($expectedTestClass, $testClasses)) {
+            if (! in_array($expectedTestClass, $testClasses)) {
                 $missingTests[] = $jobClass;
             }
         }
 
         $this->assertEmpty(
             $missingTests,
-            "The following jobs do not have tests:\n" . implode("\n", $missingTests)
+            "The following jobs do not have tests:\n".implode("\n", $missingTests)
         );
     }
 
@@ -33,7 +33,7 @@ class JobTestCoverageTest extends TestCase
         $jobsPath = base_path('app/Jobs');
         $jobs = [];
 
-        if (!is_dir($jobsPath)) {
+        if (! is_dir($jobsPath)) {
             return $jobs;
         }
 
@@ -43,7 +43,7 @@ class JobTestCoverageTest extends TestCase
 
         foreach ($iterator as $file) {
             if ($file->isFile() && $file->getExtension() === 'php') {
-                $relativePath = str_replace(base_path() . '/', '', $file->getPathname());
+                $relativePath = str_replace(base_path().'/', '', $file->getPathname());
                 $className = $this->pathToClassName($relativePath);
 
                 if (class_exists($className)) {
@@ -65,7 +65,7 @@ class JobTestCoverageTest extends TestCase
         $tests = [];
 
         foreach ($testPaths as $testPath) {
-            if (!is_dir($testPath)) {
+            if (! is_dir($testPath)) {
                 continue;
             }
 
@@ -75,7 +75,7 @@ class JobTestCoverageTest extends TestCase
 
             foreach ($iterator as $file) {
                 if ($file->isFile() && $file->getExtension() === 'php') {
-                    $relativePath = str_replace(base_path() . '/', '', $file->getPathname());
+                    $relativePath = str_replace(base_path().'/', '', $file->getPathname());
                     $className = $this->pathToClassName($relativePath);
 
                     if (class_exists($className)) {
@@ -94,9 +94,9 @@ class JobTestCoverageTest extends TestCase
         $path = str_replace('.php', '', $path);
 
         if (str_starts_with($path, 'app\\')) {
-            $path = 'App\\' . substr($path, 4);
+            $path = 'App\\'.substr($path, 4);
         } elseif (str_starts_with($path, 'tests\\')) {
-            $path = 'Tests\\' . substr($path, 6);
+            $path = 'Tests\\'.substr($path, 6);
         }
 
         return $path;
@@ -107,10 +107,10 @@ class JobTestCoverageTest extends TestCase
         $jobName = class_basename($jobClassName);
 
         $possibleTestNames = [
-            'Tests\\Unit\\Jobs\\' . $jobName . 'Test',
-            'Tests\\Feature\\Jobs\\' . $jobName . 'Test',
-            'Tests\\Unit\\' . $jobName . 'Test',
-            'Tests\\Feature\\' . $jobName . 'Test',
+            'Tests\\Unit\\Jobs\\'.$jobName.'Test',
+            'Tests\\Feature\\Jobs\\'.$jobName.'Test',
+            'Tests\\Unit\\'.$jobName.'Test',
+            'Tests\\Feature\\'.$jobName.'Test',
         ];
 
         foreach ($possibleTestNames as $testName) {
@@ -119,6 +119,6 @@ class JobTestCoverageTest extends TestCase
             }
         }
 
-        return 'Tests\\Unit\\Jobs\\' . $jobName . 'Test';
+        return 'Tests\\Unit\\Jobs\\'.$jobName.'Test';
     }
 }

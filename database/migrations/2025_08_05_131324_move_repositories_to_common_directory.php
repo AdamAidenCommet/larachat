@@ -1,9 +1,7 @@
 <?php
 
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Process;
 use App\Models\Repository;
+use Illuminate\Database\Migrations\Migration;
 
 return new class extends Migration
 {
@@ -14,25 +12,25 @@ return new class extends Migration
     {
         // Create common repository directory
         $commonDir = storage_path('app/private/repositories/common');
-        if (!file_exists($commonDir)) {
+        if (! file_exists($commonDir)) {
             mkdir($commonDir, 0755, true);
         }
 
         // Move existing repositories to common directory
         $repositories = Repository::all();
-        
+
         foreach ($repositories as $repository) {
-            $oldPath = storage_path('app/private/' . $repository->local_path);
-            
+            $oldPath = storage_path('app/private/'.$repository->local_path);
+
             if (file_exists($oldPath)) {
                 // Extract the repository folder name from the old path
                 $pathParts = explode('/', $repository->local_path);
                 $repoFolderName = end($pathParts);
-                
+
                 // New path in common directory
-                $newLocalPath = 'repositories/common/' . $repoFolderName;
-                $newFullPath = storage_path('app/private/' . $newLocalPath);
-                
+                $newLocalPath = 'repositories/common/'.$repoFolderName;
+                $newFullPath = storage_path('app/private/'.$newLocalPath);
+
                 // Move the repository directory
                 if (rename($oldPath, $newFullPath)) {
                     // Update the database record
@@ -40,13 +38,13 @@ return new class extends Migration
                 }
             }
         }
-        
+
         // Clean up old user-specific directories if empty
         $reposDir = storage_path('app/private/repositories');
         if (file_exists($reposDir)) {
-            $userDirs = glob($reposDir . '/*', GLOB_ONLYDIR);
+            $userDirs = glob($reposDir.'/*', GLOB_ONLYDIR);
             foreach ($userDirs as $userDir) {
-                if (basename($userDir) !== 'common' && count(glob($userDir . '/*')) === 0) {
+                if (basename($userDir) !== 'common' && count(glob($userDir.'/*')) === 0) {
                     rmdir($userDir);
                 }
             }

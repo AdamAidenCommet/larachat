@@ -17,16 +17,16 @@ class CommandControllerTest extends TestCase
         // Test pwd command
         $response = $this->actingAs($user)
             ->postJson('/api/run-command', [
-                'command' => 'pwd'
+                'command' => 'pwd',
             ]);
 
         $response->assertStatus(200)
             ->assertJsonStructure([
                 'output',
-                'success'
+                'success',
             ])
             ->assertJson([
-                'success' => true
+                'success' => true,
             ]);
 
         $this->assertNotEmpty($response->json('output'));
@@ -34,20 +34,20 @@ class CommandControllerTest extends TestCase
         // Test echo command
         $response = $this->actingAs($user)
             ->postJson('/api/run-command', [
-                'command' => 'echo "Hello World"'
+                'command' => 'echo "Hello World"',
             ]);
 
         $response->assertStatus(200)
             ->assertJson([
-                'output' => "Hello World",
-                'success' => true
+                'output' => 'Hello World',
+                'success' => true,
             ]);
     }
 
     public function test_unauthenticated_user_cannot_run_command()
     {
         $response = $this->postJson('/api/run-command', [
-            'command' => 'pwd'
+            'command' => 'pwd',
         ]);
 
         $response->assertStatus(401);
@@ -60,13 +60,13 @@ class CommandControllerTest extends TestCase
         // Test various commands
         $response = $this->actingAs($user)
             ->postJson('/api/run-command', [
-                'command' => 'echo "test"'
+                'command' => 'echo "test"',
             ]);
 
         $response->assertStatus(200)
             ->assertJsonStructure([
                 'output',
-                'success'
+                'success',
             ]);
     }
 
@@ -87,13 +87,12 @@ class CommandControllerTest extends TestCase
 
         $response = $this->actingAs($user)
             ->postJson('/api/run-command', [
-                'command' => 123
+                'command' => 123,
             ]);
 
         $response->assertStatus(422)
             ->assertJsonValidationErrors(['command']);
     }
-
 
     public function test_various_commands_work_correctly()
     {
@@ -102,25 +101,25 @@ class CommandControllerTest extends TestCase
         // Test ls command
         $response = $this->actingAs($user)
             ->postJson('/api/run-command', [
-                'command' => 'ls -la'
+                'command' => 'ls -la',
             ]);
 
         $response->assertStatus(200)
             ->assertJsonStructure([
                 'output',
-                'success'
+                'success',
             ]);
 
         // Test date command
         $response = $this->actingAs($user)
             ->postJson('/api/run-command', [
-                'command' => 'date'
+                'command' => 'date',
             ]);
 
         $response->assertStatus(200)
             ->assertJsonStructure([
                 'output',
-                'success'
+                'success',
             ]);
     }
 }

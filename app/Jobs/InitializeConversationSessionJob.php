@@ -28,13 +28,13 @@ class InitializeConversationSessionJob implements ShouldQueue
         // Initialize session with the user's message (but no Claude response)
         $sessionData = [
             [
-                "sessionId" => null,
+                'sessionId' => null,
                 'role' => 'user',
                 'userMessage' => $this->message,
                 'timestamp' => now()->toIso8601String(),
-                "isComplete" => false,
-                "repositoryPath" => null,
-            ]
+                'isComplete' => false,
+                'repositoryPath' => null,
+            ],
         ];
 
         Storage::put($this->conversation->filename, json_encode($sessionData, JSON_PRETTY_PRINT));
@@ -42,49 +42,49 @@ class InitializeConversationSessionJob implements ShouldQueue
         // For blank repository, ensure the base directory exists
         if (empty($this->conversation->repository)) {
             $baseDir = storage_path('app/private/repositories/base');
-            
+
             // Create base directory if it doesn't exist
-            if (!File::exists($baseDir)) {
+            if (! File::exists($baseDir)) {
                 File::makeDirectory($baseDir, 0755, true);
-                
+
                 // Initialize as a git repository
                 Process::path($baseDir)->run('git init');
                 Process::path($baseDir)->run('git config user.name "Lara"');
                 Process::path($baseDir)->run('git config user.email "lara@example.com"');
-                
+
                 // Create an initial commit
-                File::put($baseDir . '/.gitkeep', '');
+                File::put($baseDir.'/.gitkeep', '');
                 Process::path($baseDir)->run('git add .');
                 Process::path($baseDir)->run('git commit -m "Initial commit"');
-                
+
                 Log::info('InitializeConversationSessionJob: Created base directory for blank repository', [
                     'base_dir' => $baseDir,
                 ]);
             }
-            
+
             Log::info('InitializeConversationSessionJob: Using base directory for blank repository', [
                 'project_directory' => $this->conversation->project_directory,
             ]);
             // For blank repositories, we're done - the base directory is already set up
         } else {
             // Handle non-blank repositories
-            $from = storage_path('app/private/repositories/hot/' . $this->conversation->repository);
+            $from = storage_path('app/private/repositories/hot/'.$this->conversation->repository);
 
-            if (!File::exists($from)) {
+            if (! File::exists($from)) {
                 // Check if the base repository exists before trying to copy
-                $basePath = storage_path('app/private/repositories/base/' . $this->conversation->repository);
-                if (!File::exists($basePath)) {
+                $basePath = storage_path('app/private/repositories/base/'.$this->conversation->repository);
+                if (! File::exists($basePath)) {
                     Log::error('InitializeConversationSessionJob: Base repository does not exist', [
                         'repository' => $this->conversation->repository,
                         'base_path' => $basePath,
                     ]);
-                    
+
                     // Mark conversation as failed with error message
                     $this->conversation->update([
                         'is_processing' => false,
-                        'error_message' => "Repository '{$this->conversation->repository}' not found. It may have been deleted."
+                        'error_message' => "Repository '{$this->conversation->repository}' not found. It may have been deleted.",
                     ]);
-                    
+
                     // Clean up the repository record if it exists
                     $repository = \App\Models\Repository::where('name', $this->conversation->repository)->first();
                     if ($repository) {
@@ -93,10 +93,10 @@ class InitializeConversationSessionJob implements ShouldQueue
                             'repository_name' => $this->conversation->repository,
                         ]);
                     }
-                    
+
                     return;
                 }
-                
+
                 // Try to copy from base to hot
                 try {
                     CopyRepositoryToHotJob::dispatchSync($this->conversation->repository);
@@ -105,26 +105,28 @@ class InitializeConversationSessionJob implements ShouldQueue
                         'repository' => $this->conversation->repository,
                         'error' => $e->getMessage(),
                     ]);
-                    
+
                     $this->conversation->update([
                         'is_processing' => false,
-                        'error_message' => 'Failed to prepare repository: ' . $e->getMessage()
+                        'error_message' => 'Failed to prepare repository: '.$e->getMessage(),
                     ]);
+
                     return;
                 }
-                
+
                 // Check again after the copy job
-                if (!File::exists($from)) {
+                if (! File::exists($from)) {
                     Log::error('InitializeConversationSessionJob: Repository not found after copy attempt', [
                         'repository' => $this->conversation->repository,
                         'from' => $from,
                     ]);
-                    
+
                     // Mark conversation as failed
                     $this->conversation->update([
                         'is_processing' => false,
-                        'error_message' => 'Failed to prepare repository for conversation'
+                        'error_message' => 'Failed to prepare repository for conversation',
                     ]);
+
                     return;
                 }
             }
@@ -139,33 +141,33 @@ class InitializeConversationSessionJob implements ShouldQueue
             }
 
             ray($from, $to);
-            
+
             // Ensure the parent directory exists
             $parentDir = dirname($to);
-            if (!File::exists($parentDir)) {
+            if (! File::exists($parentDir)) {
                 File::makeDirectory($parentDir, 0755, true);
             }
-            
+
             File::moveDirectory($from, $to, true);
 
             // Verify the directory exists after move
-            if (!File::exists($to)) {
+            if (! File::exists($to)) {
                 Log::error('InitializeConversationSessionJob: Failed to move repository directory', [
                     'from' => $from,
                     'to' => $to,
                     'repository' => $this->conversation->repository,
                 ]);
-                
+
                 // Mark conversation as failed
                 $this->conversation->update(['is_processing' => false]);
+
                 return;
             }
-            
+
             Log::info('InitializeConversationSessionJob: Successfully moved repository', [
                 'repository' => $this->conversation->repository,
                 'project_directory' => $this->conversation->project_directory,
             ]);
         }
     }
-
 }

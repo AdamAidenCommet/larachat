@@ -11,12 +11,13 @@ class RepositoryFactory extends Factory
 
     public function definition(): array
     {
-        $name = $this->faker->userName() . '/' . $this->faker->word();
+        $name = $this->faker->userName().'/'.$this->faker->word();
+
         return [
             'name' => $name,
             'slug' => \Illuminate\Support\Str::slug($name),
-            'url' => 'https://github.com/' . $name . '.git',
-            'local_path' => '/var/www/' . $this->faker->word(),
+            'url' => 'https://github.com/'.$name.'.git',
+            'local_path' => '/var/www/'.$this->faker->word(),
             'branch' => 'main',
             'last_pulled_at' => now(),
         ];

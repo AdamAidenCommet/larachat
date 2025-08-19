@@ -114,7 +114,7 @@ const startWorker = () => {
     form.action = 'start';
     form.post(route('settings.jobs.control'), {
         preserveScroll: true,
-        onSuccess: (page: any) => {
+        onSuccess: () => {
             isStarting.value = false;
             fetchWorkerStatus();
         },
@@ -134,7 +134,7 @@ const stopWorker = (workerId?: string) => {
     form.workerId = workerId || '';
     form.post(route('settings.jobs.control'), {
         preserveScroll: true,
-        onSuccess: (page: any) => {
+        onSuccess: () => {
             isStopping.value = false;
             fetchWorkerStatus();
         },
@@ -228,7 +228,7 @@ const retryJob = async (jobId: number) => {
 
     form.post(route('settings.jobs.retry', { id: jobId }), {
         preserveScroll: true,
-        onSuccess: (page: any) => {
+        onSuccess: () => {
             retryingJobId.value = null;
             statusType.value = 'success';
             statusMessage.value = page.props.flash?.message || 'Job has been queued for retry';
@@ -248,7 +248,7 @@ const discardJob = async (jobId: number) => {
 
     form.delete(route('settings.jobs.discard', { id: jobId }), {
         preserveScroll: true,
-        onSuccess: (page: any) => {
+        onSuccess: () => {
             discardingJobId.value = null;
             fetchWorkerStatus();
         },

@@ -4,10 +4,9 @@ namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Process;
-use Illuminate\Support\Facades\Artisan;
 use Inertia\Inertia;
 use Symfony\Component\Process\PhpExecutableFinder;
 
@@ -51,10 +50,10 @@ class JobsController extends Controller
     {
         try {
             // Find PHP executable
-            $phpFinder = new PhpExecutableFinder();
+            $phpFinder = new PhpExecutableFinder;
             $phpBinary = $phpFinder->find(false);
 
-            if (!$phpBinary) {
+            if (! $phpBinary) {
                 $phpBinary = PHP_BINARY;
             }
 
@@ -72,20 +71,20 @@ class JobsController extends Controller
                 $descriptors = [
                     0 => ['pipe', 'r'],
                     1 => ['pipe', 'w'],
-                    2 => ['pipe', 'w']
+                    2 => ['pipe', 'w'],
                 ];
-                $process = proc_open('start /B ' . $command, $descriptors, $pipes);
+                $process = proc_open('start /B '.$command, $descriptors, $pipes);
                 $pid = proc_get_status($process)['pid'];
                 proc_close($process);
             } else {
                 // Unix/Linux/Mac
-                exec($command . ' echo $!', $output);
-                $pid = isset($output[0]) ? (int)$output[0] : null;
+                exec($command.' echo $!', $output);
+                $pid = isset($output[0]) ? (int) $output[0] : null;
 
                 // Alternative method to get PID
-                if (!$pid) {
+                if (! $pid) {
                     exec('ps aux | grep "[q]ueue:work" | tail -1 | awk \'{print $2}\'', $pidOutput);
-                    $pid = isset($pidOutput[0]) ? (int)$pidOutput[0] : null;
+                    $pid = isset($pidOutput[0]) ? (int) $pidOutput[0] : null;
                 }
             }
 
@@ -104,14 +103,14 @@ class JobsController extends Controller
                 Cache::put('queue_workers', $workers, now()->addDay());
 
                 return redirect()->route('settings.jobs')
-                    ->with('message', 'Queue worker started successfully (PID: ' . $pid . ')');
+                    ->with('message', 'Queue worker started successfully (PID: '.$pid.')');
             } else {
                 // Even if we can't get PID, the worker might have started
                 return redirect()->route('settings.jobs')
                     ->with('message', 'Queue worker command executed. Check process list for status.');
             }
         } catch (\Exception $e) {
-            return back()->withErrors(['message' => 'Failed to start queue worker: ' . $e->getMessage()]);
+            return back()->withErrors(['message' => 'Failed to start queue worker: '.$e->getMessage()]);
         }
     }
 
@@ -124,8 +123,10 @@ class JobsController extends Controller
                 $workers = array_filter($workers, function ($worker) use ($workerId) {
                     if ($worker['id'] === $workerId) {
                         $this->killProcess($worker['pid']);
+
                         return false;
                     }
+
                     return true;
                 });
 
@@ -139,7 +140,7 @@ class JobsController extends Controller
             return redirect()->route('settings.jobs')
                 ->with('message', 'Queue worker(s) stopped successfully');
         } catch (\Exception $e) {
-            return back()->withErrors(['message' => 'Failed to stop queue worker: ' . $e->getMessage()]);
+            return back()->withErrors(['message' => 'Failed to stop queue worker: '.$e->getMessage()]);
         }
     }
 
@@ -235,7 +236,7 @@ class JobsController extends Controller
                 }
             }
 
-            if (!$found) {
+            if (! $found) {
                 $activeWorkers[] = [
                     'id' => uniqid('worker_'),
                     'pid' => $process['pid'],
@@ -256,12 +257,15 @@ class JobsController extends Controller
 
     private function isProcessRunning($pid)
     {
-        if (!$pid) return false;
+        if (! $pid) {
+            return false;
+        }
 
         if (PHP_OS_FAMILY === 'Windows') {
             $output = [];
             exec("tasklist /FI \"PID eq $pid\" 2>&1", $output);
-            return count($output) > 1 && strpos(implode('', $output), (string)$pid) !== false;
+
+            return count($output) > 1 && strpos(implode('', $output), (string) $pid) !== false;
         } else {
             return file_exists("/proc/$pid") || posix_kill($pid, 0);
         }
@@ -278,14 +282,14 @@ class JobsController extends Controller
             // Get memory usage
             $output = [];
             exec("ps -o rss= -p $pid 2>&1", $output);
-            if (!empty($output[0]) && is_numeric(trim($output[0]))) {
-                $memoryKb = (int)trim($output[0]);
+            if (! empty($output[0]) && is_numeric(trim($output[0]))) {
+                $memoryKb = (int) trim($output[0]);
                 $info['memory'] = $this->formatMemory($memoryKb * 1024);
             }
 
             // Get CPU usage
             exec("ps -o %cpu= -p $pid 2>&1", $cpuOutput);
-            if (!empty($cpuOutput[0])) {
+            if (! empty($cpuOutput[0])) {
                 $info['cpu'] = trim($cpuOutput[0]);
             }
         }
@@ -295,12 +299,19 @@ class JobsController extends Controller
 
     private function formatMemory($bytes)
     {
-        if (!is_numeric($bytes)) return 'N/A';
+        if (! is_numeric($bytes)) {
+            return 'N/A';
+        }
 
-        $bytes = (int)$bytes;
-        if ($bytes < 1024) return $bytes . ' B';
-        if ($bytes < 1048576) return round($bytes / 1024, 2) . ' KB';
-        return round($bytes / 1048576, 2) . ' MB';
+        $bytes = (int) $bytes;
+        if ($bytes < 1024) {
+            return $bytes.' B';
+        }
+        if ($bytes < 1048576) {
+            return round($bytes / 1024, 2).' KB';
+        }
+
+        return round($bytes / 1048576, 2).' MB';
     }
 
     private function getWorkerStats($startTime)
@@ -376,7 +387,7 @@ class JobsController extends Controller
     private function getFailedJobs($limit = 10)
     {
         try {
-            if (!\Schema::hasTable('failed_jobs')) {
+            if (! \Schema::hasTable('failed_jobs')) {
                 return [];
             }
 
@@ -393,7 +404,7 @@ class JobsController extends Controller
                     if ($exception) {
                         // Extract the main error message from the exception
                         $lines = explode("\n", $exception);
-                        if (!empty($lines[0])) {
+                        if (! empty($lines[0])) {
                             $errorMessage = $lines[0];
                         }
                     }
@@ -422,13 +433,13 @@ class JobsController extends Controller
     public function retry($id)
     {
         try {
-            if (!\Schema::hasTable('failed_jobs')) {
+            if (! \Schema::hasTable('failed_jobs')) {
                 return back()->withErrors(['message' => 'Failed jobs table does not exist']);
             }
 
             $failedJob = DB::table('failed_jobs')->where('id', $id)->first();
 
-            if (!$failedJob) {
+            if (! $failedJob) {
                 return back()->withErrors(['message' => 'Failed job not found']);
             }
 
@@ -437,27 +448,27 @@ class JobsController extends Controller
 
             return back()->with('message', 'Job has been pushed back to the queue for retry');
         } catch (\Exception $e) {
-            return back()->withErrors(['message' => 'Failed to retry job: ' . $e->getMessage()]);
+            return back()->withErrors(['message' => 'Failed to retry job: '.$e->getMessage()]);
         }
     }
 
     public function discard($id)
     {
         try {
-            if (!\Schema::hasTable('failed_jobs')) {
+            if (! \Schema::hasTable('failed_jobs')) {
                 return back()->withErrors(['message' => 'Failed jobs table does not exist']);
             }
 
             // Delete the failed job from the failed_jobs table
             $deleted = DB::table('failed_jobs')->where('id', $id)->delete();
 
-            if (!$deleted) {
+            if (! $deleted) {
                 return back()->withErrors(['message' => 'Failed job not found']);
             }
 
             return back()->with('message', 'Failed job has been discarded');
         } catch (\Exception $e) {
-            return back()->withErrors(['message' => 'Failed to discard job: ' . $e->getMessage()]);
+            return back()->withErrors(['message' => 'Failed to discard job: '.$e->getMessage()]);
         }
     }
 }

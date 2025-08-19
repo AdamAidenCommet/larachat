@@ -14,11 +14,11 @@ class GitHubWebhookLogFactory extends Factory
         return [
             'event_type' => $this->faker->randomElement(['push', 'pull_request', 'issues', 'release', 'star', 'fork']),
             'delivery_id' => $this->faker->uuid(),
-            'repository' => $this->faker->userName() . '/' . $this->faker->word(),
+            'repository' => $this->faker->userName().'/'.$this->faker->word(),
             'payload' => [
                 'action' => $this->faker->randomElement(['opened', 'closed', 'created', 'published']),
                 'repository' => [
-                    'full_name' => $this->faker->userName() . '/' . $this->faker->word(),
+                    'full_name' => $this->faker->userName().'/'.$this->faker->word(),
                 ],
             ],
             'status' => $this->faker->randomElement(['success', 'failed', 'processing']),

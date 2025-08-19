@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(['web', 'auth'])->group(function () {
     Route::post('/run-command', [CommandController::class, 'run']);
     Route::post('/claude', [ClaudeController::class, 'store']);
-//    Route::get('/claude/sessions', [ClaudeController::class, 'getSessions']);
+    //    Route::get('/claude/sessions', [ClaudeController::class, 'getSessions']);
     Route::get('/claude/sessions/{filename}', [ClaudeController::class, 'getSessionMessages'])->where('filename', '.*');
 
     Route::get('/repositories', [RepositoryController::class, 'index']);

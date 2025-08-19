@@ -137,5 +137,4 @@ class ProcessGitHubWebhookTest extends TestCase
 
         $this->assertEquals('success', $webhookLog->fresh()->status);
     }
-
 }

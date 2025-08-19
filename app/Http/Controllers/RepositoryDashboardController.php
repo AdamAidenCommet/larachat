@@ -11,9 +11,9 @@ class RepositoryDashboardController extends Controller
     public function show()
     {
         $repositoryName = request()->query('repository');
-        
+
         // Allow blank repository (when no repository parameter is provided or it's empty)
-        if (!$repositoryName || $repositoryName === '') {
+        if (! $repositoryName || $repositoryName === '') {
             // Return a blank repository dashboard
             return Inertia::render('RepositoryDashboard', [
                 'repository' => [
@@ -40,9 +40,9 @@ class RepositoryDashboardController extends Controller
                     ->get(['id', 'title', 'created_at']),
             ]);
         }
-        
+
         $repository = Repository::where('name', $repositoryName)->firstOrFail();
-        
+
         // Get repository stats
         $stats = $this->getRepositoryStats($repository);
 
@@ -74,7 +74,7 @@ class RepositoryDashboardController extends Controller
     {
         $path = $repository->path;
 
-        if (!is_dir($path)) {
+        if (! is_dir($path)) {
             return null;
         }
 
@@ -121,6 +121,6 @@ class RepositoryDashboardController extends Controller
             $bytes /= 1024;
         }
 
-        return round($bytes, $precision) . ' ' . $units[$i];
+        return round($bytes, $precision).' '.$units[$i];
     }
 }

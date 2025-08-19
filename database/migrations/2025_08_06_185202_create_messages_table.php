@@ -15,7 +15,7 @@ return new class extends Migration
             $table->longText('content');
             $table->boolean('is_streaming')->default(false);
             $table->timestamps();
-            
+
             $table->index(['conversation_id', 'created_at']);
         });
     }

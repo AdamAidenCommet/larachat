@@ -2,8 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -25,14 +25,14 @@ return new class extends Migration
                 $table->timestamp('last_pulled_at')->nullable();
                 $table->timestamps();
             });
-            
+
             // Copy data from old table to new table
             DB::statement('INSERT INTO repositories_new (id, name, slug, url, local_path, branch, last_pulled_at, created_at, updated_at) 
                           SELECT id, name, slug, url, local_path, branch, last_pulled_at, created_at, updated_at FROM repositories');
-            
+
             // Drop old table
             Schema::dropIfExists('repositories');
-            
+
             // Rename new table to repositories
             Schema::rename('repositories_new', 'repositories');
         } else {

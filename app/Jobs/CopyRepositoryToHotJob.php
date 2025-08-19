@@ -2,22 +2,23 @@
 
 namespace App\Jobs;
 
+use App\Models\Repository;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use App\Models\Repository;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
-use Symfony\Component\Process\Process;
 use Symfony\Component\Process\Exception\ProcessFailedException;
+use Symfony\Component\Process\Process;
 
 class CopyRepositoryToHotJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $tries = 3;
+
     public $backoff = [60, 120, 300];
 
     protected string $repository;
@@ -32,13 +33,14 @@ class CopyRepositoryToHotJob implements ShouldQueue
         // Skip if repository is blank/empty
         if (empty($this->repository)) {
             Log::info('CopyRepositoryToHot: Skipping blank repository');
+
             return;
         }
 
-        $basePath = storage_path('app/private/repositories/base/' . $this->repository);
-        $hotPath = storage_path('app/private/repositories/hot/' . $this->repository);
+        $basePath = storage_path('app/private/repositories/base/'.$this->repository);
+        $hotPath = storage_path('app/private/repositories/hot/'.$this->repository);
 
-        if (!is_dir($basePath)) {
+        if (! is_dir($basePath)) {
             Log::error('CopyRepositoryToHot: Missing repository directory, cleaning up', [
                 'repository' => $this->repository,
                 'path' => $basePath,
@@ -46,9 +48,9 @@ class CopyRepositoryToHotJob implements ShouldQueue
 
             // Find and delete the repository from the database
             $repository = Repository::where('name', $this->repository)
-                ->orWhere('local_path', 'LIKE', '%' . $this->repository . '%')
+                ->orWhere('local_path', 'LIKE', '%'.$this->repository.'%')
                 ->first();
-            
+
             if ($repository) {
                 $repository->delete();
                 Log::info('CopyRepositoryToHot: Repository deleted from database', [
@@ -62,26 +64,27 @@ class CopyRepositoryToHotJob implements ShouldQueue
             Log::info('CopyRepositoryToHot: Job completed - repository no longer exists', [
                 'repository' => $this->repository,
             ]);
+
             return;
         }
 
         try {
             // Get the default branch name
             $defaultBranch = $this->getDefaultBranch($basePath);
-            
-            $this->runGitCommand('checkout ' . $defaultBranch, $basePath);
-            
+
+            $this->runGitCommand('checkout '.$defaultBranch, $basePath);
+
             // Try to fetch and reset, but don't fail if it doesn't work (e.g., in test environments)
             try {
                 $this->runGitCommand('fetch', $basePath);
-                $this->runGitCommand('reset --hard origin/' . $defaultBranch, $basePath);
+                $this->runGitCommand('reset --hard origin/'.$defaultBranch, $basePath);
             } catch (\Exception $e) {
                 Log::info('CopyRepositoryToHot: Could not fetch/reset repository (may be a test environment)', [
                     'repository' => $this->repository,
                     'error' => $e->getMessage(),
                 ]);
             }
-            
+
             Log::info('CopyRepositoryToHot: Prepared base repository', [
                 'repository' => $this->repository,
             ]);
@@ -94,17 +97,17 @@ class CopyRepositoryToHotJob implements ShouldQueue
         }
 
         // Generate a temporary directory name with random suffix
-        $tempName = $this->repository . '_temp_' . uniqid();
-        $tempPath = storage_path('app/private/repositories/hot/' . $tempName);
-        
+        $tempName = $this->repository.'_temp_'.uniqid();
+        $tempPath = storage_path('app/private/repositories/hot/'.$tempName);
+
         // Copy to temporary directory first
         File::copyDirectory($basePath, $tempPath);
-        
+
         Log::info('CopyRepositoryToHot: Copied repository to temporary directory', [
             'repository' => $this->repository,
             'temp_path' => $tempPath,
         ]);
-        
+
         // Remove existing hot directory if it exists
         if (File::exists($hotPath)) {
             File::deleteDirectory($hotPath);
@@ -112,44 +115,44 @@ class CopyRepositoryToHotJob implements ShouldQueue
                 'repository' => $this->repository,
             ]);
         }
-        
+
         // Rename temporary directory to final hot directory
-        if (!rename($tempPath, $hotPath)) {
+        if (! rename($tempPath, $hotPath)) {
             // If rename fails, clean up temp directory and throw exception
             if (File::exists($tempPath)) {
                 File::deleteDirectory($tempPath);
             }
             throw new \Exception('Failed to rename temporary directory to hot directory');
         }
-        
+
         Log::info('CopyRepositoryToHot: Successfully renamed temporary directory to hot', [
             'repository' => $this->repository,
         ]);
     }
-    
+
     protected function runGitCommand(string $command, string $workingDirectory): Process
     {
-        $fullCommand = 'git ' . $command;
-        
+        $fullCommand = 'git '.$command;
+
         $process = Process::fromShellCommandline($fullCommand);
         $process->setWorkingDirectory($workingDirectory);
         $process->setTimeout(60);
         $process->run();
 
-        if (!$process->isSuccessful()) {
+        if (! $process->isSuccessful()) {
             throw new ProcessFailedException($process);
         }
 
         return $process;
     }
-    
+
     protected function getDefaultBranch(string $workingDirectory): string
     {
         try {
             // Try to get the default branch from remote HEAD
             $process = $this->runGitCommand('symbolic-ref refs/remotes/origin/HEAD', $workingDirectory);
             $output = trim($process->getOutput());
-            
+
             if ($output && str_contains($output, 'refs/remotes/origin/')) {
                 return str_replace('refs/remotes/origin/', '', $output);
             }
@@ -165,7 +168,7 @@ class CopyRepositoryToHotJob implements ShouldQueue
                 // Ignore and fall back to default
             }
         }
-        
+
         // Fall back to 'main' as it's the most common default now
         return 'main';
     }

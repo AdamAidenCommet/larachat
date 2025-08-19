@@ -28,7 +28,7 @@ export function useAgents() {
     const createAgent = async (name: string, prompt: string) => {
         loading.value = true;
         createError.value = '';
-        
+
         try {
             await axios.post('/api/agents', { name, prompt });
             await fetchAgents();

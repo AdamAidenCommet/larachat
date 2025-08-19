@@ -16,17 +16,17 @@ return new class extends Migration
         if (config('database.default') === 'sqlite') {
             return;
         }
-        
+
         // Check if the repositories table exists
-        if (!Schema::hasTable('repositories')) {
+        if (! Schema::hasTable('repositories')) {
             return;
         }
-        
+
         // Check if the user_id column exists
-        if (!Schema::hasColumn('repositories', 'user_id')) {
+        if (! Schema::hasColumn('repositories', 'user_id')) {
             return;
         }
-        
+
         Schema::table('repositories', function (Blueprint $table) {
             $table->dropIndex('repositories_user_url_unique');
             $table->dropForeign(['user_id']);

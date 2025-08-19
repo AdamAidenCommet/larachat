@@ -58,18 +58,18 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
         Gate::define('viewTelescope', function ($user = null) {
             // Get allowed emails from config (works with cached config)
             $allowedEmails = config('telescope.allowed_emails', '');
-            
+
             // Convert comma-separated emails to array
             $emails = array_map('trim', explode(',', $allowedEmails));
-            
+
             // Remove empty values
             $emails = array_filter($emails);
-            
+
             // If no emails configured, deny access in all environments
             if (empty($emails)) {
                 return false;
             }
-            
+
             // Check if user email is in the allowed list
             return $user && in_array($user->email, $emails);
         });

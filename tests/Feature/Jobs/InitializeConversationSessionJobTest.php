@@ -15,7 +15,7 @@ class InitializeConversationSessionJobTest extends TestCase
     {
         $conversation = Conversation::factory()->create();
         $job = new InitializeConversationSessionJob($conversation, 'test message');
-        
+
         $this->assertInstanceOf(InitializeConversationSessionJob::class, $job);
     }
 }
