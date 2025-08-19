@@ -192,8 +192,17 @@ const handleDelete = async () => {
                                     size="sm"
                                     class="gap-2"
                                 >
+                                    <MessageSquare class="h-4 w-4" />
+                                    Ask
+                                </Button>
+                                <Button
+                                    @click="selectedMode = 'planning'"
+                                    :variant="selectedMode === 'planning' ? 'default' : 'ghost'"
+                                    size="sm"
+                                    class="gap-2"
+                                >
                                     <Lightbulb class="h-4 w-4" />
-                                    Planning
+                                    Plan
                                 </Button>
                                 <Button
                                     @click="selectedMode = 'coding'"
@@ -202,7 +211,7 @@ const handleDelete = async () => {
                                     class="gap-2"
                                 >
                                     <Code2 class="h-4 w-4" />
-                                    Coding
+                                    Code
                                 </Button>
                             </div>
                         </div>
