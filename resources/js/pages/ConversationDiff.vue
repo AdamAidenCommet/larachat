@@ -190,8 +190,8 @@ onUnmounted(() => {
                 </Card>
             </div>
 
-            <div v-else class="space-y-2">
-                <div class="mb-2 text-xs text-muted-foreground">
+            <div v-else class="space-y-1">
+                <div class="mb-1 text-xs text-muted-foreground">
                     <span class="font-medium">{{ fileDiffs.length }} file{{ fileDiffs.length === 1 ? '' : 's' }} changed</span>
                     <span v-if="fileDiffs.reduce((sum, f) => sum + f.additions, 0) > 0" class="ml-4">
                         <Plus class="inline h-3 w-3 text-green-600" />
@@ -207,7 +207,7 @@ onUnmounted(() => {
                     <Collapsible :open="expandedFiles.has(file.fileName)">
                         <div class="relative">
                             <CollapsibleTrigger @click="toggleFile(file.fileName)" class="w-full sticky top-0 z-10 bg-background">
-                                <CardHeader class="cursor-pointer p-2 transition-colors hover:bg-muted/50">
+                                <CardHeader class="cursor-pointer px-2 py-1 transition-colors hover:bg-muted/50">
                                     <div class="flex items-center justify-between">
                                         <div class="flex items-center gap-2">
                                             <ChevronRight v-if="!expandedFiles.has(file.fileName)" class="h-4 w-4 transition-transform" />
