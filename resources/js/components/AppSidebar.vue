@@ -21,7 +21,7 @@ import { useAgents } from '@/composables/useAgents';
 import { useConversations } from '@/composables/useConversations';
 import { useRepositories } from '@/composables/useRepositories';
 import { Link, router, usePage } from '@inertiajs/vue3';
-import { Bot, FileText, GitBranch, Loader2, MessageSquarePlus, Plus, Users } from 'lucide-vue-next';
+import { GitBranch, Loader2, MessageSquarePlus, Plus, Users } from 'lucide-vue-next';
 import { onMounted, onUnmounted, ref, watch } from 'vue';
 import AppLogo from './AppLogo.vue';
 
@@ -163,7 +163,6 @@ const handleCreateAgent = async () => {
         creatingAgent.value = false;
     }
 };
-
 </script>
 
 <template>

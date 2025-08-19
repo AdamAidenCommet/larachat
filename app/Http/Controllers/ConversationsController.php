@@ -280,6 +280,9 @@ class ConversationsController extends Controller
             abort(403, 'Unauthorized');
         }
 
+        // Load agent relationship
+        $conversation->load('agent');
+
         // Get the project directory path
         if (str_starts_with($conversation->project_directory, '/')) {
             $projectPath = $conversation->project_directory;
@@ -300,6 +303,7 @@ class ConversationsController extends Controller
             'diffContent' => $diffContent,
             'conversationTitle' => $conversation->title,
             'hasContent' => ! empty($diffContent),
+            'agent' => $conversation->agent,
         ]);
     }
 

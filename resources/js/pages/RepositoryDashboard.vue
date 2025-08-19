@@ -48,30 +48,30 @@ const showDeleteModal = ref(false);
 const deleteConfirmation = ref('');
 const isDeleting = ref(false);
 const selectedMode = ref<'coding' | 'planning'>('planning');
-const selectedAgentId = ref<string>('none');
+const selectedAgentId = ref<string>('');
 
 const { agents, fetchAgents } = useAgents();
 
-onMounted(() => {
-    fetchAgents();
+onMounted(async () => {
+    await fetchAgents();
+    // Auto-select first agent if available
+    if (agents.value && agents.value.length > 0) {
+        selectedAgentId.value = String(agents.value[0].id);
+    }
 });
 
 const startChatWithMessage = (message?: string) => {
     const finalMessage = message || messageInput.value.trim();
-    if (finalMessage) {
+    if (finalMessage && selectedAgentId.value) {
         // Use router.get with data to properly send parameters
         // For blank repositories, send empty string or don't send repository parameter
         const params: any = {
             message: finalMessage,
             repository: props.repository.is_blank ? '' : props.repository.name,
             mode: selectedMode.value === 'coding' ? 'bypassPermissions' : 'plan',
+            agent_id: selectedAgentId.value,
         };
-        
-        // Include agent if one is selected
-        if (selectedAgentId.value !== 'none') {
-            params.agent_id = selectedAgentId.value;
-        }
-        
+
         router.get('/claude/new', params);
     }
 };
@@ -159,7 +159,7 @@ const handleDelete = async () => {
                             />
                             <Button
                                 @click="startChatWithMessage()"
-                                :disabled="!messageInput.trim()"
+                                :disabled="!messageInput.trim() || !selectedAgentId"
                                 size="icon"
                                 class="absolute right-2 bottom-2 h-10 w-10 rounded-full"
                             >
@@ -178,12 +178,7 @@ const handleDelete = async () => {
                                     </div>
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="none">No agent</SelectItem>
-                                    <SelectItem 
-                                        v-for="agent in agents" 
-                                        :key="agent.id" 
-                                        :value="String(agent.id)"
-                                    >
+                                    <SelectItem v-for="agent in agents" :key="agent.id" :value="String(agent.id)">
                                         {{ agent.name }}
                                     </SelectItem>
                                 </SelectContent>
@@ -257,11 +252,7 @@ const handleDelete = async () => {
         <EnvFileModal v-model="showEnvModal" :repository-id="repository.id" />
 
         <!-- Repository Settings Modal -->
-        <RepositorySettingsModal 
-            v-model="showSettingsModal" 
-            :repository-id="repository.id"
-            :deploy-script="repository.deploy_script"
-        />
+        <RepositorySettingsModal v-model="showSettingsModal" :repository-id="repository.id" :deploy-script="repository.deploy_script" />
 
         <!-- Delete Confirmation Modal -->
         <Dialog v-model:open="showDeleteModal">

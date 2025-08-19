@@ -2,22 +2,22 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
-import { CheckIcon, ChevronDown, ChevronRight, CopyIcon, FileIcon, Minus, Plus, Settings } from 'lucide-vue-next';
-import { computed, ref, onUnmounted, watch } from 'vue';
+import { Bot, CheckIcon, ChevronDown, ChevronRight, CopyIcon, FileIcon, Minus, Plus, Settings } from 'lucide-vue-next';
+import { computed, onUnmounted, ref, watch } from 'vue';
 
 interface Props {
     conversationId: number;
     diffContent: string;
     conversationTitle: string;
     hasContent: boolean;
+    agent?: {
+        id: number;
+        name: string;
+        prompt: string;
+    } | null;
 }
 
 interface FileDiff {
@@ -33,11 +33,23 @@ interface FileDiff {
 
 const props = defineProps<Props>();
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Claude', href: '/claude' },
-    { title: 'Conversation', href: `/claude/conversation/${props.conversationId}` },
-    { title: 'Diff', href: `/claude/conversation/${props.conversationId}/diff` },
-];
+const breadcrumbs = computed<BreadcrumbItem[]>(() => {
+    const items: BreadcrumbItem[] = [
+        { title: 'Claude', href: '/claude' },
+        { title: 'Conversation', href: `/claude/conversation/${props.conversationId}` },
+    ];
+
+    if (props.agent) {
+        items.push({
+            title: props.agent.name,
+            icon: Bot,
+        });
+    }
+
+    items.push({ title: 'Diff', href: `/claude/conversation/${props.conversationId}/diff` });
+
+    return items;
+});
 
 const copied = ref(false);
 const expandedFiles = ref<Set<string>>(new Set());
@@ -102,11 +114,15 @@ const fileDiffs = computed(() => {
 });
 
 // Auto-expand if only one file
-watch(fileDiffs, (newFileDiffs) => {
-    if (newFileDiffs.length === 1 && expandedFiles.value.size === 0) {
-        expandedFiles.value = new Set([newFileDiffs[0].fileName]);
-    }
-}, { immediate: true });
+watch(
+    fileDiffs,
+    (newFileDiffs) => {
+        if (newFileDiffs.length === 1 && expandedFiles.value.size === 0) {
+            expandedFiles.value = new Set([newFileDiffs[0].fileName]);
+        }
+    },
+    { immediate: true },
+);
 
 const toggleFile = (fileName: string) => {
     const newSet = new Set(expandedFiles.value);
@@ -144,9 +160,9 @@ const copyToClipboard = async () => {
 const handleScroll = (event: Event) => {
     const target = event.target as HTMLElement;
     const scrollLeft = target.scrollLeft;
-    
+
     // Sync all scroll containers
-    scrollContainers.value.forEach(container => {
+    scrollContainers.value.forEach((container) => {
         if (container !== target && container) {
             container.scrollLeft = scrollLeft;
         }
@@ -161,7 +177,7 @@ const registerScrollContainer = (el: HTMLElement | null) => {
 };
 
 onUnmounted(() => {
-    scrollContainers.value.forEach(container => {
+    scrollContainers.value.forEach((container) => {
         if (container) {
             container.removeEventListener('scroll', handleScroll);
         }
@@ -183,19 +199,12 @@ onUnmounted(() => {
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" class="w-48">
-                        <DropdownMenuItem
-                            v-if="fileDiffs.length > 1"
-                            @click="toggleAll"
-                            class="cursor-pointer"
-                        >
+                        <DropdownMenuItem v-if="fileDiffs.length > 1" @click="toggleAll" class="cursor-pointer">
                             <ChevronDown v-if="!expandAll" class="mr-2 h-4 w-4" />
                             <ChevronRight v-else class="mr-2 h-4 w-4" />
                             <span>{{ expandAll ? 'Collapse All' : 'Expand All' }}</span>
                         </DropdownMenuItem>
-                        <DropdownMenuItem
-                            @click="copyToClipboard"
-                            class="cursor-pointer"
-                        >
+                        <DropdownMenuItem @click="copyToClipboard" class="cursor-pointer">
                             <CopyIcon v-if="!copied" class="mr-2 h-4 w-4" />
                             <CheckIcon v-else class="mr-2 h-4 w-4 text-green-600" />
                             <span>{{ copied ? 'Copied!' : 'Copy Diff' }}</span>
@@ -229,7 +238,7 @@ onUnmounted(() => {
                 <Card v-for="file in fileDiffs" :key="file.fileName" class="overflow-hidden">
                     <Collapsible :open="expandedFiles.has(file.fileName)">
                         <div class="relative">
-                            <CollapsibleTrigger @click="toggleFile(file.fileName)" class="w-full sticky top-0 z-10 bg-background">
+                            <CollapsibleTrigger @click="toggleFile(file.fileName)" class="sticky top-0 z-10 w-full bg-background">
                                 <CardHeader class="cursor-pointer px-2 py-1 transition-colors hover:bg-muted/50">
                                     <div class="flex items-center justify-between">
                                         <div class="flex items-center gap-2">
@@ -253,41 +262,41 @@ onUnmounted(() => {
                             </CollapsibleTrigger>
                             <CollapsibleContent>
                                 <CardContent class="p-0">
-                                <div 
-                                    class="overflow-x-auto rounded-b-lg border-t border-slate-800 bg-slate-900 dark:bg-slate-950 diff-container"
-                                    :ref="(el) => registerScrollContainer(el as HTMLElement | null)"
-                                >
-                                    <div class="font-mono text-xs min-w-fit">
-                                        <div
-                                            v-for="(line, index) in file.lines"
-                                            :key="index"
-                                            :class="{
-                                                'sm:border-l-2 border-green-500 bg-green-950/30': line.type === 'addition',
-                                                'sm:border-l-2 border-red-500 bg-red-950/30': line.type === 'deletion',
-                                                'bg-blue-950/50 px-2 py-1 font-semibold': line.type === 'chunk',
-                                                'bg-yellow-950/30 px-2 py-0.5': line.type === 'header',
-                                                'hover:bg-slate-800/30': line.type === 'normal',
-                                            }"
-                                            class="flex transition-colors duration-150 diff-line"
-                                        >
-                                            <span
-                                                class="hidden sm:inline-block w-8 flex-shrink-0 py-0.5 pr-1 text-right text-[10px] text-slate-500 select-none"
+                                    <div
+                                        class="diff-container overflow-x-auto rounded-b-lg border-t border-slate-800 bg-slate-900 dark:bg-slate-950"
+                                        :ref="(el) => registerScrollContainer(el as HTMLElement | null)"
+                                    >
+                                        <div class="min-w-fit font-mono text-xs">
+                                            <div
+                                                v-for="(line, index) in file.lines"
+                                                :key="index"
                                                 :class="{
-                                                    'bg-slate-900/50': line.type === 'addition' || line.type === 'deletion',
+                                                    'border-green-500 bg-green-950/30 sm:border-l-2': line.type === 'addition',
+                                                    'border-red-500 bg-red-950/30 sm:border-l-2': line.type === 'deletion',
+                                                    'bg-blue-950/50 px-2 py-1 font-semibold': line.type === 'chunk',
+                                                    'bg-yellow-950/30 px-2 py-0.5': line.type === 'header',
+                                                    'hover:bg-slate-800/30': line.type === 'normal',
                                                 }"
-                                                >{{ line.type !== 'header' && line.type !== 'chunk' ? line.number : '' }}</span
+                                                class="diff-line flex transition-colors duration-150"
                                             >
-                                            <span 
-                                                v-if="line.type === 'addition' || line.type === 'deletion'"
-                                                class="sm:hidden inline-block w-4 text-center select-none flex-shrink-0 py-0.5 text-xs"
-                                                :class="{
-                                                    'text-green-400 bg-green-950/50': line.type === 'addition',
-                                                    'text-red-400 bg-red-950/50': line.type === 'deletion'
-                                                }"
-                                            >
-                                                {{ line.type === 'addition' ? '+' : '-' }}
-                                            </span>
-                                            <pre class="flex-1 py-0.5 pr-2 whitespace-pre"><code
+                                                <span
+                                                    class="hidden w-8 flex-shrink-0 py-0.5 pr-1 text-right text-[10px] text-slate-500 select-none sm:inline-block"
+                                                    :class="{
+                                                        'bg-slate-900/50': line.type === 'addition' || line.type === 'deletion',
+                                                    }"
+                                                    >{{ line.type !== 'header' && line.type !== 'chunk' ? line.number : '' }}</span
+                                                >
+                                                <span
+                                                    v-if="line.type === 'addition' || line.type === 'deletion'"
+                                                    class="inline-block w-4 flex-shrink-0 py-0.5 text-center text-xs select-none sm:hidden"
+                                                    :class="{
+                                                        'bg-green-950/50 text-green-400': line.type === 'addition',
+                                                        'bg-red-950/50 text-red-400': line.type === 'deletion',
+                                                    }"
+                                                >
+                                                    {{ line.type === 'addition' ? '+' : '-' }}
+                                                </span>
+                                                <pre class="flex-1 py-0.5 pr-2 whitespace-pre"><code
                                                 :class="{
                                                     'text-green-400': line.type === 'addition',
                                                     'text-red-400': line.type === 'deletion',
@@ -297,9 +306,9 @@ onUnmounted(() => {
                                                 }"
                                                 class="diff-code-content"
                                             ><span class="hidden sm:inline">{{ line.content }}</span><span class="sm:hidden">{{ line.content.replace(/^[\+\-@]|^(index |---|\+\+\+|diff --git).*/, '') }}</span></code></pre>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
                                 </CardContent>
                             </CollapsibleContent>
                         </div>
@@ -343,7 +352,7 @@ code {
     .diff-code-content {
         font-size: 0.7rem;
     }
-    
+
     .diff-line {
         padding-left: 0.25rem;
     }

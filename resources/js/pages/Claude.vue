@@ -1,13 +1,7 @@
 <script setup lang="ts">
 import ChatMessage from '@/components/ChatMessage.vue';
 import { Button } from '@/components/ui/button';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { useChatMessages } from '@/composables/useChatMessages';
@@ -54,6 +48,12 @@ const breadcrumbs = computed<BreadcrumbItem[]>(() => {
         items.push({
             title: selectedRepository.value,
             icon: GitBranch,
+        });
+    }
+    if (agent.value) {
+        items.push({
+            title: agent.value.name,
+            icon: Bot,
         });
     }
     return items;
@@ -839,7 +839,7 @@ onUnmounted(() => {
                     <Bot class="h-3.5 w-3.5" />
                     <span class="max-w-[120px] truncate">{{ agent.name }}</span>
                 </div>
-                
+
                 <!-- Git Info - Only on larger screens -->
                 <div v-if="gitBranch || prNumber" class="hidden items-center gap-1.5 text-sm text-muted-foreground sm:flex">
                     <GitBranch v-if="gitBranch" class="h-3.5 w-3.5" />
@@ -895,15 +895,20 @@ onUnmounted(() => {
                             class="cursor-pointer"
                         >
                             <ExternalLink class="mr-2 h-4 w-4" />
-                            <span>Preview {{conversations.find((c) => c.id === conversationId)?.project_directory.split('/').pop()}}</span>
+                            <span
+                                >Preview
+                                {{
+                                    conversations
+                                        .find((c) => c.id === conversationId)
+                                        ?.project_directory.split('/')
+                                        .pop()
+                                }}</span
+                            >
                         </DropdownMenuItem>
 
                         <DropdownMenuSeparator v-if="conversationId" />
 
-                        <DropdownMenuItem
-                            @click="hideSystemMessages = !hideSystemMessages"
-                            class="cursor-pointer"
-                        >
+                        <DropdownMenuItem @click="hideSystemMessages = !hideSystemMessages" class="cursor-pointer">
                             <component :is="hideSystemMessages ? EyeOff : Eye" class="mr-2 h-4 w-4" />
                             <span>{{ hideSystemMessages ? 'Show System Messages' : 'Hide System Messages' }}</span>
                         </DropdownMenuItem>
@@ -955,7 +960,7 @@ onUnmounted(() => {
             </ScrollArea>
 
             <!-- Input Area - Fixed at bottom -->
-            <div class="absolute bottom-0 left-0 right-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 p-4">
+            <div class="absolute right-0 bottom-0 left-0 border-t bg-background/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
                 <div v-if="isArchived" class="text-center text-muted-foreground">
                     This conversation is archived. Unarchive it to continue the conversation.
                 </div>
