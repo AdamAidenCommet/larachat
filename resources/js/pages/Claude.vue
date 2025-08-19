@@ -910,7 +910,6 @@ onUnmounted(() => {
                     <Button @click="archiveConversation()" variant="destructive" size="sm" :disabled="isArchiving" class="text-xs">
                         Confirm Archive
                     </Button>
-                    <Button @click="showArchiveConfirm = false" variant="outline" size="sm" class="text-xs"> Cancel </Button>
                 </div>
             </div>
         </template>
