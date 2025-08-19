@@ -5,12 +5,14 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { useAgents } from '@/composables/useAgents';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { router } from '@inertiajs/vue3';
 import axios from 'axios';
-import { Activity, ArrowRight, Code2, FileCode, FileKey2, Lightbulb, MessageSquare, Send, Settings, Sparkles, Trash2 } from 'lucide-vue-next';
-import { ref } from 'vue';
+import { Activity, ArrowRight, Bot, Code2, FileCode, FileKey2, Lightbulb, MessageSquare, Send, Settings, Sparkles, Trash2 } from 'lucide-vue-next';
+import { onMounted, ref } from 'vue';
 
 const props = defineProps<{
     repository: {
@@ -43,17 +45,31 @@ const showDeleteModal = ref(false);
 const deleteConfirmation = ref('');
 const isDeleting = ref(false);
 const selectedMode = ref<'coding' | 'planning'>('planning');
+const selectedAgent = ref<number | null>(null);
+
+const { agents, fetchAgents } = useAgents();
+
+onMounted(() => {
+    fetchAgents();
+});
 
 const startChatWithMessage = (message?: string) => {
     const finalMessage = message || messageInput.value.trim();
     if (finalMessage) {
         // Use router.get with data to properly send parameters
         // For blank repositories, send empty string or don't send repository parameter
-        router.get('/claude/new', {
+        const params: any = {
             message: finalMessage,
             repository: props.repository.is_blank ? '' : props.repository.name,
             mode: selectedMode.value === 'coding' ? 'bypassPermissions' : 'plan',
-        });
+        };
+        
+        // Add agent if selected
+        if (selectedAgent.value) {
+            params.agent_id = selectedAgent.value;
+        }
+        
+        router.get('/claude/new', params);
     }
 };
 
@@ -145,8 +161,25 @@ const handleDelete = async () => {
                             </Button>
                         </div>
 
-                        <!-- Mode Selection -->
-                        <div class="flex items-center justify-center gap-2">
+                        <!-- Agent and Mode Selection -->
+                        <div class="flex items-center justify-center gap-3">
+                            <!-- Agent Selection -->
+                            <Select v-model="selectedAgent">
+                                <SelectTrigger class="w-[180px]">
+                                    <Bot class="mr-2 h-4 w-4" />
+                                    <SelectValue placeholder="Select agent" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem :value="null">
+                                        No agent
+                                    </SelectItem>
+                                    <SelectItem v-for="agent in agents" :key="agent.id" :value="agent.id">
+                                        {{ agent.name }}
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
+
+                            <!-- Mode Selection -->
                             <div class="inline-flex rounded-lg border p-1">
                                 <Button
                                     @click="selectedMode = 'planning'"
