@@ -2,10 +2,16 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
-import { CheckIcon, ChevronDown, ChevronRight, CopyIcon, FileIcon, Minus, Plus } from 'lucide-vue-next';
-import { computed, ref, onUnmounted } from 'vue';
+import { CheckIcon, ChevronDown, ChevronRight, CopyIcon, FileIcon, Minus, Plus, Settings } from 'lucide-vue-next';
+import { computed, ref, onUnmounted, watch } from 'vue';
 
 interface Props {
     conversationId: number;
@@ -92,13 +98,15 @@ const fileDiffs = computed(() => {
         files.push(currentFile);
     }
 
-    // Auto-expand if only one file
-    if (files.length === 1 && expandedFiles.value.size === 0) {
-        expandedFiles.value = new Set([files[0].fileName]);
-    }
-
     return files;
 });
+
+// Auto-expand if only one file
+watch(fileDiffs, (newFileDiffs) => {
+    if (newFileDiffs.length === 1 && expandedFiles.value.size === 0) {
+        expandedFiles.value = new Set([newFileDiffs[0].fileName]);
+    }
+}, { immediate: true });
 
 const toggleFile = (fileName: string) => {
     const newSet = new Set(expandedFiles.value);
@@ -167,18 +175,33 @@ onUnmounted(() => {
         <div class="container mx-auto max-w-7xl px-2 py-2">
             <div class="mb-1 flex items-center justify-between">
                 <h1 class="text-lg font-bold">Git Diff</h1>
-                <div class="flex items-center gap-2">
-                    <Button v-if="hasContent && fileDiffs.length > 1" variant="outline" size="sm" @click="toggleAll" class="flex items-center gap-2">
-                        <ChevronDown v-if="!expandAll" class="h-4 w-4" />
-                        <ChevronRight v-else class="h-4 w-4" />
-                        {{ expandAll ? 'Collapse All' : 'Expand All' }}
-                    </Button>
-                    <Button v-if="hasContent" variant="outline" size="sm" @click="copyToClipboard" class="flex items-center gap-2">
-                        <CopyIcon v-if="!copied" class="h-4 w-4" />
-                        <CheckIcon v-else class="h-4 w-4 text-green-600" />
-                        {{ copied ? 'Copied!' : 'Copy Diff' }}
-                    </Button>
-                </div>
+                <DropdownMenu v-if="hasContent">
+                    <DropdownMenuTrigger as-child>
+                        <Button variant="outline" size="sm">
+                            <Settings class="h-4 w-4" />
+                            <span class="ml-2">Options</span>
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" class="w-48">
+                        <DropdownMenuItem
+                            v-if="fileDiffs.length > 1"
+                            @click="toggleAll"
+                            class="cursor-pointer"
+                        >
+                            <ChevronDown v-if="!expandAll" class="mr-2 h-4 w-4" />
+                            <ChevronRight v-else class="mr-2 h-4 w-4" />
+                            <span>{{ expandAll ? 'Collapse All' : 'Expand All' }}</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                            @click="copyToClipboard"
+                            class="cursor-pointer"
+                        >
+                            <CopyIcon v-if="!copied" class="mr-2 h-4 w-4" />
+                            <CheckIcon v-else class="mr-2 h-4 w-4 text-green-600" />
+                            <span>{{ copied ? 'Copied!' : 'Copy Diff' }}</span>
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
             </div>
 
             <div v-if="!hasContent" class="py-12 text-center text-muted-foreground">

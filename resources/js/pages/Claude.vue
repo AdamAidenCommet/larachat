@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import ChatMessage from '@/components/ChatMessage.vue';
 import { Button } from '@/components/ui/button';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { useChatMessages } from '@/composables/useChatMessages';
@@ -14,7 +21,7 @@ import { type BreadcrumbItem } from '@/types';
 import { extractTextFromResponse } from '@/utils/claudeResponseParser';
 import { router } from '@inertiajs/vue3';
 import axios from 'axios';
-import { Archive, ArchiveRestore, Code, ExternalLink, Eye, EyeOff, GitBranch, GitPullRequest, MapPin, Send } from 'lucide-vue-next';
+import { Archive, ArchiveRestore, Code, ExternalLink, Eye, EyeOff, GitBranch, GitPullRequest, MapPin, Send, Settings } from 'lucide-vue-next';
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 
 // Constants
@@ -851,59 +858,56 @@ onUnmounted(() => {
                     </Button>
                 </div>
 
-                <!-- Action Buttons Group -->
-                <div class="inline-flex items-center gap-1">
-                    <Button
-                        v-if="conversationId"
-                        @click="() => router.visit(`/claude/conversation/${conversationId}/diff`)"
-                        variant="ghost"
-                        size="sm"
-                        title="View Diff / Create PR"
-                        class="px-2"
-                    >
-                        <GitPullRequest class="h-3.5 w-3.5" />
-                        <span class="ml-1.5 hidden lg:inline">PR</span>
-                    </Button>
+                <!-- Settings Dropdown Menu -->
+                <DropdownMenu>
+                    <DropdownMenuTrigger as-child>
+                        <Button variant="ghost" size="sm" class="px-2">
+                            <Settings class="h-3.5 w-3.5" />
+                            <span class="ml-1.5 hidden sm:inline">Settings</span>
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" class="w-56">
+                        <DropdownMenuItem
+                            v-if="conversationId"
+                            @click="() => router.visit(`/claude/conversation/${conversationId}/diff`)"
+                            class="cursor-pointer"
+                        >
+                            <GitPullRequest class="mr-2 h-4 w-4" />
+                            <span>View Diff / Create PR</span>
+                        </DropdownMenuItem>
 
-                    <Button
-                        v-if="conversationId && conversations.find((c) => c.id === conversationId)?.project_directory"
-                        @click="openPreview"
-                        variant="ghost"
-                        size="sm"
-                        :title="`Preview ${conversations
-                            .find((c) => c.id === conversationId)
-                            ?.project_directory.split('/')
-                            .pop()}`"
-                        class="px-2"
-                    >
-                        <ExternalLink class="h-3.5 w-3.5" />
-                        <span class="ml-1.5 hidden lg:inline">Preview</span>
-                    </Button>
+                        <DropdownMenuItem
+                            v-if="conversationId && conversations.find((c) => c.id === conversationId)?.project_directory"
+                            @click="openPreview"
+                            class="cursor-pointer"
+                        >
+                            <ExternalLink class="mr-2 h-4 w-4" />
+                            <span>Preview {{conversations.find((c) => c.id === conversationId)?.project_directory.split('/').pop()}}</span>
+                        </DropdownMenuItem>
 
-                    <div class="hidden h-4 w-px bg-border sm:block" />
+                        <DropdownMenuSeparator v-if="conversationId" />
 
-                    <Button
-                        v-if="conversationId && !showArchiveConfirm"
-                        @click="isArchived ? unarchiveConversation() : (showArchiveConfirm = true)"
-                        variant="ghost"
-                        size="sm"
-                        :title="isArchived ? 'Unarchive' : 'Archive'"
-                        :disabled="isArchiving"
-                        class="px-2"
-                    >
-                        <component :is="isArchived ? ArchiveRestore : Archive" class="h-3.5 w-3.5" />
-                    </Button>
+                        <DropdownMenuItem
+                            @click="hideSystemMessages = !hideSystemMessages"
+                            class="cursor-pointer"
+                        >
+                            <component :is="hideSystemMessages ? EyeOff : Eye" class="mr-2 h-4 w-4" />
+                            <span>{{ hideSystemMessages ? 'Show System Messages' : 'Hide System Messages' }}</span>
+                        </DropdownMenuItem>
 
-                    <Button
-                        @click="hideSystemMessages = !hideSystemMessages"
-                        variant="ghost"
-                        size="sm"
-                        :title="hideSystemMessages ? 'Show System Messages' : 'Hide System Messages'"
-                        class="px-2"
-                    >
-                        <component :is="hideSystemMessages ? EyeOff : Eye" class="h-3.5 w-3.5" />
-                    </Button>
-                </div>
+                        <DropdownMenuSeparator v-if="conversationId" />
+
+                        <DropdownMenuItem
+                            v-if="conversationId && !showArchiveConfirm"
+                            @click="isArchived ? unarchiveConversation() : (showArchiveConfirm = true)"
+                            :disabled="isArchiving"
+                            class="cursor-pointer"
+                        >
+                            <component :is="isArchived ? ArchiveRestore : Archive" class="mr-2 h-4 w-4" />
+                            <span>{{ isArchived ? 'Unarchive Conversation' : 'Archive Conversation' }}</span>
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
 
                 <!-- Archive Confirmation - Separate row on small screens -->
                 <div v-if="conversationId && showArchiveConfirm && !isArchived" class="flex w-full gap-2 sm:w-auto">
