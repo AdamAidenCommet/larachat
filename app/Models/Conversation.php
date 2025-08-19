@@ -22,6 +22,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $mode
  * @property string|null $git_branch
  * @property int|null $pr_number
+ * @property int|null $agent_id
  */
 class Conversation extends Model
 {
@@ -39,6 +40,7 @@ class Conversation extends Model
         'mode',
         'git_branch',
         'pr_number',
+        'agent_id',
     ];
 
     protected $casts = [
@@ -49,5 +51,10 @@ class Conversation extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function agent(): BelongsTo
+    {
+        return $this->belongsTo(Agent::class);
     }
 }

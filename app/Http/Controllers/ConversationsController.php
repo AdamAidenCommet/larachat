@@ -92,6 +92,7 @@ class ConversationsController extends Controller
             'message' => 'required|string',
             'repository' => 'nullable|string',
             'mode' => 'nullable|string|in:plan,bypassPermissions',
+            'agent_id' => 'nullable|string',
         ]);
 
         // Allow blank repository in both plan mode and when explicitly requested
@@ -124,6 +125,7 @@ class ConversationsController extends Controller
             'filename' => 'claude-sessions/' . date('Y-m-d\TH-i-s') . '-session-' . $project_id . '.json',
             'is_processing' => true, // Mark as processing when created
             'mode' => $request->input('mode', 'plan'), // Default to 'plan' if not specified
+            'agent_id' => $request->input('agent_id') ? (int)$request->input('agent_id') : null,
         ]);
 
         Bus::chain([

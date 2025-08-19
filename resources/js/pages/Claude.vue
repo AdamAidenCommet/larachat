@@ -21,7 +21,7 @@ import { type BreadcrumbItem } from '@/types';
 import { extractTextFromResponse } from '@/utils/claudeResponseParser';
 import { router } from '@inertiajs/vue3';
 import axios from 'axios';
-import { Archive, ArchiveRestore, Code, ExternalLink, Eye, EyeOff, GitBranch, GitPullRequest, MapPin, Send, Settings } from 'lucide-vue-next';
+import { Archive, ArchiveRestore, Bot, Code, ExternalLink, Eye, EyeOff, GitBranch, GitPullRequest, MapPin, Send, Settings } from 'lucide-vue-next';
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 
 // Constants
@@ -36,6 +36,11 @@ const props = defineProps<{
     conversationId?: number;
     sessionId?: string;
     isArchived?: boolean;
+    agent?: {
+        id: number;
+        name: string;
+        prompt: string;
+    } | null;
 }>();
 
 const breadcrumbs = computed<BreadcrumbItem[]>(() => {
@@ -53,6 +58,8 @@ const breadcrumbs = computed<BreadcrumbItem[]>(() => {
     }
     return items;
 });
+
+const agent = ref(props.agent || null);
 
 // Composables
 const { messagesContainer, textareaRef, scrollToBottom, isAtBottom, adjustTextareaHeight, resetTextareaHeight, focusInput, setupFocusHandlers } =
@@ -827,6 +834,12 @@ onUnmounted(() => {
     <AppLayout :breadcrumbs="breadcrumbs">
         <template #header-actions>
             <div class="flex flex-wrap items-center gap-2">
+                <!-- Agent Info -->
+                <div v-if="agent" class="hidden items-center gap-1.5 text-sm text-muted-foreground sm:flex">
+                    <Bot class="h-3.5 w-3.5" />
+                    <span class="max-w-[120px] truncate">{{ agent.name }}</span>
+                </div>
+                
                 <!-- Git Info - Only on larger screens -->
                 <div v-if="gitBranch || prNumber" class="hidden items-center gap-1.5 text-sm text-muted-foreground sm:flex">
                     <GitBranch v-if="gitBranch" class="h-3.5 w-3.5" />

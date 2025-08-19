@@ -92,6 +92,7 @@ class ClaudeController extends Controller
             'conversationId' => 'nullable|integer|exists:conversations,id',
             'repositoryPath' => 'nullable|string',
             'mode' => 'nullable|string|in:plan,bypassPermissions',
+            'agent_id' => 'nullable|integer|exists:agents,id',
         ]);
 
         $conversationId = $request->input('conversationId');
@@ -118,6 +119,7 @@ class ClaudeController extends Controller
                 'claude_session_id' => $request->input('sessionId'),
                 'project_directory' => $request->input('repositoryPath'),
                 'mode' => $request->input('mode', 'plan'),
+                'agent_id' => $request->input('agent_id'),
             ]);
             
             $conversationId = $conversation->id;

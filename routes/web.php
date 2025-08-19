@@ -58,13 +58,14 @@ Route::get('claude/new', [ConversationsController::class, 'store'])
 //a
 
 Route::get('claude/conversation/{conversation}', function ($conversation) {
-    $conv = \App\Models\Conversation::findOrFail($conversation);
+    $conv = \App\Models\Conversation::with('agent')->findOrFail($conversation);
     return Inertia::render('Claude', [
         'conversationId' => $conv->id,
         'repository' => $conv->repository,
         'sessionId' => $conv->claude_session_id,
         'sessionFile' => $conv->filename,
-        'isArchived' => $conv->archived ?? false
+        'isArchived' => $conv->archived ?? false,
+        'agent' => $conv->agent
     ]);
 })->middleware(['auth', 'verified'])->name('claude.conversation');
 
