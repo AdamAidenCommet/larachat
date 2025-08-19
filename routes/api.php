@@ -22,6 +22,7 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::post('/repositories/{repository}/copy-to-hot', [RepositoryController::class, 'copyToHot'])->where('repository', '[0-9]+');
     Route::get('/repositories/{repository}/env', [RepositoryController::class, 'getEnvFile'])->where('repository', '[0-9]+');
     Route::put('/repositories/{repository}/env', [RepositoryController::class, 'updateEnvFile'])->where('repository', '[0-9]+');
+    Route::put('/repositories/{repository}/settings', [RepositoryController::class, 'updateSettings'])->where('repository', '[0-9]+');
 
     Route::get('/conversations', [ConversationsController::class, 'index']);
     Route::post('/conversations', [ConversationsController::class, 'store']);

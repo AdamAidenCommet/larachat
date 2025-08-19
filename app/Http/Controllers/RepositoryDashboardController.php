@@ -61,6 +61,7 @@ class RepositoryDashboardController extends Controller
                 'branch' => $repository->branch,
                 'path' => $repository->path,
                 'has_hot_folder' => $repository->has_hot_folder,
+                'deploy_script' => $repository->deploy_script,
                 'created_at' => $repository->created_at,
                 'updated_at' => $repository->updated_at,
             ],

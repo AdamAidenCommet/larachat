@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import EnvFileModal from '@/components/EnvFileModal.vue';
+import RepositorySettingsModal from '@/components/RepositorySettingsModal.vue';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -22,6 +23,7 @@ const props = defineProps<{
         branch?: string;
         path: string;
         has_hot_folder: boolean;
+        deploy_script?: string | null;
         created_at: string;
         updated_at: string;
         is_blank?: boolean;
@@ -41,6 +43,7 @@ const props = defineProps<{
 
 const messageInput = ref('');
 const showEnvModal = ref(false);
+const showSettingsModal = ref(false);
 const showDeleteModal = ref(false);
 const deleteConfirmation = ref('');
 const isDeleting = ref(false);
@@ -119,6 +122,10 @@ const handleDelete = async () => {
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
+                    <DropdownMenuItem @click="showSettingsModal = true">
+                        <Settings class="mr-2 h-4 w-4" />
+                        Repository Settings
+                    </DropdownMenuItem>
                     <DropdownMenuItem @click="showDeleteModal = true" class="text-destructive focus:text-destructive">
                         <Trash2 class="mr-2 h-4 w-4" />
                         Delete Repository
@@ -249,6 +256,13 @@ const handleDelete = async () => {
 
         <!-- Environment Variables Modal -->
         <EnvFileModal v-model="showEnvModal" :repository-id="repository.id" />
+
+        <!-- Repository Settings Modal -->
+        <RepositorySettingsModal 
+            v-model="showSettingsModal" 
+            :repository-id="repository.id"
+            :deploy-script="repository.deploy_script"
+        />
 
         <!-- Delete Confirmation Modal -->
         <Dialog v-model:open="showDeleteModal">

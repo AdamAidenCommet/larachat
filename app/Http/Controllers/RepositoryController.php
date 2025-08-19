@@ -368,6 +368,41 @@ class RepositoryController extends Controller
         ]);
     }
 
+    /**
+     * Update repository settings
+     * 
+     * Update repository settings including deploy script
+     * 
+     * @authenticated
+     * 
+     * @urlParam repository integer required The ID of the repository. Example: 1
+     * @bodyParam deploy_script string The deployment script for the repository. Example: npm run build && npm run deploy
+     * 
+     * @response 200 scenario="Success" {
+     *   "message": "Repository settings updated successfully",
+     *   "repository": {
+     *     "id": 1,
+     *     "name": "my-project",
+     *     "deploy_script": "npm run build && npm run deploy"
+     *   }
+     * }
+     */
+    public function updateSettings(Request $request, Repository $repository)
+    {
+        $request->validate([
+            'deploy_script' => 'nullable|string'
+        ]);
+        
+        $repository->update([
+            'deploy_script' => $request->input('deploy_script')
+        ]);
+        
+        return response()->json([
+            'message' => 'Repository settings updated successfully',
+            'repository' => $repository
+        ]);
+    }
+
     private function extractRepoName(string $url): string
     {
         // Remove trailing .git if present

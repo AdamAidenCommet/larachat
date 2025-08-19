@@ -15,6 +15,7 @@ class Repository extends Model
         'url',
         'local_path',
         'branch',
+        'deploy_script',
         'last_pulled_at'
     ];
     
