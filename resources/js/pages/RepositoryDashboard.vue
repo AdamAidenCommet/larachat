@@ -110,11 +110,6 @@ const handleDelete = async () => {
 <template>
     <AppLayout>
         <template #header-actions>
-            <Button v-if="!repository.is_blank" @click="showEnvModal = true" variant="outline" size="sm">
-                <FileKey2 class="mr-2 h-4 w-4" />
-                Environment
-            </Button>
-
             <DropdownMenu v-if="!repository.is_blank">
                 <DropdownMenuTrigger as-child>
                     <Button variant="outline" size="sm">
@@ -122,6 +117,10 @@ const handleDelete = async () => {
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
+                    <DropdownMenuItem @click="showEnvModal = true">
+                        <FileKey2 class="mr-2 h-4 w-4" />
+                        Environment
+                    </DropdownMenuItem>
                     <DropdownMenuItem @click="showSettingsModal = true">
                         <Settings class="mr-2 h-4 w-4" />
                         Repository Settings

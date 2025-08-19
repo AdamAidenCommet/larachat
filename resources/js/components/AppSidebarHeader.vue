@@ -15,15 +15,15 @@ withDefaults(
 
 <template>
     <header
-        class="sticky top-0 z-50 flex flex-col sm:h-16 shrink-0 sm:flex-row sm:items-center gap-2 border-b border-sidebar-border/70 bg-background px-6 py-3 sm:py-0 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:sm:h-12 md:px-4"
+        class="sticky top-0 z-50 flex h-16 shrink-0 flex-row items-center gap-2 border-b border-sidebar-border/70 bg-background px-6 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 md:px-4"
     >
-        <div class="flex items-center gap-2 w-full sm:w-auto">
-            <SidebarTrigger class="-ml-1" />
+        <div class="flex items-center gap-2 flex-1 min-w-0">
+            <SidebarTrigger class="-ml-1 shrink-0" />
             <template v-if="breadcrumbs && breadcrumbs.length > 0">
-                <Breadcrumbs :breadcrumbs="breadcrumbs" class="flex-1 sm:flex-none" />
+                <Breadcrumbs :breadcrumbs="breadcrumbs" class="truncate" />
             </template>
         </div>
-        <div class="ml-0 sm:ml-auto flex items-center gap-2">
+        <div class="ml-auto flex items-center gap-2 shrink-0">
             <slot name="actions" />
         </div>
     </header>
