@@ -10,10 +10,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { useAgents } from '@/composables/useAgents';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { type BreadcrumbItem } from '@/types';
 import { router } from '@inertiajs/vue3';
 import axios from 'axios';
 import { Activity, ArrowRight, Bot, FileCode, FileKey2, Lightbulb, MessageSquare, Send, Settings, Sparkles, Trash2 } from 'lucide-vue-next';
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 
 const props = defineProps<{
     repository: {
@@ -51,6 +52,8 @@ const selectedMode = ref<'ask' | 'plan' | 'code'>('ask');
 const selectedAgentId = ref<string>('');
 
 const { agents, fetchAgents } = useAgents();
+
+const breadcrumbs = computed<BreadcrumbItem[]>(() => [{ title: props.repository.name, href: '#' }]);
 
 onMounted(async () => {
     await fetchAgents();
@@ -108,7 +111,7 @@ const handleDelete = async () => {
 </script>
 
 <template>
-    <AppLayout>
+    <AppLayout :breadcrumbs="breadcrumbs">
         <template #header-actions>
             <DropdownMenu v-if="!repository.is_blank">
                 <DropdownMenuTrigger as-child>
@@ -155,7 +158,7 @@ const handleDelete = async () => {
                                 placeholder="Type your message or question..."
                                 @keydown.meta.enter.prevent="startChatWithMessage()"
                                 @keydown.alt.enter.prevent="startChatWithMessage()"
-                                class="min-h-[100px] max-h-[300px] resize-y pr-14 pl-5 text-base overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700 hover:scrollbar-thumb-gray-400 dark:hover:scrollbar-thumb-gray-600"
+                                class="scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700 hover:scrollbar-thumb-gray-400 dark:hover:scrollbar-thumb-gray-600 max-h-[300px] min-h-[100px] resize-y overflow-y-auto pr-14 pl-5 text-base"
                             />
                             <Button
                                 @click="startChatWithMessage()"
@@ -186,12 +189,7 @@ const handleDelete = async () => {
 
                             <!-- Mode Selection (Right) -->
                             <div class="inline-flex rounded-lg border p-1">
-                                <Button
-                                    @click="selectedMode = 'ask'"
-                                    :variant="selectedMode === 'ask' ? 'default' : 'ghost'"
-                                    size="sm"
-                                    class="gap-2"
-                                >
+                                <Button @click="selectedMode = 'ask'" :variant="selectedMode === 'ask' ? 'default' : 'ghost'" size="sm" class="gap-2">
                                     <MessageSquare class="h-4 w-4" />
                                     Ask
                                 </Button>
@@ -291,4 +289,3 @@ const handleDelete = async () => {
         </Dialog>
     </AppLayout>
 </template>
-
