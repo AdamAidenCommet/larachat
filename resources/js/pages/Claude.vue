@@ -28,6 +28,7 @@ const props = defineProps<{
     sessionFile?: string;
     repository?: string;
     conversationId?: number;
+    conversationTitle?: string;
     sessionId?: string;
     isArchived?: boolean;
     agent?: {
@@ -39,6 +40,14 @@ const props = defineProps<{
 
 const breadcrumbs = computed<BreadcrumbItem[]>(() => {
     const items: BreadcrumbItem[] = [{ title: 'Claude', href: '/claude' }];
+    
+    // First line: Agent and Repository
+    if (agent.value) {
+        items.push({
+            title: agent.value.name,
+            icon: Bot,
+        });
+    }
     if (selectedRepository.value && selectedRepositoryData.value) {
         items.push({
             title: selectedRepositoryData.value.name,
@@ -50,12 +59,15 @@ const breadcrumbs = computed<BreadcrumbItem[]>(() => {
             icon: GitBranch,
         });
     }
-    if (agent.value) {
+    
+    // Second line: Conversation title (will be styled smaller in AppLayout)
+    if (props.conversationTitle) {
         items.push({
-            title: agent.value.name,
-            icon: Bot,
+            title: props.conversationTitle,
+            subtitle: true,
         });
     }
+    
     return items;
 });
 

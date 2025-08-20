@@ -36,17 +36,25 @@ const props = defineProps<Props>();
 const breadcrumbs = computed<BreadcrumbItem[]>(() => {
     const items: BreadcrumbItem[] = [
         { title: 'Claude', href: '/claude' },
-        { title: 'Conversation', href: `/claude/conversation/${props.conversationId}` },
     ];
 
+    // First line: Agent and Repository/Diff
     if (props.agent) {
         items.push({
             title: props.agent.name,
             icon: Bot,
         });
     }
-
+    
     items.push({ title: 'Diff', href: `/claude/conversation/${props.conversationId}/diff` });
+
+    // Second line: Conversation title
+    if (props.conversationTitle) {
+        items.push({
+            title: props.conversationTitle,
+            subtitle: true,
+        });
+    }
 
     return items;
 });
