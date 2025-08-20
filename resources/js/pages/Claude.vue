@@ -39,7 +39,7 @@ const props = defineProps<{
 }>();
 
 const breadcrumbs = computed<BreadcrumbItem[]>(() => {
-    const items: BreadcrumbItem[] = [{ title: 'Claude', href: '/claude' }];
+    const items: BreadcrumbItem[] = [];
     
     // First line: Agent and Repository
     if (agent.value) {
