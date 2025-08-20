@@ -47,7 +47,7 @@ const showSettingsModal = ref(false);
 const showDeleteModal = ref(false);
 const deleteConfirmation = ref('');
 const isDeleting = ref(false);
-const selectedMode = ref<'ask' | 'plan'>('ask');
+const selectedMode = ref<'ask' | 'plan' | 'code'>('ask');
 const selectedAgentId = ref<string>('');
 
 const { agents, fetchAgents } = useAgents();
@@ -68,7 +68,7 @@ const startChatWithMessage = (message?: string) => {
         const params: any = {
             message: finalMessage,
             repository: props.repository.is_blank ? '' : props.repository.name,
-            mode: selectedMode.value === 'ask' ? 'bypassPermissions' : 'plan',
+            mode: selectedMode.value === 'code' ? 'bypassPermissions' : selectedMode.value === 'plan' ? 'plan' : 'ask',
             agent_id: selectedAgentId.value,
         };
 
@@ -203,6 +203,15 @@ const handleDelete = async () => {
                                 >
                                     <Lightbulb class="h-4 w-4" />
                                     Plan
+                                </Button>
+                                <Button
+                                    @click="selectedMode = 'code'"
+                                    :variant="selectedMode === 'code' ? 'default' : 'ghost'"
+                                    size="sm"
+                                    class="gap-2"
+                                >
+                                    <FileCode class="h-4 w-4" />
+                                    Code
                                 </Button>
                             </div>
                         </div>
