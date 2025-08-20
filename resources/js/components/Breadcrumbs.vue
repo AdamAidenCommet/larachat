@@ -37,7 +37,7 @@ defineProps<{
         </Breadcrumb>
         
         <!-- Second line: conversation title if present -->
-        <div v-if="breadcrumbs.some(b => b.subtitle)" class="text-sm text-muted-foreground pl-7 truncate">
+        <div v-if="breadcrumbs.some(b => b.subtitle)" class="text-sm text-muted-foreground truncate">
             <template v-for="item in breadcrumbs.filter(b => b.subtitle)" :key="item.title">
                 {{ item.title }}
             </template>
