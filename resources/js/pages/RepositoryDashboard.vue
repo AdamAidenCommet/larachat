@@ -12,7 +12,7 @@ import { useAgents } from '@/composables/useAgents';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { router } from '@inertiajs/vue3';
 import axios from 'axios';
-import { Activity, ArrowRight, Bot, Code2, FileCode, FileKey2, Lightbulb, MessageSquare, Send, Settings, Sparkles, Trash2 } from 'lucide-vue-next';
+import { Activity, ArrowRight, Bot, FileCode, FileKey2, Lightbulb, MessageSquare, Send, Settings, Sparkles, Trash2 } from 'lucide-vue-next';
 import { onMounted, ref } from 'vue';
 
 const props = defineProps<{
@@ -47,7 +47,7 @@ const showSettingsModal = ref(false);
 const showDeleteModal = ref(false);
 const deleteConfirmation = ref('');
 const isDeleting = ref(false);
-const selectedMode = ref<'coding' | 'planning'>('planning');
+const selectedMode = ref<'ask' | 'plan'>('ask');
 const selectedAgentId = ref<string>('');
 
 const { agents, fetchAgents } = useAgents();
@@ -68,7 +68,7 @@ const startChatWithMessage = (message?: string) => {
         const params: any = {
             message: finalMessage,
             repository: props.repository.is_blank ? '' : props.repository.name,
-            mode: selectedMode.value === 'coding' ? 'bypassPermissions' : 'plan',
+            mode: selectedMode.value === 'ask' ? 'bypassPermissions' : 'plan',
             agent_id: selectedAgentId.value,
         };
 
@@ -187,8 +187,8 @@ const handleDelete = async () => {
                             <!-- Mode Selection -->
                             <div class="inline-flex rounded-lg border p-1">
                                 <Button
-                                    @click="selectedMode = 'planning'"
-                                    :variant="selectedMode === 'planning' ? 'default' : 'ghost'"
+                                    @click="selectedMode = 'ask'"
+                                    :variant="selectedMode === 'ask' ? 'default' : 'ghost'"
                                     size="sm"
                                     class="gap-2"
                                 >
@@ -196,22 +196,13 @@ const handleDelete = async () => {
                                     Ask
                                 </Button>
                                 <Button
-                                    @click="selectedMode = 'planning'"
-                                    :variant="selectedMode === 'planning' ? 'default' : 'ghost'"
+                                    @click="selectedMode = 'plan'"
+                                    :variant="selectedMode === 'plan' ? 'default' : 'ghost'"
                                     size="sm"
                                     class="gap-2"
                                 >
                                     <Lightbulb class="h-4 w-4" />
                                     Plan
-                                </Button>
-                                <Button
-                                    @click="selectedMode = 'coding'"
-                                    :variant="selectedMode === 'coding' ? 'default' : 'ghost'"
-                                    size="sm"
-                                    class="gap-2"
-                                >
-                                    <Code2 class="h-4 w-4" />
-                                    Code
                                 </Button>
                             </div>
                         </div>
@@ -293,3 +284,4 @@ const handleDelete = async () => {
         </Dialog>
     </AppLayout>
 </template>
+
