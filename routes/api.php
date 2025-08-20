@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AgentController;
+use App\Http\Controllers\Api\NoteController;
 use App\Http\Controllers\ClaudeController;
 use App\Http\Controllers\CommandController;
 use App\Http\Controllers\ConversationsController;
@@ -36,6 +37,8 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::post('/agents', [AgentController::class, 'store']);
 
     Route::get('/claude/conversations', [ConversationsController::class, 'index']); // TODO: deprecated, replace usage with /conversations
+
+    Route::apiResource('notes', NoteController::class);
 });
 
 Route::post('/github/webhook', [GitHubWebhookController::class, 'handle']);

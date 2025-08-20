@@ -4,7 +4,9 @@ import AppShell from '@/components/AppShell.vue';
 import AppSidebar from '@/components/AppSidebar.vue';
 import AppSidebarHeader from '@/components/AppSidebarHeader.vue';
 import PageTransition from '@/components/PageTransition.vue';
+import QuickNoteModal from '@/components/QuickNoteModal.vue';
 import type { BreadcrumbItemType } from '@/types';
+import { ref, onMounted, onUnmounted } from 'vue';
 
 interface Props {
     breadcrumbs?: BreadcrumbItemType[];
@@ -12,6 +14,23 @@ interface Props {
 
 withDefaults(defineProps<Props>(), {
     breadcrumbs: () => [],
+});
+
+const showQuickNoteModal = ref(false);
+
+const handleGlobalKeydown = (event: KeyboardEvent) => {
+    if (event.metaKey && event.altKey && event.key === 'n') {
+        event.preventDefault();
+        showQuickNoteModal.value = true;
+    }
+};
+
+onMounted(() => {
+    document.addEventListener('keydown', handleGlobalKeydown);
+});
+
+onUnmounted(() => {
+    document.removeEventListener('keydown', handleGlobalKeydown);
 });
 </script>
 
@@ -29,4 +48,5 @@ withDefaults(defineProps<Props>(), {
             </PageTransition>
         </AppContent>
     </AppShell>
+    <QuickNoteModal v-model="showQuickNoteModal" />
 </template>
