@@ -155,7 +155,7 @@ const handleDelete = async () => {
                                 placeholder="Type your message or question..."
                                 @keydown.meta.enter.prevent="startChatWithMessage()"
                                 @keydown.alt.enter.prevent="startChatWithMessage()"
-                                class="min-h-[100px] resize-y pr-14 pl-5 text-base"
+                                class="min-h-[100px] max-h-[300px] resize-y pr-14 pl-5 text-base overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700 hover:scrollbar-thumb-gray-400 dark:hover:scrollbar-thumb-gray-600"
                             />
                             <Button
                                 @click="startChatWithMessage()"
@@ -168,8 +168,8 @@ const handleDelete = async () => {
                         </div>
 
                         <!-- Agent and Mode Selection -->
-                        <div class="flex items-center justify-center gap-3">
-                            <!-- Agent Selection -->
+                        <div class="flex items-center justify-between gap-3">
+                            <!-- Agent Selection (Left) -->
                             <Select v-model="selectedAgentId">
                                 <SelectTrigger class="w-[180px]">
                                     <div class="flex items-center gap-2">
@@ -184,7 +184,7 @@ const handleDelete = async () => {
                                 </SelectContent>
                             </Select>
 
-                            <!-- Mode Selection -->
+                            <!-- Mode Selection (Right) -->
                             <div class="inline-flex rounded-lg border p-1">
                                 <Button
                                     @click="selectedMode = 'ask'"
@@ -215,8 +215,6 @@ const handleDelete = async () => {
                                 </Button>
                             </div>
                         </div>
-
-                        <p class="text-center text-xs text-muted-foreground">Cmd+Enter / Alt+Enter</p>
                     </div>
 
                     <!-- Quick Messages -->

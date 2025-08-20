@@ -300,3 +300,44 @@
 .animate-accordion-up {
     animation: accordion-up 0.2s ease-out;
 }
+
+/* Custom scrollbar for textareas */
+.scrollbar-thin::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.scrollbar-track-transparent::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.scrollbar-thumb-gray-300::-webkit-scrollbar-thumb {
+    background-color: rgb(209 213 219);
+    border-radius: 4px;
+}
+
+.dark .scrollbar-thumb-gray-700::-webkit-scrollbar-thumb {
+    background-color: rgb(55 65 81);
+    border-radius: 4px;
+}
+
+.hover\:scrollbar-thumb-gray-400:hover::-webkit-scrollbar-thumb {
+    background-color: rgb(156 163 175);
+}
+
+.dark .hover\:scrollbar-thumb-gray-600:hover::-webkit-scrollbar-thumb {
+    background-color: rgb(75 85 99);
+}
+
+/* Firefox scrollbar support */
+.scrollbar-thin {
+    scrollbar-width: thin;
+}
+
+.scrollbar-thin {
+    scrollbar-color: rgb(209 213 219) transparent;
+}
+
+.dark .scrollbar-thin {
+    scrollbar-color: rgb(55 65 81) transparent;
+}
