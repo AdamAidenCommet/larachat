@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\Conversation;
+use App\Models\Repository;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -162,6 +163,39 @@ class InitializeConversationSessionJob implements ShouldQueue
                 $this->conversation->update(['is_processing' => false]);
 
                 return;
+            }
+
+            // Run the repository's deploy script from database if it exists
+            $repository = Repository::where('name', $this->conversation->repository)->first();
+            if ($repository && $repository->deploy_script) {
+                Log::info('InitializeConversationSessionJob: Running deploy script from database', [
+                    'repository' => $this->conversation->repository,
+                    'project_directory' => $to,
+                ]);
+
+                try {
+                    $result = Process::path($to)
+                        ->timeout(300) // 5 minutes timeout
+                        ->run($repository->deploy_script);
+
+                    if ($result->successful()) {
+                        Log::info('InitializeConversationSessionJob: Deploy script completed successfully', [
+                            'repository' => $this->conversation->repository,
+                            'output' => $result->output(),
+                        ]);
+                    } else {
+                        Log::warning('InitializeConversationSessionJob: Deploy script failed', [
+                            'repository' => $this->conversation->repository,
+                            'error' => $result->errorOutput(),
+                            'exit_code' => $result->exitCode(),
+                        ]);
+                    }
+                } catch (\Exception $e) {
+                    Log::error('InitializeConversationSessionJob: Exception running deploy script', [
+                        'repository' => $this->conversation->repository,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
             }
 
             Log::info('InitializeConversationSessionJob: Successfully moved repository', [
