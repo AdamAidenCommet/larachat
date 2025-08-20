@@ -19,7 +19,11 @@ withDefaults(defineProps<Props>(), {
 const showQuickNoteModal = ref(false);
 
 const handleGlobalKeydown = (event: KeyboardEvent) => {
-    if (event.metaKey && event.altKey && event.key === 'n') {
+    // Check for Cmd+Option+N (Mac) or Ctrl+Alt+N (Windows/Linux)
+    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+    const cmdOrCtrl = isMac ? event.metaKey : event.ctrlKey;
+    
+    if (cmdOrCtrl && event.altKey && event.key.toLowerCase() === 'n') {
         event.preventDefault();
         showQuickNoteModal.value = true;
     }
@@ -36,7 +40,7 @@ onUnmounted(() => {
 
 <template>
     <AppShell variant="sidebar">
-        <AppSidebar />
+        <AppSidebar @open-quick-note="showQuickNoteModal = true" />
         <AppContent variant="sidebar" class="overflow-x-hidden">
             <AppSidebarHeader :breadcrumbs="breadcrumbs">
                 <template #actions>

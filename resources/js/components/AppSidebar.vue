@@ -21,9 +21,13 @@ import { useAgents } from '@/composables/useAgents';
 import { useConversations } from '@/composables/useConversations';
 import { useRepositories } from '@/composables/useRepositories';
 import { Link, router, usePage } from '@inertiajs/vue3';
-import { GitBranch, Loader2, MessageSquarePlus, Plus, Users } from 'lucide-vue-next';
-import { onMounted, onUnmounted, ref, watch } from 'vue';
+import { GitBranch, Loader2, MessageSquarePlus, Plus, StickyNote, Users } from 'lucide-vue-next';
+import { onMounted, onUnmounted, ref, watch, defineEmits } from 'vue';
 import AppLogo from './AppLogo.vue';
+
+const emit = defineEmits<{
+    openQuickNote: [];
+}>();
 
 const page = usePage();
 const { conversations, fetchConversations, cleanup } = useConversations();
@@ -180,6 +184,18 @@ const handleCreateAgent = async () => {
         </SidebarHeader>
 
         <SidebarContent>
+            <SidebarGroup class="px-2 py-0">
+                <SidebarMenu>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton @click="emit('openQuickNote')">
+                            <StickyNote />
+                            <span>Quick Note</span>
+                            <span class="ml-auto text-xs text-muted-foreground">⌘⌥N</span>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                </SidebarMenu>
+            </SidebarGroup>
+
             <SidebarGroup class="px-2 py-0">
                 <div class="flex items-center justify-between">
                     <SidebarGroupLabel>Agents</SidebarGroupLabel>
