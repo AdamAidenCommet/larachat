@@ -20,20 +20,23 @@ const deployScriptContent = ref(props.deployScript || '');
 const isSaving = ref(false);
 const error = ref('');
 
-watch(() => props.modelValue, (newValue) => {
-    if (newValue) {
-        deployScriptContent.value = props.deployScript || '';
-        error.value = '';
-    }
-});
+watch(
+    () => props.modelValue,
+    (newValue) => {
+        if (newValue) {
+            deployScriptContent.value = props.deployScript || '';
+            error.value = '';
+        }
+    },
+);
 
 const saveSettings = async () => {
     isSaving.value = true;
     error.value = '';
-    
+
     try {
         await axios.put(`/api/repositories/${props.repositoryId}/settings`, {
-            deploy_script: deployScriptContent.value
+            deploy_script: deployScriptContent.value,
         });
         emit('update:modelValue', false);
     } catch (err: any) {
@@ -49,9 +52,7 @@ const saveSettings = async () => {
         <DialogContent class="max-w-2xl">
             <DialogHeader>
                 <DialogTitle>Repository Settings</DialogTitle>
-                <DialogDescription>
-                    Configure deployment scripts and other repository settings.
-                </DialogDescription>
+                <DialogDescription> Configure deployment scripts and other repository settings. </DialogDescription>
             </DialogHeader>
 
             <div class="space-y-4 py-4">
@@ -74,9 +75,7 @@ const saveSettings = async () => {
             </div>
 
             <DialogFooter>
-                <Button variant="outline" @click="emit('update:modelValue', false)" :disabled="isSaving">
-                    Cancel
-                </Button>
+                <Button variant="outline" @click="emit('update:modelValue', false)" :disabled="isSaving"> Cancel </Button>
                 <Button @click="saveSettings" :disabled="isSaving">
                     {{ isSaving ? 'Saving...' : 'Save Settings' }}
                 </Button>

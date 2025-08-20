@@ -106,10 +106,29 @@ class SendClaudeMessageJob implements ShouldQueue
             // Use conversation mode to determine permission mode
             // If mode is 'plan', use 'plan' permission mode; otherwise use 'bypassPermissions'
             $permissionMode = $this->conversation->mode === 'plan' ? 'plan' : 'bypassPermissions';
+            
+            // Build options string
+            $options = '--permission-mode '.$permissionMode;
+            
+            // Add agent prompt as system message if agent is selected
+            if ($this->conversation->agent_id) {
+                $this->conversation->load('agent');
+                if ($this->conversation->agent && $this->conversation->agent->prompt) {
+                    // Escape the prompt for shell usage
+                    $agentPrompt = escapeshellarg($this->conversation->agent->prompt);
+                    $options .= ' --append-system-prompt '.$agentPrompt;
+                    
+                    Log::info('Adding agent system prompt', [
+                        'conversation_id' => $this->conversation->id,
+                        'agent_id' => $this->conversation->agent_id,
+                        'agent_name' => $this->conversation->agent->name,
+                    ]);
+                }
+            }
 
             $result = ClaudeService::processInBackground(
                 $this->message,
-                '--permission-mode '.$permissionMode,
+                $options,
                 $this->conversation->claude_session_id,
                 $filename,
                 $this->conversation->project_directory,

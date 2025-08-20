@@ -22,4 +22,5 @@ export interface ClaudeApiRequest {
     repositoryPath?: string;
     conversationId?: number;
     mode?: string;
+    agent_id?: number;
 }

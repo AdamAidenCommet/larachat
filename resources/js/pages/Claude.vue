@@ -40,7 +40,7 @@ const props = defineProps<{
 
 const breadcrumbs = computed<BreadcrumbItem[]>(() => {
     const items: BreadcrumbItem[] = [];
-    
+
     // First line: Agent and Repository
     if (agent.value) {
         items.push({
@@ -59,7 +59,7 @@ const breadcrumbs = computed<BreadcrumbItem[]>(() => {
             icon: GitBranch,
         });
     }
-    
+
     // Second line: Conversation title (will be styled smaller in AppLayout)
     if (props.conversationTitle) {
         items.push({
@@ -67,7 +67,7 @@ const breadcrumbs = computed<BreadcrumbItem[]>(() => {
             subtitle: true,
         });
     }
-    
+
     return items;
 });
 
@@ -498,6 +498,7 @@ const sendMessage = async () => {
                 repositoryPath: selectedRepositoryData.value?.local_path,
                 conversationId: conversationId.value || undefined,
                 mode: selectedMode.value === 'coding' ? 'bypassPermissions' : 'plan',
+                agent_id: agent.value?.id,
             },
             (text, rawResponse) => {
                 // Extract session ID from init response

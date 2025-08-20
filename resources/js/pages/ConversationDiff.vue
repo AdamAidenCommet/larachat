@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
@@ -34,9 +34,7 @@ interface FileDiff {
 const props = defineProps<Props>();
 
 const breadcrumbs = computed<BreadcrumbItem[]>(() => {
-    const items: BreadcrumbItem[] = [
-        { title: 'Claude', href: '/claude' },
-    ];
+    const items: BreadcrumbItem[] = [{ title: 'Claude', href: '/claude' }];
 
     // First line: Agent and Repository/Diff
     if (props.agent) {
@@ -45,7 +43,7 @@ const breadcrumbs = computed<BreadcrumbItem[]>(() => {
             icon: Bot,
         });
     }
-    
+
     items.push({ title: 'Diff', href: `/claude/conversation/${props.conversationId}/diff` });
 
     // Second line: Conversation title
@@ -197,7 +195,7 @@ onUnmounted(() => {
 <template>
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="px-1 py-0.5">
-            <div class="mb-0.5 sm:mb-1 flex items-center justify-between">
+            <div class="mb-0.5 flex items-center justify-between sm:mb-1">
                 <h1 class="text-lg font-bold">Git Diff</h1>
                 <DropdownMenu v-if="hasContent">
                     <DropdownMenuTrigger as-child>
@@ -245,15 +243,15 @@ onUnmounted(() => {
 
                 <div class="space-y-0.5">
                     <Card v-for="file in fileDiffs" :key="file.fileName" class="overflow-hidden">
-                        <CardHeader class="px-1 py-0.5 cursor-pointer" @click="toggleFile(file.fileName)">
+                        <CardHeader class="cursor-pointer px-1 py-0.5" @click="toggleFile(file.fileName)">
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center gap-0.5 overflow-hidden">
-                                    <ChevronRight v-if="!expandedFiles.has(file.fileName)" class="h-3 w-3 transition-transform flex-shrink-0" />
-                                    <ChevronDown v-else class="h-3 w-3 transition-transform flex-shrink-0" />
+                                    <ChevronRight v-if="!expandedFiles.has(file.fileName)" class="h-3 w-3 flex-shrink-0 transition-transform" />
+                                    <ChevronDown v-else class="h-3 w-3 flex-shrink-0 transition-transform" />
                                     <FileIcon class="h-3 w-3 flex-shrink-0" />
-                                    <span class="font-mono text-xs truncate">{{ file.fileName }}</span>
+                                    <span class="truncate font-mono text-xs">{{ file.fileName }}</span>
                                 </div>
-                                <div class="flex items-center gap-1 text-xs flex-shrink-0">
+                                <div class="flex flex-shrink-0 items-center gap-1 text-xs">
                                     <span v-if="file.additions > 0" class="flex items-center gap-0.5 text-green-600">
                                         <Plus class="h-3 w-3" />
                                         <span>{{ file.additions }}</span>
@@ -267,35 +265,35 @@ onUnmounted(() => {
                         </CardHeader>
                         <Collapsible :open="expandedFiles.has(file.fileName)">
                             <CollapsibleContent>
-                                    <CardContent class="p-0">
-                                        <div
-                                            class="diff-container overflow-x-auto rounded-b-lg border-t border-slate-800 bg-slate-900 dark:bg-slate-950"
-                                            :ref="(el) => registerScrollContainer(el as HTMLElement | null)"
-                                        >
-                                            <div class="min-w-fit font-mono text-xs">
-                                                <div
-                                                    v-for="(line, index) in file.lines"
-                                                    :key="index"
+                                <CardContent class="p-0">
+                                    <div
+                                        class="diff-container overflow-x-auto rounded-b-lg border-t border-slate-800 bg-slate-900 dark:bg-slate-950"
+                                        :ref="(el) => registerScrollContainer(el as HTMLElement | null)"
+                                    >
+                                        <div class="min-w-fit font-mono text-xs">
+                                            <div
+                                                v-for="(line, index) in file.lines"
+                                                :key="index"
+                                                :class="{
+                                                    'bg-green-950/30': line.type === 'addition',
+                                                    'bg-red-950/30': line.type === 'deletion',
+                                                    'bg-blue-950/50 px-2 py-1 font-semibold': line.type === 'chunk',
+                                                    'bg-yellow-950/30 px-2 py-0.5': line.type === 'header',
+                                                    'hover:bg-slate-800/30': line.type === 'normal',
+                                                }"
+                                                class="diff-line flex transition-colors duration-150"
+                                            >
+                                                <span
+                                                    v-if="line.type === 'addition' || line.type === 'deletion'"
+                                                    class="inline-block w-4 flex-shrink-0 py-0.5 text-center text-xs select-none"
                                                     :class="{
-                                                        'bg-green-950/30': line.type === 'addition',
-                                                        'bg-red-950/30': line.type === 'deletion',
-                                                        'bg-blue-950/50 px-2 py-1 font-semibold': line.type === 'chunk',
-                                                        'bg-yellow-950/30 px-2 py-0.5': line.type === 'header',
-                                                        'hover:bg-slate-800/30': line.type === 'normal',
+                                                        'bg-green-950/50 text-green-400': line.type === 'addition',
+                                                        'bg-red-950/50 text-red-400': line.type === 'deletion',
                                                     }"
-                                                    class="diff-line flex transition-colors duration-150"
                                                 >
-                                                    <span
-                                                        v-if="line.type === 'addition' || line.type === 'deletion'"
-                                                        class="inline-block w-4 flex-shrink-0 py-0.5 text-center text-xs select-none"
-                                                        :class="{
-                                                            'bg-green-950/50 text-green-400': line.type === 'addition',
-                                                            'bg-red-950/50 text-red-400': line.type === 'deletion',
-                                                        }"
-                                                    >
-                                                        {{ line.type === 'addition' ? '+' : '-' }}
-                                                    </span>
-                                                    <pre class="flex-1 py-0.5 pr-1 whitespace-pre"><code
+                                                    {{ line.type === 'addition' ? '+' : '-' }}
+                                                </span>
+                                                <pre class="flex-1 py-0.5 pr-1 whitespace-pre"><code
                                                     :class="{
                                                         'text-green-400': line.type === 'addition',
                                                         'text-red-400': line.type === 'deletion',
@@ -305,11 +303,11 @@ onUnmounted(() => {
                                                     }"
                                                     class="diff-code-content"
                                                 >{{ line.content }}</code></pre>
-                                                </div>
                                             </div>
                                         </div>
-                                    </CardContent>
-                                </CollapsibleContent>
+                                    </div>
+                                </CardContent>
+                            </CollapsibleContent>
                         </Collapsible>
                     </Card>
                 </div>
