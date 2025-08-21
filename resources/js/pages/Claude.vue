@@ -843,11 +843,9 @@ onUnmounted(() => {
     <AppLayout :breadcrumbs="breadcrumbs">
         <template #header-actions>
             <div class="flex flex-wrap items-center gap-2">
-                <!-- Git Info - Only on larger screens -->
-                <div v-if="gitBranch || prNumber" class="hidden items-center gap-1.5 text-sm text-muted-foreground sm:flex">
-                    <GitBranch v-if="gitBranch" class="h-3.5 w-3.5" />
-                    <span v-if="gitBranch" class="max-w-[120px] truncate">{{ gitBranch }}</span>
-                    <span v-if="prNumber" class="rounded bg-muted px-1.5 py-0.5 text-xs">#{{ prNumber }}</span>
+                <!-- PR Info - Only on larger screens -->
+                <div v-if="prNumber" class="hidden items-center gap-1.5 text-sm text-muted-foreground sm:flex">
+                    <span class="rounded bg-muted px-1.5 py-0.5 text-xs">#{{ prNumber }}</span>
                 </div>
 
                 <!-- Mode Switcher - Grouped together -->
