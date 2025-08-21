@@ -15,7 +15,21 @@ import { type BreadcrumbItem } from '@/types';
 import { extractTextFromResponse } from '@/utils/claudeResponseParser';
 import { router } from '@inertiajs/vue3';
 import axios from 'axios';
-import { Archive, ArchiveRestore, Bot, Code, ExternalLink, Eye, EyeOff, GitBranch, GitPullRequest, MapPin, Send, Settings } from 'lucide-vue-next';
+import {
+    Archive,
+    ArchiveRestore,
+    Bot,
+    Code,
+    ExternalLink,
+    Eye,
+    EyeOff,
+    GitBranch,
+    GitPullRequest,
+    MapPin,
+    Send,
+    Settings,
+    Square,
+} from 'lucide-vue-next';
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 
 // Constants
@@ -456,6 +470,28 @@ const loadSessionMessages = async (isPolling = false) => {
                 startPolling(500); // Poll more frequently when waiting for file
             }
         }
+    }
+};
+
+const stopProcessing = async () => {
+    if (!conversationId.value || !conversation.value?.is_processing) return;
+
+    try {
+        await axios.post(`/api/conversations/${conversationId.value}/stop`);
+
+        // Update local state
+        if (conversation.value) {
+            conversation.value.is_processing = false;
+        }
+
+        // Show a message that processing was stopped
+        const stoppedMessage = addAssistantMessage();
+        appendToMessage(stoppedMessage.id, 'Processing stopped by user.');
+
+        // Continue polling to get any partial results
+        startPolling(POLLING_INTERVAL_MS);
+    } catch (error) {
+        console.error('Error stopping processing:', error);
     }
 };
 
@@ -932,7 +968,6 @@ onUnmounted(() => {
                             <component :is="isArchived ? ArchiveRestore : Archive" class="mr-2 h-4 w-4" />
                             <span>{{ isArchived ? 'Unarchive Conversation' : 'Archive Conversation' }}</span>
                         </DropdownMenuItem>
-
                     </DropdownMenuContent>
                 </DropdownMenu>
             </div>
@@ -979,12 +1014,23 @@ onUnmounted(() => {
                             :disabled="conversation?.is_processing"
                         />
                         <Button
+                            v-if="!conversation?.is_processing"
                             @click="sendMessage"
-                            :disabled="!inputMessage.trim() || conversation?.is_processing"
+                            :disabled="!inputMessage.trim()"
                             size="icon"
                             class="h-10 w-10 rounded-full"
                         >
                             <Send class="h-4 w-4" />
+                        </Button>
+                        <Button
+                            v-else
+                            @click="stopProcessing"
+                            variant="destructive"
+                            size="icon"
+                            class="h-10 w-10 rounded-full"
+                            title="Stop processing"
+                        >
+                            <Square class="h-4 w-4" />
                         </Button>
                     </div>
                 </div>

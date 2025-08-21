@@ -265,9 +265,44 @@ class ClaudeService
     }
 
     /**
+     * Terminate a running process for a conversation
+     */
+    public static function terminateConversationProcess(int $conversationId): bool
+    {
+        $cacheKey = 'claude_process_' . $conversationId;
+        $pid = Cache::get($cacheKey);
+        
+        if ($pid) {
+            try {
+                // Kill the process and its children
+                $killCommand = "pkill -TERM -P {$pid}; kill -TERM {$pid}";
+                exec($killCommand);
+                
+                // Clear the cache
+                Cache::forget($cacheKey);
+                
+                Log::info('Terminated Claude process', [
+                    'conversation_id' => $conversationId,
+                    'pid' => $pid,
+                ]);
+                
+                return true;
+            } catch (\Exception $e) {
+                Log::error('Failed to terminate Claude process', [
+                    'conversation_id' => $conversationId,
+                    'pid' => $pid,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+        
+        return false;
+    }
+
+    /**
      * Process Claude message in background (for queue jobs)
      */
-    public static function processInBackground(string $prompt, string $options = '--permission-mode bypassPermissions', ?string $sessionId = null, ?string $sessionFilename = null, ?string $repositoryPath = null, ?callable $progressCallback = null): array
+    public static function processInBackground(string $prompt, string $options = '--permission-mode bypassPermissions', ?string $sessionId = null, ?string $sessionFilename = null, ?string $repositoryPath = null, ?callable $progressCallback = null, ?int $conversationId = null): array
     {
         // Extract project ID from repository path
         $projectId = null;

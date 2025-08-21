@@ -37,6 +37,15 @@ class SendClaudeMessageJob implements ShouldQueue
                 return;
             }
 
+            // Check if processing has been stopped by the user
+            $freshConversation = $this->conversation->fresh();
+            if (!$freshConversation->is_processing) {
+                Log::info('Conversation processing was stopped by user', [
+                    'conversation_id' => $this->conversation->id,
+                ]);
+                return;
+            }
+
             // Check if project directory exists (if specified)
             if ($this->conversation->project_directory) {
                 // If project_directory starts with absolute path, use it directly
@@ -133,7 +142,8 @@ class SendClaudeMessageJob implements ShouldQueue
                 $this->conversation->claude_session_id,
                 $filename,
                 $this->conversation->project_directory,
-                $progressCallback
+                $progressCallback,
+                $this->conversation->id
             );
 
             // Update conversation with the session ID if extracted (in case callback didn't catch it)

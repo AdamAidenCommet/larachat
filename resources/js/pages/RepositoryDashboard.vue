@@ -9,13 +9,13 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useAgents } from '@/composables/useAgents';
-import { useKeyboardShortcut, getPlatformModifier } from '@/composables/useKeyboardShortcuts';
+import { getPlatformModifier, useKeyboardShortcut } from '@/composables/useKeyboardShortcuts';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import { router } from '@inertiajs/vue3';
 import axios from 'axios';
 import { Activity, ArrowRight, Bot, FileCode, FileKey2, Lightbulb, MessageSquare, Send, Settings, Sparkles, Trash2 } from 'lucide-vue-next';
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 
 const props = defineProps<{
     repository: {
@@ -65,7 +65,7 @@ useKeyboardShortcut([
         key: 'm',
         modifiers: {
             [platformMod]: true,
-            alt: true
+            alt: true,
         },
         handler: () => {
             // Focus on the message input textarea
@@ -75,13 +75,13 @@ useKeyboardShortcut([
                 console.log('[RepositoryDashboard] Ctrl+Option+M shortcut triggered - focusing message input');
             }
         },
-        description: 'Focus message input (CMD/CTRL+ALT+M)'
+        description: 'Focus message input (CMD/CTRL+ALT+M)',
     },
     {
         key: 'm',
         modifiers: {
             [platformMod]: true,
-            shift: true
+            shift: true,
         },
         handler: () => {
             // Cycle through modes: ask -> plan -> code -> ask
@@ -94,8 +94,8 @@ useKeyboardShortcut([
             }
             console.log('[RepositoryDashboard] Ctrl+Shift+M shortcut triggered - switched to', selectedMode.value, 'mode');
         },
-        description: 'Cycle through modes (CMD/CTRL+SHIFT+M)'
-    }
+        description: 'Cycle through modes (CMD/CTRL+SHIFT+M)',
+    },
 ]);
 
 onMounted(async () => {
@@ -104,7 +104,7 @@ onMounted(async () => {
     if (agents.value && agents.value.length > 0) {
         selectedAgentId.value = String(agents.value[0].id);
     }
-    
+
     // Log shortcut initialization
     console.log('[RepositoryDashboard] Keyboard shortcuts initialized');
     console.log('  Focus message: CMD/CTRL + ALT + M');
@@ -119,7 +119,14 @@ const startChatWithMessage = (message?: string) => {
         const params: any = {
             message: finalMessage,
             repository: props.repository.is_blank ? '' : props.repository.name,
-            mode: selectedMode.value === 'code' ? 'bypassPermissions' : selectedMode.value === 'ask' ? 'plan' : selectedMode.value === 'plan' ? 'plan' : 'ask',
+            mode:
+                selectedMode.value === 'code'
+                    ? 'bypassPermissions'
+                    : selectedMode.value === 'ask'
+                      ? 'plan'
+                      : selectedMode.value === 'plan'
+                        ? 'plan'
+                        : 'ask',
             agent_id: selectedAgentId.value,
         };
 

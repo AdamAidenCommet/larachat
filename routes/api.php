@@ -32,6 +32,7 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::post('/conversations/{conversation}/archive', [ConversationsController::class, 'archive']);
     Route::post('/conversations/{conversation}/unarchive', [ConversationsController::class, 'unarchive']);
     Route::get('/conversations/{conversation}/git-info', [ConversationsController::class, 'getGitInfo']);
+    Route::post('/conversations/{conversation}/stop', [ConversationsController::class, 'stopProcessing']);
 
     Route::get('/agents', [AgentController::class, 'index']);
     Route::post('/agents', [AgentController::class, 'store']);

@@ -359,4 +359,38 @@ class ConversationsController extends Controller
             'pr_number' => $conversation->pr_number,
         ]);
     }
+
+    /**
+     * Stop processing conversation
+     *
+     * Stop a running Claude message process for a conversation
+     *
+     * @authenticated
+     *
+     * @urlParam conversation integer required The ID of the conversation. Example: 1
+     *
+     * @response 200 scenario="Success" {
+     *   "message": "Processing stopped successfully"
+     * }
+     * @response 403 scenario="Unauthorized" {
+     *   "error": "Unauthorized"
+     * }
+     */
+    public function stopProcessing(Conversation $conversation)
+    {
+        // Check if user owns this conversation
+        if ($conversation->user_id !== Auth::id()) {
+            abort(403, 'Unauthorized');
+        }
+
+        // Mark conversation as no longer processing
+        $conversation->is_processing = false;
+        $conversation->error_message = 'Processing stopped by user';
+        $conversation->save();
+
+        // Try to terminate the running Claude process
+        \App\Services\ClaudeService::terminateConversationProcess($conversation->id);
+        
+        return response()->json(['message' => 'Processing stopped successfully']);
+    }
 }

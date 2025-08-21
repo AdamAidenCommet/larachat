@@ -19,15 +19,10 @@ export function useKeyboardShortcut(
         preventDefault?: boolean;
         stopPropagation?: boolean;
         capture?: boolean;
-    } = {}
+    } = {},
 ) {
     const shortcuts = Array.isArray(shortcut) ? shortcut : [shortcut];
-    const { 
-        enabled = true, 
-        preventDefault = true, 
-        stopPropagation = true,
-        capture = true 
-    } = options;
+    const { enabled = true, preventDefault = true, stopPropagation = true, capture = true } = options;
 
     const handleKeyboard = (event: KeyboardEvent) => {
         // Check if shortcuts are enabled
@@ -37,18 +32,16 @@ export function useKeyboardShortcut(
         // Check each shortcut
         for (const s of shortcuts) {
             const modifiers = s.modifiers || {};
-            
+
             // Check if all required modifiers are pressed
-            const modifiersMatch = 
+            const modifiersMatch =
                 (modifiers.ctrl === undefined || modifiers.ctrl === event.ctrlKey) &&
                 (modifiers.meta === undefined || modifiers.meta === event.metaKey) &&
                 (modifiers.alt === undefined || modifiers.alt === event.altKey) &&
                 (modifiers.shift === undefined || modifiers.shift === event.shiftKey);
 
             // Check if the key matches (case-insensitive)
-            const keyMatches = 
-                event.key.toLowerCase() === s.key.toLowerCase() ||
-                event.code.toLowerCase() === `key${s.key}`.toLowerCase();
+            const keyMatches = event.key.toLowerCase() === s.key.toLowerCase() || event.code.toLowerCase() === `key${s.key}`.toLowerCase();
 
             if (modifiersMatch && keyMatches) {
                 if (preventDefault) {
@@ -58,7 +51,7 @@ export function useKeyboardShortcut(
                     event.stopPropagation();
                     event.stopImmediatePropagation();
                 }
-                
+
                 console.log(`[Keyboard] Shortcut triggered: ${s.description || s.key}`);
                 s.handler(event);
                 return;
@@ -70,26 +63,26 @@ export function useKeyboardShortcut(
         // Register on multiple targets for maximum compatibility
         const targets = [document, window, document.body];
         const events = ['keydown', 'keyup'];
-        
+
         for (const target of targets) {
             if (target) {
                 for (const eventType of events) {
-                    target.addEventListener(eventType, handleKeyboard as EventListener, { 
-                        capture, 
-                        passive: false 
+                    target.addEventListener(eventType, handleKeyboard as EventListener, {
+                        capture,
+                        passive: false,
                     });
                 }
             }
         }
-        
-        console.log('[Keyboard] Shortcuts registered:', shortcuts.map(s => s.description || s.key).join(', '));
+
+        console.log('[Keyboard] Shortcuts registered:', shortcuts.map((s) => s.description || s.key).join(', '));
     });
 
     onUnmounted(() => {
         // Clean up all listeners
         const targets = [document, window, document.body];
         const events = ['keydown', 'keyup'];
-        
+
         for (const target of targets) {
             if (target) {
                 for (const eventType of events) {
@@ -97,14 +90,13 @@ export function useKeyboardShortcut(
                 }
             }
         }
-        
+
         console.log('[Keyboard] Shortcuts unregistered');
     });
 }
 
 // Platform detection helper
 export function getPlatformModifier() {
-    const isMac = navigator.userAgent.includes('Mac') || 
-                  navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+    const isMac = navigator.userAgent.includes('Mac') || navigator.platform.toUpperCase().indexOf('MAC') >= 0;
     return isMac ? 'meta' : 'ctrl';
 }
