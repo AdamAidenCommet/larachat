@@ -499,7 +499,8 @@ class ClaudeService
                         $data[$lastIndex] = array_merge($lastConversation, [
                             'rawJsonResponses' => $rawJsonResponses,
                             'isComplete' => $isComplete,
-                            'timestamp' => $messageData['timestamp'],
+                            'timestamp' => $lastConversation['timestamp'] ?? $messageData['timestamp'], // Preserve original timestamp
+                            'responseTimestamp' => $isComplete ? now()->toIso8601String() : null, // Track when response completed
                             'sessionId' => $messageData['sessionId'] ?? $lastConversation['sessionId'],
                             'repositoryPath' => $messageData['repositoryPath'] ?? $lastConversation['repositoryPath'],
                             'role' => $lastConversation['role'] ?? $messageData['role'] ?? null,
