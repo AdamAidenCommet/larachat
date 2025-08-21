@@ -71,7 +71,7 @@ const startChatWithMessage = (message?: string) => {
         const params: any = {
             message: finalMessage,
             repository: props.repository.is_blank ? '' : props.repository.name,
-            mode: selectedMode.value === 'code' ? 'bypassPermissions' : selectedMode.value === 'plan' ? 'plan' : 'ask',
+            mode: selectedMode.value === 'code' ? 'bypassPermissions' : selectedMode.value === 'ask' ? 'plan' : selectedMode.value === 'plan' ? 'plan' : 'ask',
             agent_id: selectedAgentId.value,
         };
 
