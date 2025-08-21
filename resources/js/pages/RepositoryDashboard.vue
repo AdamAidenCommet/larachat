@@ -14,7 +14,7 @@ import { type BreadcrumbItem } from '@/types';
 import { router } from '@inertiajs/vue3';
 import axios from 'axios';
 import { Activity, ArrowRight, Bot, FileCode, FileKey2, Lightbulb, MessageSquare, Send, Settings, Sparkles, Trash2 } from 'lucide-vue-next';
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 
 const props = defineProps<{
     repository: {
@@ -55,12 +55,35 @@ const { agents, fetchAgents } = useAgents();
 
 const breadcrumbs = computed<BreadcrumbItem[]>(() => [{ title: props.repository.name, href: '#' }]);
 
+const cycleModeShortcut = (e: KeyboardEvent) => {
+    // CMD+OPTION+M
+    if (e.metaKey && e.altKey && e.key === 'm') {
+        e.preventDefault();
+        // Cycle through modes: ask -> plan -> code -> ask
+        if (selectedMode.value === 'ask') {
+            selectedMode.value = 'plan';
+        } else if (selectedMode.value === 'plan') {
+            selectedMode.value = 'code';
+        } else {
+            selectedMode.value = 'ask';
+        }
+    }
+};
+
 onMounted(async () => {
     await fetchAgents();
     // Auto-select first agent if available
     if (agents.value && agents.value.length > 0) {
         selectedAgentId.value = String(agents.value[0].id);
     }
+    
+    // Add keyboard shortcut listener
+    document.addEventListener('keydown', cycleModeShortcut);
+});
+
+onUnmounted(() => {
+    // Remove keyboard shortcut listener on component unmount
+    document.removeEventListener('keydown', cycleModeShortcut);
 });
 
 const startChatWithMessage = (message?: string) => {
