@@ -18,7 +18,7 @@ fi
 
 REPO_NAME="$1"
 BRANCH_NAME="$2"
-REPO_BASE_DIR="$(dirname "$(dirname "$(realpath "$0")")")/repositories"
+REPO_BASE_DIR="$(dirname "$(dirname "$(realpath "$0")")")/storage/app/private/repositories"
 
 HOT_REPO="$REPO_BASE_DIR/hot/$REPO_NAME"
 PROJECT_REPO="$REPO_BASE_DIR/project/$REPO_NAME/$BRANCH_NAME"
