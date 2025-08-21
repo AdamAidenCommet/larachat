@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import axios from 'axios';
-import { Loader2, StickyNote } from 'lucide-vue-next';
-import { ref, watch, onMounted, onUnmounted } from 'vue';
+import { format } from 'date-fns';
+import { Loader2, Trash2 } from 'lucide-vue-next';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { toast } from 'vue-sonner';
 
 const props = defineProps<{
@@ -17,24 +17,27 @@ const emit = defineEmits<{
     'update:modelValue': [value: boolean];
 }>();
 
-const title = ref('');
 const content = ref('');
 const saving = ref(false);
+const notes = ref<any[]>([]);
+const loadingNotes = ref(false);
+const deletingNoteId = ref<number | null>(null);
 
 const saveNote = async () => {
-    if (!title.value.trim() && !content.value.trim()) {
-        toast.error('Please enter a title or content for the note');
+    if (!content.value.trim()) {
+        toast.error('Please enter content for the note');
         return;
     }
 
     saving.value = true;
     try {
-        await axios.post('/api/notes', {
-            title: title.value || 'Quick Note',
+        const response = await axios.post('/api/notes', {
+            title: content.value.substring(0, 50),
             content: content.value,
         });
-        toast.success('Note saved successfully');
-        handleClose();
+        toast.success('Note saved');
+        content.value = '';
+        notes.value.unshift(response.data);
     } catch (error: any) {
         toast.error(error.response?.data?.message || 'Failed to save note');
         console.error('Failed to save note:', error);
@@ -43,8 +46,33 @@ const saveNote = async () => {
     }
 };
 
+const loadNotes = async () => {
+    loadingNotes.value = true;
+    try {
+        const response = await axios.get('/api/notes');
+        notes.value = response.data;
+    } catch (error: any) {
+        console.error('Failed to load notes:', error);
+    } finally {
+        loadingNotes.value = false;
+    }
+};
+
+const deleteNote = async (noteId: number) => {
+    deletingNoteId.value = noteId;
+    try {
+        await axios.delete(`/api/notes/${noteId}`);
+        notes.value = notes.value.filter((n) => n.id !== noteId);
+        toast.success('Note deleted');
+    } catch (error: any) {
+        toast.error('Failed to delete note');
+        console.error('Failed to delete note:', error);
+    } finally {
+        deletingNoteId.value = null;
+    }
+};
+
 const handleClose = () => {
-    title.value = '';
     content.value = '';
     emit('update:modelValue', false);
 };
@@ -55,20 +83,31 @@ const handleEscape = (event: KeyboardEvent) => {
     }
 };
 
-const handleSaveShortcut = (event: KeyboardEvent) => {
-    if ((event.metaKey || event.ctrlKey) && event.key === 'Enter' && props.modelValue) {
+const handleKeyPress = (event: KeyboardEvent) => {
+    const target = event.target as HTMLElement;
+    const isNoteInput = target.id === 'quick-note-input';
+
+    if (isNoteInput && event.key === 'Enter' && !event.shiftKey) {
         event.preventDefault();
         saveNote();
     }
 };
 
+const formattedNotes = computed(() => {
+    return notes.value.map((note) => ({
+        ...note,
+        formattedDate: format(new Date(note.created_at), 'MMM d, h:mm a'),
+    }));
+});
+
 watch(
     () => props.modelValue,
     (isOpen) => {
         if (isOpen) {
+            loadNotes();
             setTimeout(() => {
-                const titleInput = document.querySelector('#quick-note-title') as HTMLInputElement;
-                titleInput?.focus();
+                const noteInput = document.querySelector('#quick-note-input') as HTMLInputElement;
+                noteInput?.focus();
             }, 100);
         }
     },
@@ -76,63 +115,73 @@ watch(
 
 onMounted(() => {
     document.addEventListener('keydown', handleEscape);
-    document.addEventListener('keydown', handleSaveShortcut);
+    document.addEventListener('keydown', handleKeyPress);
 });
 
 onUnmounted(() => {
     document.removeEventListener('keydown', handleEscape);
-    document.removeEventListener('keydown', handleSaveShortcut);
+    document.removeEventListener('keydown', handleKeyPress);
 });
 </script>
 
 <template>
     <Dialog :open="modelValue" @update:open="handleClose">
-        <DialogContent class="sm:max-w-lg">
-            <DialogHeader>
-                <DialogTitle class="flex items-center gap-2">
-                    <StickyNote class="h-5 w-5" />
-                    Quick Note
-                </DialogTitle>
-                <DialogDescription>
-                    Create a quick note. Press <kbd class="text-xs">⌘</kbd>+<kbd class="text-xs">Enter</kbd> to save.
-                </DialogDescription>
-            </DialogHeader>
+        <DialogContent class="p-0 sm:max-w-2xl">
+            <div class="flex h-[600px] flex-col">
+                <div class="border-b p-4">
+                    <div class="relative">
+                        <Input
+                            id="quick-note-input"
+                            v-model="content"
+                            placeholder="Type your note... (Enter to save, Shift+Enter for new line)"
+                            :disabled="saving"
+                            class="pr-10"
+                        />
+                        <Button
+                            size="sm"
+                            variant="ghost"
+                            class="absolute top-1/2 right-1 h-7 -translate-y-1/2 px-2"
+                            @click="saveNote"
+                            :disabled="saving || !content.trim()"
+                        >
+                            <Loader2 v-if="saving" class="h-4 w-4 animate-spin" />
+                            <span v-else class="text-xs">Save</span>
+                        </Button>
+                    </div>
+                </div>
 
-            <div class="space-y-4 py-4">
-                <div class="space-y-2">
-                    <Label htmlFor="quick-note-title">Title (optional)</Label>
-                    <Input
-                        id="quick-note-title"
-                        v-model="title"
-                        placeholder="Enter note title..."
-                        :disabled="saving"
-                        @keydown.enter.prevent="() => {
-                            const textarea = document.querySelector('#quick-note-content') as HTMLTextAreaElement;
-                            textarea?.focus();
-                        }"
-                    />
-                </div>
-                <div class="space-y-2">
-                    <Label htmlFor="quick-note-content">Note</Label>
-                    <Textarea
-                        id="quick-note-content"
-                        v-model="content"
-                        placeholder="Type your note here..."
-                        class="min-h-[120px] resize-none"
-                        :disabled="saving"
-                    />
-                </div>
+                <ScrollArea class="flex-1 p-4">
+                    <div v-if="loadingNotes" class="flex items-center justify-center py-8">
+                        <Loader2 class="h-6 w-6 animate-spin text-muted-foreground" />
+                    </div>
+                    <div v-else-if="notes.length === 0" class="py-8 text-center text-muted-foreground">No notes yet</div>
+                    <div v-else class="space-y-3">
+                        <div
+                            v-for="note in formattedNotes"
+                            :key="note.id"
+                            class="group relative rounded-lg border p-3 transition-colors hover:bg-muted/50"
+                        >
+                            <div class="flex items-start justify-between gap-2">
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-sm break-words whitespace-pre-wrap">{{ note.content }}</p>
+                                    <p class="mt-1 text-xs text-muted-foreground">{{ note.formattedDate }}</p>
+                                </div>
+                                <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    class="h-6 w-6 p-0 opacity-0 transition-opacity group-hover:opacity-100"
+                                    @click="deleteNote(note.id)"
+                                    :disabled="deletingNoteId === note.id"
+                                >
+                                    <Loader2 v-if="deletingNoteId === note.id" class="h-3 w-3 animate-spin" />
+                                    <Trash2 v-else class="h-3 w-3" />
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </ScrollArea>
             </div>
-
-            <DialogFooter>
-                <Button variant="outline" @click="handleClose" :disabled="saving">
-                    Cancel
-                </Button>
-                <Button @click="saveNote" :disabled="saving">
-                    <Loader2 v-if="saving" class="mr-2 h-4 w-4 animate-spin" />
-                    Save Note
-                </Button>
-            </DialogFooter>
         </DialogContent>
     </Dialog>
 </template>
+

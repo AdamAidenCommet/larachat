@@ -5,9 +5,9 @@ import AppSidebar from '@/components/AppSidebar.vue';
 import AppSidebarHeader from '@/components/AppSidebarHeader.vue';
 import PageTransition from '@/components/PageTransition.vue';
 import QuickNoteModal from '@/components/QuickNoteModal.vue';
-import { useKeyboardShortcut, getPlatformModifier } from '@/composables/useKeyboardShortcuts';
+import { getPlatformModifier, useKeyboardShortcut } from '@/composables/useKeyboardShortcuts';
 import type { BreadcrumbItemType } from '@/types';
-import { ref, onMounted } from 'vue';
+import { onMounted, ref } from 'vue';
 
 interface Props {
     breadcrumbs?: BreadcrumbItemType[];
@@ -28,50 +28,26 @@ useKeyboardShortcut([
         key: 'n',
         modifiers: {
             [platformMod]: true,
-            alt: true
+            alt: true,
         },
         handler: () => {
-            showQuickNoteModal.value = true;
+            showQuickNoteModal.value = !showQuickNoteModal.value;
         },
-        description: 'Open Quick Note (CMD/CTRL+ALT+N)'
+        description: 'Toggle Quick Note (CMD/CTRL+ALT+N)',
     },
-    {
-        key: 'n',
-        modifiers: {
-            [platformMod]: true,
-            shift: true
-        },
-        handler: () => {
-            showQuickNoteModal.value = true;
-        },
-        description: 'Open Quick Note fallback (CMD/CTRL+SHIFT+N)'
-    },
-    {
-        key: 'q',
-        modifiers: {
-            [platformMod]: true,
-            shift: true
-        },
-        handler: () => {
-            showQuickNoteModal.value = true;
-        },
-        description: 'Open Quick Note alternative (CMD/CTRL+SHIFT+Q)'
-    }
 ]);
 
 // Expose globally for debugging and testing
 onMounted(() => {
     if (typeof window !== 'undefined') {
         (window as any).__openQuickNote = () => {
-            console.log('[QuickNote] Opening via global function');
-            showQuickNoteModal.value = true;
+            console.log('[QuickNote] Toggling via global function');
+            showQuickNoteModal.value = !showQuickNoteModal.value;
         };
         (window as any).__quickNoteModal = showQuickNoteModal;
-        
-        console.log('[QuickNote] Quick Note shortcuts initialized');
-        console.log('  Primary: CMD/CTRL + ALT + N');
-        console.log('  Fallback: CMD/CTRL + SHIFT + N');
-        console.log('  Alternative: CMD/CTRL + SHIFT + Q');
+
+        console.log('[QuickNote] Quick Note shortcut initialized');
+        console.log('  Shortcut: CMD/CTRL + ALT + N (toggle)');
         console.log('  Debug: window.__openQuickNote()');
     }
 });

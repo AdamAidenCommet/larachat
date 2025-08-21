@@ -22,7 +22,7 @@ import { useConversations } from '@/composables/useConversations';
 import { useRepositories } from '@/composables/useRepositories';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import { GitBranch, Loader2, MessageSquarePlus, Plus, StickyNote, Users } from 'lucide-vue-next';
-import { onMounted, onUnmounted, ref, watch, defineEmits } from 'vue';
+import { defineEmits, onMounted, onUnmounted, ref, watch } from 'vue';
 import AppLogo from './AppLogo.vue';
 
 const emit = defineEmits<{
@@ -190,7 +190,7 @@ const handleCreateAgent = async () => {
                         <SidebarMenuButton @click="emit('openQuickNote')">
                             <StickyNote />
                             <span>Quick Note</span>
-                            <span class="ml-auto text-xs text-muted-foreground">⌘⇧Q</span>
+                            <span class="ml-auto text-xs text-muted-foreground">⌘⌥N</span>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                 </SidebarMenu>
