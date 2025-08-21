@@ -5,8 +5,9 @@ import AppSidebar from '@/components/AppSidebar.vue';
 import AppSidebarHeader from '@/components/AppSidebarHeader.vue';
 import PageTransition from '@/components/PageTransition.vue';
 import QuickNoteModal from '@/components/QuickNoteModal.vue';
+import { useKeyboardShortcut, getPlatformModifier } from '@/composables/useKeyboardShortcuts';
 import type { BreadcrumbItemType } from '@/types';
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted } from 'vue';
 
 interface Props {
     breadcrumbs?: BreadcrumbItemType[];
@@ -18,25 +19,61 @@ withDefaults(defineProps<Props>(), {
 
 const showQuickNoteModal = ref(false);
 
-const handleGlobalKeydown = (event: KeyboardEvent) => {
-    // Check for Cmd+Option+N (Mac) or Ctrl+Alt+N (Windows/Linux)
-    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-    const cmdOrCtrl = isMac ? event.metaKey : event.ctrlKey;
-    
-    if (cmdOrCtrl && event.altKey && event.key.toLowerCase() === 'n') {
-        event.preventDefault();
-        event.stopPropagation();
-        showQuickNoteModal.value = true;
+// Get platform-specific modifier key
+const platformMod = getPlatformModifier();
+
+// Register keyboard shortcuts using the robust composable
+useKeyboardShortcut([
+    {
+        key: 'n',
+        modifiers: {
+            [platformMod]: true,
+            alt: true
+        },
+        handler: () => {
+            showQuickNoteModal.value = true;
+        },
+        description: 'Open Quick Note (CMD/CTRL+ALT+N)'
+    },
+    {
+        key: 'n',
+        modifiers: {
+            [platformMod]: true,
+            shift: true
+        },
+        handler: () => {
+            showQuickNoteModal.value = true;
+        },
+        description: 'Open Quick Note fallback (CMD/CTRL+SHIFT+N)'
+    },
+    {
+        key: 'q',
+        modifiers: {
+            [platformMod]: true,
+            shift: true
+        },
+        handler: () => {
+            showQuickNoteModal.value = true;
+        },
+        description: 'Open Quick Note alternative (CMD/CTRL+SHIFT+Q)'
     }
-};
+]);
 
+// Expose globally for debugging and testing
 onMounted(() => {
-    // Use capture phase to intercept the event before other handlers
-    document.addEventListener('keydown', handleGlobalKeydown, true);
-});
-
-onUnmounted(() => {
-    document.removeEventListener('keydown', handleGlobalKeydown, true);
+    if (typeof window !== 'undefined') {
+        (window as any).__openQuickNote = () => {
+            console.log('[QuickNote] Opening via global function');
+            showQuickNoteModal.value = true;
+        };
+        (window as any).__quickNoteModal = showQuickNoteModal;
+        
+        console.log('[QuickNote] Quick Note shortcuts initialized');
+        console.log('  Primary: CMD/CTRL + ALT + N');
+        console.log('  Fallback: CMD/CTRL + SHIFT + N');
+        console.log('  Alternative: CMD/CTRL + SHIFT + Q');
+        console.log('  Debug: window.__openQuickNote()');
+    }
 });
 </script>
 

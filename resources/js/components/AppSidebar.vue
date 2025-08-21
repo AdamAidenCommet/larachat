@@ -190,7 +190,7 @@ const handleCreateAgent = async () => {
                         <SidebarMenuButton @click="emit('openQuickNote')">
                             <StickyNote />
                             <span>Quick Note</span>
-                            <span class="ml-auto text-xs text-muted-foreground">⌘⌥N</span>
+                            <span class="ml-auto text-xs text-muted-foreground">⌘⇧Q</span>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                 </SidebarMenu>
