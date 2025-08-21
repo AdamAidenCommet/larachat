@@ -174,9 +174,9 @@ const handleDelete = async () => {
             </DropdownMenu>
         </template>
 
-        <div class="container mx-auto py-6">
+        <div class="container mx-auto px-2 py-6 sm:px-6">
             <!-- Main CTA Section -->
-            <div class="flex min-h-[60vh] flex-col items-center justify-center">
+            <div class="flex min-h-[60vh] flex-col items-center justify-center px-1 sm:px-0">
                 <!-- Conversation Starter -->
                 <div class="w-full max-w-2xl space-y-6">
                     <div class="text-center">

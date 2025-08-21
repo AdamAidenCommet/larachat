@@ -194,8 +194,8 @@ onUnmounted(() => {
 
 <template>
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="px-1 py-0.5">
-            <div class="mb-0.5 flex items-center justify-between sm:mb-1">
+        <div class="px-1 py-0.5 sm:px-2">
+            <div class="mb-0.5 flex items-center justify-between px-1 sm:mb-1 sm:px-0">
                 <h1 class="text-lg font-bold">Git Diff</h1>
                 <DropdownMenu v-if="hasContent">
                     <DropdownMenuTrigger as-child>
