@@ -930,15 +930,26 @@ onUnmounted(() => {
                             <component :is="isArchived ? ArchiveRestore : Archive" class="mr-2 h-4 w-4" />
                             <span>{{ isArchived ? 'Unarchive Conversation' : 'Archive Conversation' }}</span>
                         </DropdownMenuItem>
+
+                        <DropdownMenuItem
+                            v-if="conversationId && showArchiveConfirm && !isArchived"
+                            @click="archiveConversation()"
+                            :disabled="isArchiving"
+                            class="cursor-pointer text-destructive"
+                        >
+                            <Archive class="mr-2 h-4 w-4" />
+                            <span>Confirm Archive</span>
+                        </DropdownMenuItem>
+
+                        <DropdownMenuItem
+                            v-if="conversationId && showArchiveConfirm && !isArchived"
+                            @click="showArchiveConfirm = false"
+                            class="cursor-pointer"
+                        >
+                            <span class="ml-6">Cancel</span>
+                        </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
-
-                <!-- Archive Confirmation - Separate row on small screens -->
-                <div v-if="conversationId && showArchiveConfirm && !isArchived" class="flex w-full gap-2 sm:w-auto">
-                    <Button @click="archiveConversation()" variant="destructive" size="sm" :disabled="isArchiving" class="text-xs">
-                        Confirm Archive
-                    </Button>
-                </div>
             </div>
         </template>
         <div class="relative flex h-[calc(100dvh-4rem)] flex-col bg-background">
