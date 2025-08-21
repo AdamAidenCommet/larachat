@@ -273,10 +273,12 @@ const processConversationResponses = (conversation: any, isPolling = false) => {
 };
 
 const loadSessionMessages = async (isPolling = false) => {
-    if (!props.sessionFile) return;
+    // Check both props.sessionFile and local sessionFilename
+    const fileToLoad = props.sessionFile || sessionFilename.value;
+    if (!fileToLoad) return;
 
     try {
-        const sessionData = await loadSession(props.sessionFile);
+        const sessionData = await loadSession(fileToLoad);
         incompleteMessageFound.value = false;
 
         if (!isPolling) {
@@ -434,7 +436,7 @@ const loadSessionMessages = async (isPolling = false) => {
             }
         }
 
-        sessionFilename.value = props.sessionFile;
+        sessionFilename.value = fileToLoad;
 
         // Only scroll if not interacting
         if (!isUserInteracting.value) {
