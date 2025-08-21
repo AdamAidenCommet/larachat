@@ -94,7 +94,6 @@ const isUserInteracting = ref(false);
 const pendingUpdates = ref<any[]>([]);
 const isArchived = ref(props.isArchived || false);
 const isArchiving = ref(false);
-const showArchiveConfirm = ref(false);
 const selectedMode = ref<'coding' | 'planning'>('coding');
 const gitBranch = ref<string | null>(null);
 const prNumber = ref<number | null>(null);
@@ -598,7 +597,6 @@ const archiveConversation = async () => {
         // Archive the conversation
         await axios.post(`/api/conversations/${conversationId.value}/archive`);
         isArchived.value = true;
-        showArchiveConfirm.value = false;
 
         // Refresh conversations list to update sidebar
         await fetchConversations(false, true);
@@ -718,7 +716,6 @@ watch(
         // Reset archive button state when conversation changes
         isArchived.value = props.isArchived || false;
         isArchiving.value = false;
-        showArchiveConfirm.value = false;
     },
 );
 
@@ -727,7 +724,6 @@ watch(
     () => props.isArchived,
     (newValue) => {
         isArchived.value = newValue || false;
-        showArchiveConfirm.value = false;
     },
 );
 
@@ -922,8 +918,8 @@ onUnmounted(() => {
                         <DropdownMenuSeparator v-if="conversationId" />
 
                         <DropdownMenuItem
-                            v-if="conversationId && !showArchiveConfirm"
-                            @click="isArchived ? unarchiveConversation() : (showArchiveConfirm = true)"
+                            v-if="conversationId"
+                            @click="isArchived ? unarchiveConversation() : archiveConversation()"
                             :disabled="isArchiving"
                             class="cursor-pointer"
                         >
@@ -931,23 +927,6 @@ onUnmounted(() => {
                             <span>{{ isArchived ? 'Unarchive Conversation' : 'Archive Conversation' }}</span>
                         </DropdownMenuItem>
 
-                        <DropdownMenuItem
-                            v-if="conversationId && showArchiveConfirm && !isArchived"
-                            @click="archiveConversation()"
-                            :disabled="isArchiving"
-                            class="cursor-pointer text-destructive"
-                        >
-                            <Archive class="mr-2 h-4 w-4" />
-                            <span>Confirm Archive</span>
-                        </DropdownMenuItem>
-
-                        <DropdownMenuItem
-                            v-if="conversationId && showArchiveConfirm && !isArchived"
-                            @click="showArchiveConfirm = false"
-                            class="cursor-pointer"
-                        >
-                            <span class="ml-6">Cancel</span>
-                        </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
             </div>
