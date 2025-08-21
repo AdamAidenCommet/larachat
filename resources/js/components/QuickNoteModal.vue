@@ -91,7 +91,11 @@ const handleKeyPress = (event: KeyboardEvent) => {
 
     if (isNoteInput && event.key === 'Enter' && !event.shiftKey) {
         event.preventDefault();
-        saveNote();
+        if (content.value.trim()) {
+            saveNote();
+        } else {
+            handleClose();
+        }
     }
 };
 
