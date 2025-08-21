@@ -2,7 +2,10 @@
 
 namespace App\Providers;
 
+use App\Models\Note;
 use App\Models\Repository;
+use App\Policies\NotePolicy;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 
@@ -21,6 +24,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Register policies
+        Gate::policy(Note::class, NotePolicy::class);
+
         // Force HTTPS for URL generation if APP_URL uses https
         // This ensures assets are loaded over HTTPS
         if (str_starts_with(config('app.url'), 'https://')) {

@@ -38,6 +38,8 @@ const saveNote = async () => {
         toast.success('Note saved');
         content.value = '';
         notes.value.unshift(response.data);
+        // Close the modal after saving
+        handleClose();
     } catch (error: any) {
         toast.error(error.response?.data?.message || 'Failed to save note');
         console.error('Failed to save note:', error);
