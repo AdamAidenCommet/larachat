@@ -972,10 +972,10 @@ onUnmounted(() => {
                 </DropdownMenu>
             </div>
         </template>
-        <div class="relative flex h-[calc(100dvh-4rem)] flex-col bg-background">
+        <div class="flex h-[calc(100dvh-4rem)] flex-col bg-background">
             <!-- Chat Messages -->
-            <ScrollArea ref="messagesContainer" class="flex-1 p-4 pb-20">
-                <div class="space-y-2">
+            <ScrollArea ref="messagesContainer" class="flex-1 overflow-auto p-4">
+                <div class="space-y-2 pb-4">
                     <ChatMessage
                         v-for="message in filteredMessages"
                         :key="message.id"
@@ -996,8 +996,8 @@ onUnmounted(() => {
                 </div>
             </ScrollArea>
 
-            <!-- Input Area - Fixed at bottom -->
-            <div class="absolute right-0 bottom-0 left-0 border-t bg-background/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+            <!-- Input Area - Now part of flex layout, not absolute -->
+            <div class="border-t bg-background/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
                 <div v-if="isArchived" class="text-center text-muted-foreground">
                     This conversation is archived. Unarchive it to continue the conversation.
                 </div>
