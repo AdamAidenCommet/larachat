@@ -114,14 +114,15 @@ class SendClaudeMessageJob implements ShouldQueue
             if ($this->conversation->agent_id) {
                 $this->conversation->load('agent');
                 if ($this->conversation->agent && $this->conversation->agent->prompt) {
-                    // Escape the prompt for shell usage
-                    $agentPrompt = escapeshellarg($this->conversation->agent->prompt);
-                    $options .= ' --append-system-prompt '.$agentPrompt;
+                    // Escape quotes in the prompt and wrap in quotes for str_getcsv
+                    $agentPrompt = str_replace('"', '\"', $this->conversation->agent->prompt);
+                    $options .= ' --append-system-prompt "'.$agentPrompt.'"';
                     
                     Log::info('Adding agent system prompt', [
                         'conversation_id' => $this->conversation->id,
                         'agent_id' => $this->conversation->agent_id,
                         'agent_name' => $this->conversation->agent->name,
+                        'prompt_length' => strlen($agentPrompt),
                     ]);
                 }
             }

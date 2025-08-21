@@ -58,11 +58,22 @@ class ClaudeService
             }
 
             if ($options) {
-                $optionsParts = explode(' ', $options);
+                // Use str_getcsv to properly handle quoted arguments
+                $optionsParts = str_getcsv($options, ' ');
+                // Remove empty parts that might result from extra spaces
+                $optionsParts = array_filter($optionsParts, fn($part) => $part !== '');
                 $command = array_merge($command, $optionsParts);
             }
 
             $command[] = $prompt;
+
+            // Log the full command for debugging
+            \Log::info('Claude stream command constructed', [
+                'command' => $command,
+                'prompt' => $prompt,
+                'sessionId' => $sessionId,
+                'options' => $options,
+            ]);
 
             // With the wrapper handling directory changes, we don't need to set working directory here
             // The wrapper will cd to the correct project directory based on the project ID
@@ -288,11 +299,22 @@ class ClaudeService
         }
 
         if ($options) {
-            $optionsParts = explode(' ', $options);
+            // Use str_getcsv to properly handle quoted arguments
+            $optionsParts = str_getcsv($options, ' ');
+            // Remove empty parts that might result from extra spaces
+            $optionsParts = array_filter($optionsParts, fn($part) => $part !== '');
             $command = array_merge($command, $optionsParts);
         }
 
         $command[] = $prompt;
+
+        // Log the full command for debugging
+        \Log::info('Claude command constructed', [
+            'command' => $command,
+            'prompt' => $prompt,
+            'sessionId' => $sessionId,
+            'options' => $options,
+        ]);
 
         // With the wrapper handling directory changes, we don't need to set working directory here
         // The wrapper will cd to the correct project directory based on the project ID
