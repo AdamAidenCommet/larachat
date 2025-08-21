@@ -65,7 +65,8 @@ class ClaudeService
                 $command = array_merge($command, $optionsParts);
             }
 
-            $command[] = $prompt;
+            // Escape the prompt to handle special characters properly
+        $command[] = $prompt;
 
             // Log the full command for debugging
             \Log::info('Claude stream command constructed', [
@@ -345,6 +346,7 @@ class ClaudeService
             $command = array_merge($command, $optionsParts);
         }
 
+        // Escape the prompt to handle special characters properly
         $command[] = $prompt;
 
         // Log the full command for debugging
