@@ -727,6 +727,14 @@ watch(
     },
 );
 
+// Update agent when prop changes
+watch(
+    () => props.agent,
+    (newAgent) => {
+        agent.value = newAgent || null;
+    },
+);
+
 // Update conversation when conversations list changes
 watch(
     conversations,
