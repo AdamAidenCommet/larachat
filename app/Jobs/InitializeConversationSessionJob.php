@@ -176,6 +176,11 @@ class InitializeConversationSessionJob implements ShouldQueue
                 try {
                     $result = Process::path($to)
                         ->timeout(300) // 5 minutes timeout
+                        ->env([
+                            'PATH' => '/Users/customer/Library/Application Support/Herd/bin:/Users/customer/Library/Application Support/Herd/config/nvm/versions/node/v20.19.4/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin',
+                            'HOME' => '/Users/customer',
+                            'USER' => 'customer',
+                        ])
                         ->run($repository->deploy_script);
 
                     if ($result->successful()) {

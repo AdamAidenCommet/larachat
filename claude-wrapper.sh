@@ -47,10 +47,23 @@ fi
 cd "$PROJECT_DIR" || exit 1
 
 # Set up environment for Claude CLI
-# Use the actual user's environment
-export PATH="/Users/customer/Library/Application Support/Herd/config/nvm/versions/node/v20.19.4/bin:/opt/homebrew/bin:$PATH"
+# Include Herd PHP/Composer paths and Node paths
+export PATH="/Users/customer/Library/Application Support/Herd/bin:/Users/customer/Library/Application Support/Herd/config/nvm/versions/node/v20.19.4/bin:/opt/homebrew/bin:$PATH"
 export HOME="${HOME:-/Users/customer}"
 export USER="${USER:-customer}"
 
 # Execute claude with all arguments from the project directory
-exec claude "$@"
+# If the last argument doesn't start with a dash (it's the prompt), pass it via stdin
+# This ensures claude doesn't wait for interactive input
+if [ $# -gt 0 ]; then
+    last_arg="${@: -1}"
+    if [[ ! "$last_arg" =~ ^- ]]; then
+        # Remove the last argument (the prompt) and pass it via stdin
+        set -- "${@:1:$(($#-1))}"
+        echo "$last_arg" | exec claude "$@"
+    else
+        exec claude "$@"
+    fi
+else
+    exec claude "$@"
+fi

@@ -77,7 +77,11 @@ class ClaudeService
 
             // With the wrapper handling directory changes, we don't need to set working directory here
             // The wrapper will cd to the correct project directory based on the project ID
-            $process = new Process($command);
+            $process = new Process($command, null, [
+                'PATH' => '/Users/customer/Library/Application Support/Herd/bin:/Users/customer/Library/Application Support/Herd/config/nvm/versions/node/v20.19.4/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin',
+                'HOME' => '/Users/customer',
+                'USER' => 'customer',
+            ]);
             $process->setTimeout(null);
             $process->setIdleTimeout(null);
 
@@ -318,7 +322,11 @@ class ClaudeService
 
         // With the wrapper handling directory changes, we don't need to set working directory here
         // The wrapper will cd to the correct project directory based on the project ID
-        $process = new Process($command);
+        $process = new Process($command, null, [
+            'PATH' => '/Users/customer/Library/Application Support/Herd/bin:/Users/customer/Library/Application Support/Herd/config/nvm/versions/node/v20.19.4/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin',
+            'HOME' => '/Users/customer',
+            'USER' => 'customer',
+        ]);
         $process->setTimeout(null);
         $process->setIdleTimeout(null);
 
