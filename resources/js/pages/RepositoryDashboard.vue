@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useAgents } from '@/composables/useAgents';
+import { useKeyboardShortcut, getPlatformModifier } from '@/composables/useKeyboardShortcuts';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import { router } from '@inertiajs/vue3';
@@ -55,20 +56,47 @@ const { agents, fetchAgents } = useAgents();
 
 const breadcrumbs = computed<BreadcrumbItem[]>(() => [{ title: props.repository.name, href: '#' }]);
 
-const cycleModeShortcut = (e: KeyboardEvent) => {
-    // CMD+OPTION+M
-    if (e.metaKey && e.altKey && e.key === 'm') {
-        e.preventDefault();
-        // Cycle through modes: ask -> plan -> code -> ask
-        if (selectedMode.value === 'ask') {
-            selectedMode.value = 'plan';
-        } else if (selectedMode.value === 'plan') {
-            selectedMode.value = 'code';
-        } else {
-            selectedMode.value = 'ask';
-        }
+// Get platform-specific modifier key
+const platformMod = getPlatformModifier();
+
+// Register keyboard shortcuts using the robust composable
+useKeyboardShortcut([
+    {
+        key: 'm',
+        modifiers: {
+            [platformMod]: true,
+            alt: true
+        },
+        handler: () => {
+            // Focus on the message input textarea
+            const textarea = document.querySelector('textarea[placeholder="Type your message or question..."]') as HTMLTextAreaElement;
+            if (textarea) {
+                textarea.focus();
+                console.log('[RepositoryDashboard] Ctrl+Option+M shortcut triggered - focusing message input');
+            }
+        },
+        description: 'Focus message input (CMD/CTRL+ALT+M)'
+    },
+    {
+        key: 'm',
+        modifiers: {
+            [platformMod]: true,
+            shift: true
+        },
+        handler: () => {
+            // Cycle through modes: ask -> plan -> code -> ask
+            if (selectedMode.value === 'ask') {
+                selectedMode.value = 'plan';
+            } else if (selectedMode.value === 'plan') {
+                selectedMode.value = 'code';
+            } else {
+                selectedMode.value = 'ask';
+            }
+            console.log('[RepositoryDashboard] Ctrl+Shift+M shortcut triggered - switched to', selectedMode.value, 'mode');
+        },
+        description: 'Cycle through modes (CMD/CTRL+SHIFT+M)'
     }
-};
+]);
 
 onMounted(async () => {
     await fetchAgents();
@@ -77,13 +105,10 @@ onMounted(async () => {
         selectedAgentId.value = String(agents.value[0].id);
     }
     
-    // Add keyboard shortcut listener
-    document.addEventListener('keydown', cycleModeShortcut);
-});
-
-onUnmounted(() => {
-    // Remove keyboard shortcut listener on component unmount
-    document.removeEventListener('keydown', cycleModeShortcut);
+    // Log shortcut initialization
+    console.log('[RepositoryDashboard] Keyboard shortcuts initialized');
+    console.log('  Focus message: CMD/CTRL + ALT + M');
+    console.log('  Cycle modes: CMD/CTRL + SHIFT + M');
 });
 
 const startChatWithMessage = (message?: string) => {
