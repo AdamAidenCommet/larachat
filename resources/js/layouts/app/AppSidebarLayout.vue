@@ -25,16 +25,18 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
     
     if (cmdOrCtrl && event.altKey && event.key.toLowerCase() === 'n') {
         event.preventDefault();
+        event.stopPropagation();
         showQuickNoteModal.value = true;
     }
 };
 
 onMounted(() => {
-    document.addEventListener('keydown', handleGlobalKeydown);
+    // Use capture phase to intercept the event before other handlers
+    document.addEventListener('keydown', handleGlobalKeydown, true);
 });
 
 onUnmounted(() => {
-    document.removeEventListener('keydown', handleGlobalKeydown);
+    document.removeEventListener('keydown', handleGlobalKeydown, true);
 });
 </script>
 
