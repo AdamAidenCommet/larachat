@@ -275,17 +275,34 @@ class ClaudeService
         
         if ($pid) {
             try {
-                // Kill the process and its children
-                $killCommand = "pkill -TERM -P {$pid}; kill -TERM {$pid}";
-                exec($killCommand);
+                // First, check if the process is still running
+                $checkCommand = "ps -p {$pid} > /dev/null 2>&1";
+                $processExists = shell_exec($checkCommand . ' && echo "1" || echo "0"');
                 
-                // Clear the cache
+                if (trim($processExists) === '1') {
+                    // Kill the process and its children
+                    // Use SIGTERM first to allow graceful shutdown
+                    $killCommand = "pkill -TERM -P {$pid} 2>/dev/null; kill -TERM {$pid} 2>/dev/null";
+                    exec($killCommand);
+                    
+                    // Give it a moment to terminate gracefully
+                    usleep(500000); // 0.5 seconds
+                    
+                    // Check if still running and force kill if necessary
+                    $processStillExists = shell_exec($checkCommand . ' && echo "1" || echo "0"');
+                    if (trim($processStillExists) === '1') {
+                        $forceKillCommand = "pkill -9 -P {$pid} 2>/dev/null; kill -9 {$pid} 2>/dev/null";
+                        exec($forceKillCommand);
+                    }
+                    
+                    Log::info('Terminated Claude process', [
+                        'conversation_id' => $conversationId,
+                        'pid' => $pid,
+                    ]);
+                }
+                
+                // Clear the cache regardless
                 Cache::forget($cacheKey);
-                
-                Log::info('Terminated Claude process', [
-                    'conversation_id' => $conversationId,
-                    'pid' => $pid,
-                ]);
                 
                 return true;
             } catch (\Exception $e) {
@@ -294,7 +311,14 @@ class ClaudeService
                     'pid' => $pid,
                     'error' => $e->getMessage(),
                 ]);
+                
+                // Still try to clear the cache
+                Cache::forget($cacheKey);
             }
+        } else {
+            Log::warning('No process found to terminate', [
+                'conversation_id' => $conversationId,
+            ]);
         }
         
         return false;
@@ -367,6 +391,21 @@ class ClaudeService
         $process->setTimeout(null);
         $process->setIdleTimeout(null);
 
+        // Start the process to get the PID
+        $process->start();
+        
+        // Store the process ID in cache for the stop functionality
+        if ($conversationId && $process->isRunning()) {
+            $pid = $process->getPid();
+            $cacheKey = 'claude_process_' . $conversationId;
+            Cache::put($cacheKey, $pid, 3600); // Store for 1 hour
+            
+            Log::info('Stored Claude process PID', [
+                'conversation_id' => $conversationId,
+                'pid' => $pid,
+            ]);
+        }
+
         // Initialize session data
         $rawJsonResponses = [];
         $extractedSessionId = $sessionId;
@@ -385,8 +424,8 @@ class ClaudeService
             'repositoryPath' => $repositoryPath,
         ]);
 
-        // Run the process with real-time output processing
-        $process->run(function ($type, $buffer) use (&$rawJsonResponses, &$extractedSessionId, $prompt, $filename, $sessionId, $repositoryPath, $progressCallback) {
+        // Wait for the process to complete with real-time output processing
+        $process->wait(function ($type, $buffer) use (&$rawJsonResponses, &$extractedSessionId, $prompt, $filename, $sessionId, $repositoryPath, $progressCallback) {
             $lines = explode("\n", $buffer);
 
             foreach ($lines as $line) {
@@ -443,6 +482,16 @@ class ClaudeService
                 'process_successful' => $process->isSuccessful(),
             ]);
             self::saveResponse($prompt, $filename, $sessionId, $extractedSessionId, $rawJsonResponses, false, $repositoryPath);
+        }
+
+        // Clear the process cache once completed
+        if ($conversationId) {
+            $cacheKey = 'claude_process_' . $conversationId;
+            Cache::forget($cacheKey);
+            
+            Log::info('Cleared Claude process PID from cache', [
+                'conversation_id' => $conversationId,
+            ]);
         }
 
         return [
