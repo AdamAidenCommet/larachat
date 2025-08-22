@@ -999,7 +999,7 @@ onUnmounted(() => {
             </ScrollArea>
 
             <!-- Input Area - Now part of flex layout, not absolute -->
-            <div class="relative z-30 border-t bg-background/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+            <div class="relative z-[100] border-t bg-background/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
                 <div v-if="isArchived" class="text-center text-muted-foreground">
                     This conversation is archived. Unarchive it to continue the conversation.
                 </div>
@@ -1024,17 +1024,15 @@ onUnmounted(() => {
                         >
                             <Send class="h-4 w-4" />
                         </Button>
-                        <Button
+                        <button
                             v-else
                             @click="stopProcessing"
-                            variant="destructive"
-                            size="icon"
-                            class="relative z-50 h-10 w-10 rounded-full pointer-events-auto"
+                            class="h-10 w-10 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90 inline-flex items-center justify-center text-sm font-medium transition-colors"
                             title="Stop processing"
-                            style="pointer-events: auto !important;"
+                            style="z-index: 999999 !important; position: relative !important; pointer-events: auto !important;"
                         >
                             <Square class="h-4 w-4" />
-                        </Button>
+                        </button>
                     </div>
                 </div>
             </div>
