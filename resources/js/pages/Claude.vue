@@ -999,7 +999,7 @@ onUnmounted(() => {
             </ScrollArea>
 
             <!-- Input Area - Now part of flex layout, not absolute -->
-            <div class="border-t bg-background/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+            <div class="relative z-10 border-t bg-background/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
                 <div v-if="isArchived" class="text-center text-muted-foreground">
                     This conversation is archived. Unarchive it to continue the conversation.
                 </div>
@@ -1029,7 +1029,7 @@ onUnmounted(() => {
                             @click="stopProcessing"
                             variant="destructive"
                             size="icon"
-                            class="h-10 w-10 rounded-full"
+                            class="relative z-20 h-10 w-10 rounded-full"
                             title="Stop processing"
                         >
                             <Square class="h-4 w-4" />
