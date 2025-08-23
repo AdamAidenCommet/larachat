@@ -26,7 +26,9 @@ class AgentController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'description' => 'nullable|string|max:500',
             'prompt' => 'required|string',
+            'tools' => 'nullable|string',
         ]);
 
         $agent = Agent::create($validated);
@@ -43,7 +45,9 @@ class AgentController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'description' => 'nullable|string|max:500',
             'prompt' => 'required|string',
+            'tools' => 'nullable|string',
         ]);
 
         $agent->update($validated);
