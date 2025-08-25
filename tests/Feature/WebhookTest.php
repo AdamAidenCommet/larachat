@@ -200,4 +200,132 @@ class WebhookTest extends TestCase
         $this->assertNotNull($conversation);
         $this->assertNull($conversation->repository);
     }
+
+    public function test_webhook_accepts_mode_parameter()
+    {
+        Queue::fake();
+
+        // Test 'ask' mode (default)
+        $payload = json_encode([
+            'message' => 'Test with ask mode',
+            'mode' => 'ask',
+        ]);
+
+        $signature = 'sha256='.hash_hmac('sha256', $payload, 'test-webhook-secret');
+
+        $response = $this->postJson('/api/webhooks', json_decode($payload, true), [
+            'X-Webhook-Signature' => $signature,
+        ]);
+
+
+        $response->assertStatus(201)
+            ->assertJson([
+                'status' => 'success',
+                'mode' => 'plan',
+            ]);
+
+        $conversation = Conversation::where('message', 'Test with ask mode')->first();
+        $this->assertNotNull($conversation);
+        $this->assertEquals('plan', $conversation->mode);
+
+        // Test 'code' mode
+        $payload = json_encode([
+            'message' => 'Test with code mode',
+            'mode' => 'code',
+        ]);
+
+        $signature = 'sha256='.hash_hmac('sha256', $payload, 'test-webhook-secret');
+
+        $response = $this->postJson('/api/webhooks', json_decode($payload, true), [
+            'X-Webhook-Signature' => $signature,
+        ]);
+
+        $response->assertStatus(201)
+            ->assertJson([
+                'status' => 'success',
+                'mode' => 'bypassPermissions',
+            ]);
+
+        $conversation = Conversation::where('message', 'Test with code mode')->first();
+        $this->assertNotNull($conversation);
+        $this->assertEquals('bypassPermissions', $conversation->mode);
+
+        // Test default mode when not specified
+        $payload = json_encode([
+            'message' => 'Test without mode',
+        ]);
+
+        $signature = 'sha256='.hash_hmac('sha256', $payload, 'test-webhook-secret');
+
+        $response = $this->postJson('/api/webhooks', json_decode($payload, true), [
+            'X-Webhook-Signature' => $signature,
+        ]);
+
+        $response->assertStatus(201)
+            ->assertJson([
+                'status' => 'success',
+                'mode' => 'plan', // Default should be 'plan' (ask mode)
+            ]);
+
+        $conversation = Conversation::where('message', 'Test without mode')->first();
+        $this->assertNotNull($conversation);
+        $this->assertEquals('plan', $conversation->mode);
+    }
+
+    public function test_webhook_rejects_invalid_mode()
+    {
+        Queue::fake();
+
+        $payload = json_encode([
+            'message' => 'Test with invalid mode',
+            'mode' => 'invalid_mode',
+        ]);
+
+        $signature = 'sha256='.hash_hmac('sha256', $payload, 'test-webhook-secret');
+
+        $response = $this->postJson('/api/webhooks', json_decode($payload, true), [
+            'X-Webhook-Signature' => $signature,
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJson(['error' => 'Invalid mode. Must be "ask", "plan", "code", or "bypassPermissions"']);
+    }
+
+    public function test_webhook_accepts_all_mode_variations()
+    {
+        Queue::fake();
+
+        // Test all accepted mode values
+        $modeTests = [
+            'ask' => 'plan',
+            'plan' => 'plan',
+            'code' => 'bypassPermissions',
+            'bypassPermissions' => 'bypassPermissions',
+            'ASK' => 'plan', // Test case insensitivity
+            'CODE' => 'bypassPermissions',
+        ];
+
+        foreach ($modeTests as $input => $expected) {
+            $payload = json_encode([
+                'message' => "Test with mode: {$input}",
+                'mode' => $input,
+            ]);
+
+            $signature = 'sha256='.hash_hmac('sha256', $payload, 'test-webhook-secret');
+
+            $response = $this->postJson('/api/webhooks', json_decode($payload, true), [
+                'X-Webhook-Signature' => $signature,
+            ]);
+
+            $response->assertStatus(201)
+                ->assertJson([
+                    'status' => 'success',
+                    'mode' => $expected,
+                ]);
+
+            $conversation = Conversation::where('message', "Test with mode: {$input}")->first();
+            $this->assertNotNull($conversation);
+            $this->assertEquals($expected, $conversation->mode);
+        }
+    }
 }
