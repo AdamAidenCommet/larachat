@@ -7,7 +7,7 @@ import { computed, ref } from 'vue';
 
 const props = defineProps<{
     message: Message;
-    formatTime: (date: Date) => string;
+    formatTime: (date: Date | string) => string;
     showRawResponses: boolean;
     repositoryPath?: string;
 }>();
