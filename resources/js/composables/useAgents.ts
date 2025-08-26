@@ -19,7 +19,25 @@ export function useAgents() {
     const fetchAgents = async () => {
         try {
             const response = await axios.get('/api/agents');
-            agents.value = response.data.agents || [];
+            const newAgents = response.data.agents || [];
+            
+            // Update the list in-place to avoid UI jump
+            // Remove agents that no longer exist
+            agents.value = agents.value.filter(existingAgent => 
+                newAgents.some(newAgent => newAgent.id === existingAgent.id)
+            );
+            
+            // Update existing agents and add new ones
+            newAgents.forEach(newAgent => {
+                const existingIndex = agents.value.findIndex(a => a.id === newAgent.id);
+                if (existingIndex !== -1) {
+                    // Update existing agent
+                    agents.value[existingIndex] = newAgent;
+                } else {
+                    // Add new agent
+                    agents.value.push(newAgent);
+                }
+            });
         } catch (error) {
             console.error('Failed to fetch agents:', error);
         }

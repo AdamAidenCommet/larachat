@@ -42,11 +42,30 @@ export function useConversations() {
 
         try {
             const response = await axios.get<Conversation[]>('/api/claude/conversations');
-            conversations.value = response.data;
+            const newConversations = response.data || [];
+            
+            // Update the list in-place to avoid UI jump
+            // Remove conversations that no longer exist
+            conversations.value = conversations.value.filter(existingConv => 
+                newConversations.some(newConv => newConv.id === existingConv.id)
+            );
+            
+            // Update existing conversations and add new ones
+            newConversations.forEach(newConv => {
+                const existingIndex = conversations.value.findIndex(c => c.id === newConv.id);
+                if (existingIndex !== -1) {
+                    // Update existing conversation
+                    conversations.value[existingIndex] = newConv;
+                } else {
+                    // Add new conversation
+                    conversations.value.push(newConv);
+                }
+            });
+            
             hasInitialized = true;
 
             // Check if any conversations are processing
-            const hasProcessing = response.data.some((conv) => conv.is_processing);
+            const hasProcessing = newConversations.some((conv) => conv.is_processing);
 
             // Set up or clear interval based on processing status
             if (hasProcessing && !refreshInterval) {

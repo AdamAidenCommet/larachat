@@ -31,7 +31,26 @@ export function useRepositories() {
         error.value = null;
         try {
             const response = await axios.get('/api/repositories');
-            repositories.value = response.data;
+            const newRepositories = response.data || [];
+            
+            // Update the list in-place to avoid UI jump
+            // Remove repositories that no longer exist
+            repositories.value = repositories.value.filter(existingRepo => 
+                newRepositories.some(newRepo => newRepo.id === existingRepo.id)
+            );
+            
+            // Update existing repositories and add new ones
+            newRepositories.forEach(newRepo => {
+                const existingIndex = repositories.value.findIndex(r => r.id === newRepo.id);
+                if (existingIndex !== -1) {
+                    // Update existing repository
+                    repositories.value[existingIndex] = newRepo;
+                } else {
+                    // Add new repository
+                    repositories.value.push(newRepo);
+                }
+            });
+            
             hasInitialized = true;
         } catch (err) {
             error.value = 'Failed to fetch repositories';
