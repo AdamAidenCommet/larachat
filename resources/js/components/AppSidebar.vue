@@ -266,6 +266,10 @@ const handleCreateAgent = async () => {
                                 <div class="min-w-0 flex-1">
                                     <span class="block truncate">{{ conversation.title }}</span>
                                     <div class="mt-0.5 flex items-center justify-between gap-1 text-xs text-muted-foreground">
+                                        <div v-if="conversation.agent" class="flex min-w-0 items-center gap-1">
+                                            <Users class="h-3 w-3 shrink-0" />
+                                            <span class="truncate">{{ conversation.agent.name }}</span>
+                                        </div>
                                         <div v-if="conversation.repository" class="flex min-w-0 items-center gap-1">
                                             <GitBranch class="h-3 w-3 shrink-0" />
                                             <span class="truncate">{{ conversation.repository }}</span>

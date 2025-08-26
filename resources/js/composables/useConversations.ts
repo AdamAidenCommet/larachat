@@ -1,6 +1,14 @@
 import axios from 'axios';
 import { computed, onUnmounted, ref } from 'vue';
 
+interface Agent {
+    id: number;
+    name: string;
+    slug: string;
+    description: string;
+    prompt: string;
+}
+
 interface Conversation {
     id: number;
     user_id: number;
@@ -11,6 +19,8 @@ interface Conversation {
     is_processing: boolean;
     created_at: string;
     updated_at: string;
+    agent?: Agent | null;
+    agent_id?: number | null;
 }
 
 // Move these outside the composable function to share state across all instances

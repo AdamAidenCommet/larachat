@@ -45,6 +45,7 @@ class ConversationsController extends Controller
     public function index()
     {
         $conversations = Conversation::where('archived', false)
+            ->with('agent')
             ->orderBy('created_at', 'desc')
             ->get();
 
