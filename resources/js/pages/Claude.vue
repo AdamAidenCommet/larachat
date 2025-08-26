@@ -984,6 +984,7 @@ onUnmounted(() => {
                         :message="message"
                         :format-time="formatTime"
                         :show-raw-responses="false"
+                        :repository-path="selectedRepository"
                     />
 
                     <div v-if="conversation?.is_processing" id="processing-indicator" class="flex justify-start">

@@ -1,15 +1,19 @@
 <script setup lang="ts">
+import ForwardMessageModal from '@/components/ForwardMessageModal.vue';
 import type { Message } from '@/types/claude';
 import { parseMessageContent } from '@/utils/urlParser';
+import { Forward } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 
 const props = defineProps<{
     message: Message;
     formatTime: (date: Date) => string;
     showRawResponses: boolean;
+    repositoryPath?: string;
 }>();
 
 const showLocalRawResponse = ref(false);
+const showForwardModal = ref(false);
 
 const parsedContent = computed(() => {
     return parseMessageContent(props.message.content);
@@ -44,9 +48,20 @@ const toggleRawResponse = () => {
         >
             <p class="text-sm break-words whitespace-pre-wrap" v-html="parsedContent"></p>
             <div class="mt-1 flex items-center justify-between">
-                <p :class="['text-[11px]', message.role === 'user' ? 'text-muted-foreground' : 'text-muted-foreground']">
-                    {{ formatTime(message.timestamp) }}
-                </p>
+                <div class="flex items-center gap-2">
+                    <p :class="['text-[11px]', message.role === 'user' ? 'text-muted-foreground' : 'text-muted-foreground']">
+                        {{ formatTime(message.timestamp) }}
+                    </p>
+                    <button
+                        v-if="message.role === 'assistant'"
+                        @click="showForwardModal = true"
+                        class="text-muted-foreground hover:text-foreground transition-colors"
+                        type="button"
+                        title="Forward to new conversation"
+                    >
+                        <Forward class="h-3 w-3" />
+                    </button>
+                </div>
                 <button
                     v-if="getContentType(message)"
                     @click="toggleRawResponse"
@@ -80,4 +95,11 @@ const toggleRawResponse = () => {
             </div>
         </div>
     </div>
+
+    <ForwardMessageModal
+        v-if="message.role === 'assistant'"
+        v-model="showForwardModal"
+        :message-content="message.content"
+        :repository-path="repositoryPath"
+    />
 </template>
