@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Agent;
 use App\Models\Conversation;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -327,5 +328,127 @@ class WebhookTest extends TestCase
             $this->assertNotNull($conversation);
             $this->assertEquals($expected, $conversation->mode);
         }
+    }
+
+    public function test_webhook_accepts_agent_by_slug()
+    {
+        Queue::fake();
+
+        // Create an agent
+        $agent = Agent::create([
+            'name' => 'Test Agent',
+            'slug' => 'test-agent',
+            'description' => 'A test agent',
+            'prompt' => 'Test prompt',
+            'tools' => 'test-tools',
+        ]);
+
+        $payload = json_encode([
+            'message' => 'Test with agent',
+            'agent' => 'test-agent',
+        ]);
+
+        $signature = 'sha256='.hash_hmac('sha256', $payload, 'test-webhook-secret');
+
+        $response = $this->postJson('/api/webhooks', json_decode($payload, true), [
+            'X-Webhook-Signature' => $signature,
+        ]);
+
+        $response->assertStatus(201)
+            ->assertJson([
+                'status' => 'success',
+                'agent_id' => $agent->id,
+            ]);
+
+        $conversation = Conversation::where('message', 'Test with agent')->first();
+        $this->assertNotNull($conversation);
+        $this->assertEquals($agent->id, $conversation->agent_id);
+    }
+
+    public function test_webhook_accepts_agent_by_id()
+    {
+        Queue::fake();
+
+        // Create an agent
+        $agent = Agent::create([
+            'name' => 'Test Agent by ID',
+            'slug' => 'test-agent-id',
+            'description' => 'A test agent',
+            'prompt' => 'Test prompt',
+            'tools' => 'test-tools',
+        ]);
+
+        $payload = json_encode([
+            'message' => 'Test with agent ID',
+            'agent' => $agent->id,
+        ]);
+
+        $signature = 'sha256='.hash_hmac('sha256', $payload, 'test-webhook-secret');
+
+        $response = $this->postJson('/api/webhooks', json_decode($payload, true), [
+            'X-Webhook-Signature' => $signature,
+        ]);
+
+        $response->assertStatus(201)
+            ->assertJson([
+                'status' => 'success',
+                'agent_id' => $agent->id,
+            ]);
+
+        $conversation = Conversation::where('message', 'Test with agent ID')->first();
+        $this->assertNotNull($conversation);
+        $this->assertEquals($agent->id, $conversation->agent_id);
+    }
+
+    public function test_webhook_handles_invalid_agent_gracefully()
+    {
+        Queue::fake();
+
+        $payload = json_encode([
+            'message' => 'Test with invalid agent',
+            'agent' => 'non-existent-agent',
+        ]);
+
+        $signature = 'sha256='.hash_hmac('sha256', $payload, 'test-webhook-secret');
+
+        $response = $this->postJson('/api/webhooks', json_decode($payload, true), [
+            'X-Webhook-Signature' => $signature,
+        ]);
+
+        // Should still create conversation without agent
+        $response->assertStatus(201)
+            ->assertJson([
+                'status' => 'success',
+                'agent_id' => null,
+            ]);
+
+        $conversation = Conversation::where('message', 'Test with invalid agent')->first();
+        $this->assertNotNull($conversation);
+        $this->assertNull($conversation->agent_id);
+    }
+
+    public function test_webhook_works_without_agent()
+    {
+        Queue::fake();
+
+        $payload = json_encode([
+            'message' => 'Test without agent parameter',
+        ]);
+
+        $signature = 'sha256='.hash_hmac('sha256', $payload, 'test-webhook-secret');
+
+        $response = $this->postJson('/api/webhooks', json_decode($payload, true), [
+            'X-Webhook-Signature' => $signature,
+        ]);
+
+        $response->assertStatus(201)
+            ->assertJson([
+                'status' => 'success',
+                'agent_id' => null,
+            ]);
+
+        $conversation = Conversation::where('message', 'Test without agent parameter')->first();
+        $this->assertNotNull($conversation);
+        $this->assertNull($conversation->agent_id);
     }
 }

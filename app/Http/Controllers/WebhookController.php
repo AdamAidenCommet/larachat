@@ -59,6 +59,28 @@ class WebhookController extends Controller
             $message = $data['message'];
             $repository = $data['repository'] ?? null;
             
+            // Get agent if specified - accept agent slug or ID
+            $agentId = null;
+            if (! empty($data['agent'])) {
+                $agent = null;
+                
+                // First try to find by slug
+                if (is_string($data['agent'])) {
+                    $agent = \App\Models\Agent::where('slug', $data['agent'])->first();
+                }
+                
+                // If not found by slug, try by ID
+                if (! $agent && is_numeric($data['agent'])) {
+                    $agent = \App\Models\Agent::find($data['agent']);
+                }
+                
+                if ($agent) {
+                    $agentId = $agent->id;
+                } else {
+                    Log::warning('Webhook specified agent not found', ['agent' => $data['agent']]);
+                }
+            }
+            
             // Get mode from webhook data, default to 'ask' (which maps to 'plan' internally)
             // Accept both 'ask' and 'plan' for planning mode, 'code' and 'bypassPermissions' for coding mode
             $inputMode = strtolower($data['mode'] ?? 'ask');
@@ -87,6 +109,7 @@ class WebhookController extends Controller
                 'project_directory' => $projectDirectory,
                 'repository' => $repository,
                 'mode' => $mode,
+                'agent_id' => $agentId,
                 'filename' => 'claude-sessions/'.date('Y-m-d\TH-i-s').'-session-'.$project_id.'.json',
                 'is_processing' => true, // Mark as processing when created
             ]);
@@ -106,6 +129,7 @@ class WebhookController extends Controller
                 'user_id' => $user->id,
                 'repository' => $repository,
                 'mode' => $mode,
+                'agent_id' => $agentId,
             ]);
 
             return response()->json([
@@ -113,6 +137,7 @@ class WebhookController extends Controller
                 'conversation_id' => $conversation->id,
                 'message' => 'Conversation created successfully',
                 'mode' => $mode,
+                'agent_id' => $agentId,
             ], 201);
 
         } catch (\Exception $e) {
