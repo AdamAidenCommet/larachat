@@ -1,0 +1,198 @@
+diff --git a/app/Jobs/SendClaudeMessageJob.php b/app/Jobs/SendClaudeMessageJob.php
+index e826bb5..3dba799 100644
+--- a/app/Jobs/SendClaudeMessageJob.php
++++ b/app/Jobs/SendClaudeMessageJob.php
+@@ -44,14 +44,14 @@ public function handle(): void
+                 } else {
+                     $projectPath = storage_path($this->conversation->project_directory);
+                 }
+-                
++
+                 if (!is_dir($projectPath)) {
+                     Log::error('Project directory does not exist', [
+                         'conversation_id' => $this->conversation->id,
+                         'project_directory' => $this->conversation->project_directory,
+                         'full_path' => $projectPath
+                     ]);
+-                    
++
+                     $this->conversation->update([
+                         'is_processing' => false,
+                         'error_message' => 'Project directory not found: ' . $this->conversation->project_directory
+@@ -62,14 +62,14 @@ public function handle(): void
+ 
+             // Filename should already be set by the controller
+             $filename = $this->conversation->filename;
+-            
++
+             // If for some reason it's not set, generate it
+             if (!$filename) {
+                 $timestamp = now()->format('Y-m-d\TH-i-s');
+                 $tempId = substr(uniqid(), -12);
+                 $filename = "claude-sessions/{$timestamp}-session-{$tempId}.json";
+                 $this->conversation->update(['filename' => $filename]);
+-                
++
+                 // Also save the user message if we had to generate filename
+                 ClaudeService::saveUserMessage(
+                     $this->message,
+@@ -91,7 +91,7 @@ public function handle(): void
+                 } elseif ($type === 'response') {
+                     // Update the conversation's updated_at timestamp to signal new content
+                     $this->conversation->touch();
+-                    
++
+                     Log::debug('Progress update', [
+                         'conversation_id' => $this->conversation->id,
+                         'filename' => $data['filename'],
+@@ -106,7 +106,8 @@ public function handle(): void
+                 $this->conversation->claude_session_id,
+                 $filename,
+                 $this->conversation->project_directory,
+-                $progressCallback
++                $progressCallback,
++                $this->conversation
+             );
+ 
+             // Update conversation with the session ID if extracted (in case callback didn't catch it)
+@@ -115,7 +116,7 @@ public function handle(): void
+             }
+ 
+             // Filename is already set at the beginning, no need to update it again
+-            
++
+             // Mark conversation as no longer processing
+             $this->conversation->update(['is_processing' => false]);
+ 
+diff --git a/app/Services/ClaudeService.php b/app/Services/ClaudeService.php
+index f59965a..e32822f 100644
+--- a/app/Services/ClaudeService.php
++++ b/app/Services/ClaudeService.php
+@@ -2,6 +2,7 @@
+ 
+ namespace App\Services;
+ 
++use App\Models\Conversation;
+ use Illuminate\Support\Facades\File;
+ use Illuminate\Support\Facades\Log;
+ use Illuminate\Support\Facades\Storage;
+@@ -39,7 +40,7 @@ public static function stream(string $prompt, string $options = '--permission-mo
+ 
+             $wrapperPath = base_path('claude-wrapper.sh');
+             $command = [$wrapperPath];
+-            
++
+             // Add project ID as first argument if available
+             if ($projectId) {
+                 $command[] = $projectId;
+@@ -47,7 +48,7 @@ public static function stream(string $prompt, string $options = '--permission-mo
+                 // Default project ID if none specified
+                 $command[] = 'default';
+             }
+-            
++
+             // Add Claude CLI arguments
+             $command = array_merge($command, ['--print', '--verbose', '--output-format', 'stream-json']);
+ 
+@@ -217,13 +218,13 @@ private static function extractSessionId($jsonData): ?string
+     private static function extractAllTextContent(array $rawResponses): string
+     {
+         $content = '';
+-        
++
+         foreach ($rawResponses as $response) {
+             // Skip system messages
+             if (isset($response['type']) && $response['type'] === 'system') {
+                 continue;
+             }
+-            
++
+             // Handle content blocks (streaming format from Claude CLI)
+             if (isset($response['type']) && $response['type'] === 'content' && isset($response['content'])) {
+                 if (is_array($response['content']) && isset($response['content']['type']) && $response['content']['type'] === 'text' && isset($response['content']['text'])) {
+@@ -232,7 +233,7 @@ private static function extractAllTextContent(array $rawResponses): string
+                     $content .= $response['content'];
+                 }
+             }
+-            
++
+             // Handle Claude Code CLI assistant response format
+             if (isset($response['type']) && $response['type'] === 'assistant' && isset($response['message'])) {
+                 $message = $response['message'];
+@@ -245,14 +246,14 @@ private static function extractAllTextContent(array $rawResponses): string
+                 }
+             }
+         }
+-        
++
+         return $content;
+     }
+ 
+     /**
+      * Process Claude message in background (for queue jobs)
+      */
+-    public static function processInBackground(string $prompt, string $options = '--permission-mode bypassPermissions', ?string $sessionId = null, ?string $sessionFilename = null, ?string $repositoryPath = null, ?callable $progressCallback = null): array
++    public static function processInBackground(string $prompt, string $options = '--permission-mode bypassPermissions', ?string $sessionId = null, ?string $sessionFilename = null, ?string $repositoryPath = null, ?callable $progressCallback = null, ?Conversation $conversation = null): array
+     {
+         // Extract project ID from repository path
+         $projectId = null;
+@@ -269,7 +270,7 @@ public static function processInBackground(string $prompt, string $options = '--
+ 
+         $wrapperPath = base_path('claude-wrapper.sh');
+         $command = [$wrapperPath];
+-        
++
+         // Add project ID as first argument if available
+         if ($projectId) {
+             $command[] = $projectId;
+@@ -277,7 +278,7 @@ public static function processInBackground(string $prompt, string $options = '--
+             // Default project ID if none specified
+             $command[] = 'default';
+         }
+-        
++
+         // Add Claude CLI arguments
+         $command = array_merge($command, ['--print', '--verbose', '--output-format', 'stream-json']);
+ 
+@@ -321,7 +322,7 @@ public static function processInBackground(string $prompt, string $options = '--
+         // Run the process with real-time output processing
+         $process->run(function ($type, $buffer) use (&$rawJsonResponses, &$extractedSessionId, $prompt, $filename, $sessionId, $repositoryPath, $progressCallback) {
+             $lines = explode("\n", $buffer);
+-            
++
+             foreach ($lines as $line) {
+                 if (trim($line)) {
+                     try {
+@@ -332,7 +333,7 @@ public static function processInBackground(string $prompt, string $options = '--
+                             // Extract session ID if not provided
+                             if (!$extractedSessionId) {
+                                 $extractedSessionId = self::extractSessionId($jsonData);
+-                                
++
+                                 // Notify about session ID extraction
+                                 if ($progressCallback && $extractedSessionId) {
+                                     $progressCallback('sessionId', $extractedSessionId);
+@@ -342,12 +343,12 @@ public static function processInBackground(string $prompt, string $options = '--
+                             // Save response incrementally after each message
+                             if ($filename) {
+                                 self::saveResponse($prompt, $filename, $sessionId, $extractedSessionId, $rawJsonResponses, false, $repositoryPath);
+-                                
++
+                                 // Notify about progress with accumulated content
+                                 if ($progressCallback) {
+                                     // Extract all text content from responses
+                                     $allContent = self::extractAllTextContent($rawJsonResponses);
+-                                    
++
+                                     $progressCallback('response', [
+                                         'filename' => $filename,
+                                         'responseCount' => count($rawJsonResponses),
+@@ -457,7 +458,7 @@ private static function saveResponse(string $userMessage, string $filename, ?str
+                         'currentUserMessage' => $userMessage,
+                         'match' => (!$lastConversation['isComplete'] && $lastConversation['userMessage'] === $userMessage)
+                     ]);
+-                    
++
+                     if (!$lastConversation['isComplete'] &&
+                         $lastConversation['userMessage'] === $userMessage) {
+                         // Update the existing conversation with new responses
