@@ -61,7 +61,7 @@ class ProcessGitHubWebhook implements ShouldQueue
 
         if ($repositoryName) {
             $repository = Repository::where('name', $repositoryName)
-                ->orWhere('path', 'LIKE', '%'.$repositoryName)
+                ->orWhere('local_path', 'LIKE', '%'.$repositoryName)
                 ->first();
 
             if ($repository && $this->data['ref'] === 'refs/heads/'.($repository->default_branch ?? 'main')) {

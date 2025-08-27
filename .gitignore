@@ -9,6 +9,7 @@
 /storage/pail
 /vendor
 .env
+.env.swp
 .env.backup
 .env.production
 .phpactor.json
