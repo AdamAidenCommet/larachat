@@ -18,7 +18,7 @@ shift # Remove PROJECT_ID from arguments to pass remaining args to claude
 # or use a specific project directory if provided
 if [ "$PROJECT_ID" = "default" ] || [ "$PROJECT_ID" = "larachat" ]; then
     # Use the LaraChat directory itself
-    PROJECT_DIR="$SCRIPT_DIR"
+    PROJECT_DIR="$SCRIPT_DIR/storage/app/private/repositories/base"
 else
     # Try project-specific locations
     # Try new location first (direct subdomain path)
