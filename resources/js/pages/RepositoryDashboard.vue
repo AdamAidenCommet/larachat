@@ -212,7 +212,7 @@ const handleDelete = async () => {
                         <div class="flex items-center justify-between gap-3">
                             <!-- Agent Selection (Left) -->
                             <Select v-model="selectedAgentId">
-                                <SelectTrigger class="w-[250px]">
+                                <SelectTrigger class="w-[180px]">
                                     <div class="flex items-center gap-2">
                                         <Bot class="h-4 w-4" />
                                         <SelectValue placeholder="Select agent" />

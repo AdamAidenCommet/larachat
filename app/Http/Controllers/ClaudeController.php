@@ -144,12 +144,12 @@ class ClaudeController extends Controller
             $projectDir = storage_path($projectDir);
         }
 
-        ClaudeService::saveUserMessage(
-            $request->input('prompt'),
-            $conversation->filename,
-            $conversation->claude_session_id,
-            $projectDir
-        );
+//        ClaudeService::saveUserMessage(
+//            $request->input('prompt'),
+//            $conversation->filename,
+//            $conversation->claude_session_id,
+//            $projectDir
+//        );
 
         // Dispatch job to send message to Claude
         SendClaudeMessageJob::dispatch($conversation, $request->input('prompt'));

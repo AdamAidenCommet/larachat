@@ -65,42 +65,12 @@ export function useChatMessages() {
         }
     };
 
-    const formatTime = (date: Date | string): string => {
-        // Ensure we have a valid Date object
-        const dateObj = date instanceof Date ? date : new Date(date);
-        
-        // Check if the date is valid
-        if (isNaN(dateObj.getTime())) {
-            return 'Invalid time';
-        }
-        
-        const now = new Date();
-        const isToday = dateObj.toDateString() === now.toDateString();
-        const yesterday = new Date(now);
-        yesterday.setDate(yesterday.getDate() - 1);
-        const isYesterday = dateObj.toDateString() === yesterday.toDateString();
-        
-        // Format time
-        const timeString = dateObj.toLocaleTimeString('en-US', {
+    const formatTime = (date: Date): string => {
+        return date.toLocaleTimeString('en-US', {
             hour: 'numeric',
             minute: '2-digit',
             hour12: true,
         });
-        
-        // Add date prefix if not today
-        if (isToday) {
-            return timeString;
-        } else if (isYesterday) {
-            return `Yesterday ${timeString}`;
-        } else {
-            // Show date for older messages
-            const dateString = dateObj.toLocaleDateString('en-US', {
-                month: 'short',
-                day: 'numeric',
-                year: dateObj.getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
-            });
-            return `${dateString} ${timeString}`;
-        }
     };
 
     return {

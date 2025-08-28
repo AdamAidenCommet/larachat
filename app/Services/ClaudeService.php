@@ -24,52 +24,9 @@ class ClaudeService
                 ob_end_flush();
             }
 
-            // Extract project ID from repository path
-            $projectId = null;
-            if ($repositoryPath) {
-                // Try new format: /Users/customer/www/subdomains/{project_id}
-                if (preg_match('/\/subdomains\/([^\/]+)/', $repositoryPath, $matches)) {
-                    $projectId = $matches[1];
-                }
-                // Fallback to old format: repositories/projects/{project_id}
-                elseif (preg_match('/repositories\/projects\/([^\/]+)/', $repositoryPath, $matches)) {
-                    $projectId = $matches[1];
-                }
-            }
+            $command = self::getArr($repositoryPath, $sessionId, $options, $prompt);
 
-            $wrapperPath = base_path('claude-wrapper.sh');
-            $command = [$wrapperPath];
-
-            // Add project ID as first argument if available
-            if ($projectId) {
-                $command[] = $projectId;
-            } else {
-                // Default project ID if none specified
-                $command[] = 'default';
-            }
-
-            // Add Claude CLI arguments
-            $command = array_merge($command, ['--print', '--verbose', '--output-format', 'stream-json']);
-
-            // Use --resume for continuing an existing session with a valid UUID
-            if ($sessionId && preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $sessionId)) {
-                $command[] = '--resume';
-                $command[] = $sessionId;
-            }
-
-            if ($options) {
-                // Use str_getcsv to properly handle quoted arguments
-                $optionsParts = str_getcsv($options, ' ');
-                // Remove empty parts that might result from extra spaces
-                $optionsParts = array_filter($optionsParts, fn($part) => $part !== '');
-                $command = array_merge($command, $optionsParts);
-            }
-
-            // Escape the prompt to handle special characters properly
-        $command[] = $prompt;
-
-            // Log the full command for debugging
-            \Log::info('Claude stream command constructed', [
+            Log::info('Claude stream command constructed', [
                 'command' => $command,
                 'prompt' => $prompt,
                 'sessionId' => $sessionId,
@@ -79,9 +36,9 @@ class ClaudeService
             // With the wrapper handling directory changes, we don't need to set working directory here
             // The wrapper will cd to the correct project directory based on the project ID
             $process = new Process($command, null, [
-                'PATH' => '/Users/customer/Library/Application Support/Herd/bin:/Users/customer/Library/Application Support/Herd/config/nvm/versions/node/v20.19.4/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin',
-                'HOME' => '/Users/customer',
-                'USER' => 'customer',
+                'PATH' => '/Users/arturhanusek/Library/Application Support/Herd/bin:/Users/arturhanusek/Library/Application Support/Herd/config/nvm/versions/node/v20.19.3/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin',
+                'HOME' => '/Users/arturhanusek',
+                'USER' => 'arturhanusek',
             ]);
             $process->setTimeout(null);
             $process->setIdleTimeout(null);
@@ -272,38 +229,38 @@ class ClaudeService
     {
         $cacheKey = 'claude_process_' . $conversationId;
         $pid = Cache::get($cacheKey);
-        
+
         if ($pid) {
             try {
                 // First, check if the process is still running
                 $checkCommand = "ps -p {$pid} > /dev/null 2>&1";
                 $processExists = shell_exec($checkCommand . ' && echo "1" || echo "0"');
-                
+
                 if (trim($processExists) === '1') {
                     // Kill the process and its children
                     // Use SIGTERM first to allow graceful shutdown
                     $killCommand = "pkill -TERM -P {$pid} 2>/dev/null; kill -TERM {$pid} 2>/dev/null";
                     exec($killCommand);
-                    
+
                     // Give it a moment to terminate gracefully
                     usleep(500000); // 0.5 seconds
-                    
+
                     // Check if still running and force kill if necessary
                     $processStillExists = shell_exec($checkCommand . ' && echo "1" || echo "0"');
                     if (trim($processStillExists) === '1') {
                         $forceKillCommand = "pkill -9 -P {$pid} 2>/dev/null; kill -9 {$pid} 2>/dev/null";
                         exec($forceKillCommand);
                     }
-                    
+
                     Log::info('Terminated Claude process', [
                         'conversation_id' => $conversationId,
                         'pid' => $pid,
                     ]);
                 }
-                
+
                 // Clear the cache regardless
                 Cache::forget($cacheKey);
-                
+
                 return true;
             } catch (\Exception $e) {
                 Log::error('Failed to terminate Claude process', [
@@ -311,7 +268,7 @@ class ClaudeService
                     'pid' => $pid,
                     'error' => $e->getMessage(),
                 ]);
-                
+
                 // Still try to clear the cache
                 Cache::forget($cacheKey);
             }
@@ -320,7 +277,7 @@ class ClaudeService
                 'conversation_id' => $conversationId,
             ]);
         }
-        
+
         return false;
     }
 
@@ -329,49 +286,7 @@ class ClaudeService
      */
     public static function processInBackground(string $prompt, string $options = '--permission-mode bypassPermissions', ?string $sessionId = null, ?string $sessionFilename = null, ?string $repositoryPath = null, ?callable $progressCallback = null, ?int $conversationId = null): array
     {
-        // Extract project ID from repository path
-        $projectId = null;
-        if ($repositoryPath) {
-            // Try new format: /Users/customer/www/subdomains/{project_id}
-            if (preg_match('/\/subdomains\/([^\/]+)/', $repositoryPath, $matches)) {
-                $projectId = $matches[1];
-            }
-            // Fallback to old format: repositories/projects/{project_id}
-            elseif (preg_match('/repositories\/projects\/([^\/]+)/', $repositoryPath, $matches)) {
-                $projectId = $matches[1];
-            }
-        }
-
-        $wrapperPath = base_path('claude-wrapper.sh');
-        $command = [$wrapperPath];
-
-        // Add project ID as first argument if available
-        if ($projectId) {
-            $command[] = $projectId;
-        } else {
-            // Default project ID if none specified
-            $command[] = 'default';
-        }
-
-        // Add Claude CLI arguments
-        $command = array_merge($command, ['--print', '--verbose', '--output-format', 'stream-json']);
-
-        // Use --resume for continuing an existing session with a valid UUID
-        if ($sessionId && preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $sessionId)) {
-            $command[] = '--resume';
-            $command[] = $sessionId;
-        }
-
-        if ($options) {
-            // Use str_getcsv to properly handle quoted arguments
-            $optionsParts = str_getcsv($options, ' ');
-            // Remove empty parts that might result from extra spaces
-            $optionsParts = array_filter($optionsParts, fn($part) => $part !== '');
-            $command = array_merge($command, $optionsParts);
-        }
-
-        // Escape the prompt to handle special characters properly
-        $command[] = $prompt;
+        $command = self::getArr($repositoryPath, $sessionId, $options, $prompt);
 
         // Log the full command for debugging
         \Log::info('Claude command constructed', [
@@ -381,25 +296,36 @@ class ClaudeService
             'options' => $options,
         ]);
 
+        ClaudeService::saveSystemMessage(implode(' ', $command), $sessionFilename);
+
+        \Log::info('Starting Claude process', [
+            'command' => implode(' ', $command),
+            'sessionFilename' => $sessionFilename,
+            'sessionId' => $sessionId,
+            'repositoryPath' => $repositoryPath,
+            'conversationId' => $conversationId,
+        ]);
+
         // With the wrapper handling directory changes, we don't need to set working directory here
         // The wrapper will cd to the correct project directory based on the project ID
         $process = new Process($command, null, [
-            'PATH' => '/Users/customer/Library/Application Support/Herd/bin:/Users/customer/Library/Application Support/Herd/config/nvm/versions/node/v20.19.4/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin',
-            'HOME' => '/Users/customer',
-            'USER' => 'customer',
+            'PATH' => '/Users/arturhanusek/Library/Application Support/Herd/bin:/Users/arturhanusek/Library/Application Support/Herd/config/nvm/versions/node/v20.19.3/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin',
+            'HOME' => '/Users/arturhanusek',
+            'USER' => 'arturhanusek',
         ]);
         $process->setTimeout(null);
         $process->setIdleTimeout(null);
 
         // Start the process to get the PID
         $process->start();
-        
+
         // Store the process ID in cache for the stop functionality
         if ($conversationId && $process->isRunning()) {
             $pid = $process->getPid();
             $cacheKey = 'claude_process_' . $conversationId;
             Cache::put($cacheKey, $pid, 3600); // Store for 1 hour
-            
+
+            ClaudeService::saveSystemMessage("Process started with PID {$pid}", $sessionFilename);
             Log::info('Stored Claude process PID', [
                 'conversation_id' => $conversationId,
                 'pid' => $pid,
@@ -426,6 +352,12 @@ class ClaudeService
 
         // Wait for the process to complete with real-time output processing
         $process->wait(function ($type, $buffer) use (&$rawJsonResponses, &$extractedSessionId, $prompt, $filename, $sessionId, $repositoryPath, $progressCallback) {
+            \Log::info('Claude process output', [
+                'type' => $type === Process::OUT ? 'stdout' : 'stderr',
+                'buffer' => substr($buffer, 0, 500), // Log first 500 chars
+                'bufferLength' => strlen($buffer),
+            ]);
+
             $lines = explode("\n", $buffer);
 
             foreach ($lines as $line) {
@@ -472,6 +404,14 @@ class ClaudeService
             }
         });
 
+        \Log::info('Claude process completed', [
+            'exitCode' => $process->getExitCode(),
+            'isSuccessful' => $process->isSuccessful(),
+            'errorOutput' => $process->getErrorOutput(),
+            'responseCount' => count($rawJsonResponses),
+            'filename' => $filename,
+        ]);
+
         // Final save with complete flag ONLY if we got responses
         if ($filename && count($rawJsonResponses) > 0) {
             self::saveResponse($prompt, $filename, $sessionId, $extractedSessionId, $rawJsonResponses, true, $repositoryPath);
@@ -480,6 +420,8 @@ class ClaudeService
             \Log::warning('No responses from Claude process', [
                 'filename' => $filename,
                 'process_successful' => $process->isSuccessful(),
+                'exitCode' => $process->getExitCode(),
+                'errorOutput' => $process->getErrorOutput(),
             ]);
             self::saveResponse($prompt, $filename, $sessionId, $extractedSessionId, $rawJsonResponses, false, $repositoryPath);
         }
@@ -488,7 +430,7 @@ class ClaudeService
         if ($conversationId) {
             $cacheKey = 'claude_process_' . $conversationId;
             Cache::forget($cacheKey);
-            
+
             Log::info('Cleared Claude process PID from cache', [
                 'conversation_id' => $conversationId,
             ]);
@@ -510,6 +452,14 @@ class ClaudeService
         self::saveResponse($userMessage, $filename, $sessionId, null, [], false, $repositoryPath);
     }
 
+    /**
+     * Save initial user message to session file immediately
+     */
+    public static function saveSystemMessage(string $message, string $filename, ?string $sessionId = null, ?string $repositoryPath = null): void
+    {
+        self::saveResponse($message, $filename, $sessionId, null, [], false, $repositoryPath);
+    }
+
     private static function saveResponse(string $userMessage, string $filename, ?string $sessionId, ?string $extractedSessionId, array $rawJsonResponses, bool $isComplete, ?string $repositoryPath = null): void
     {
         // If filename already includes claude-sessions/, use it as-is
@@ -522,13 +472,13 @@ class ClaudeService
             $path = $directory.'/'.$filename;
         }
 
-        \Log::info('Saving response', [
-            'filename' => $filename,
-            'path' => $path,
-            'sessionId' => $sessionId,
-            'response_count' => count($rawJsonResponses),
-            'isComplete' => $isComplete,
-        ]);
+//        \Log::info('Saving response', [
+//            'filename' => $filename,
+//            'path' => $path,
+//            'sessionId' => $sessionId,
+//            'response_count' => count($rawJsonResponses),
+//            'isComplete' => $isComplete,
+//        ]);
 
         // Create directory if it doesn't exist
         if (! Storage::exists($directory)) {
@@ -665,6 +615,42 @@ class ClaudeService
             ]);
             throw new \Exception("Failed to move directory: {$error}");
         }
+    }
+
+    /**
+     * @param string|null $repositoryPath
+     * @param string|null $sessionId
+     * @param string $options
+     * @return array|string[]
+     */
+    public static function getArr(?string $repositoryPath, ?string $sessionId, string $options, $prompt): array
+    {
+        $wrapperPath = base_path('claude-wrapper.sh');
+        $command = [$wrapperPath];
+        $command[] = $repositoryPath;
+
+        // Add Claude CLI arguments
+        $command = array_merge($command, ['--print', '--verbose', '--output-format', 'stream-json']);
+
+        // Use --resume for continuing an existing session with a valid UUID
+        if ($sessionId && preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $sessionId)) {
+            $command[] = '--resume';
+            $command[] = $sessionId;
+        }
+
+        // Add options BEFORE the prompt
+        if ($options) {
+            // Use str_getcsv to properly handle quoted arguments
+            $optionsParts = str_getcsv($options, ' ');
+            // Remove empty parts that might result from extra spaces
+            $optionsParts = array_filter($optionsParts, fn($part) => $part !== '');
+            $command = array_merge($command, $optionsParts);
+        }
+
+        // Add prompt as the last argument
+        $command[] = '"'. $prompt .'"';
+
+        return $command;
     }
 
     private static function copyDirectory(string $source, string $destination): void

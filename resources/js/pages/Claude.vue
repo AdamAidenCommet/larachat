@@ -984,7 +984,6 @@ onUnmounted(() => {
                         :message="message"
                         :format-time="formatTime"
                         :show-raw-responses="false"
-                        :repository-path="selectedRepository"
                     />
 
                     <div v-if="conversation?.is_processing" id="processing-indicator" class="flex justify-start">
@@ -1000,7 +999,7 @@ onUnmounted(() => {
             </ScrollArea>
 
             <!-- Input Area - Now part of flex layout, not absolute -->
-            <div class="relative z-[100] border-t bg-background/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+            <div class="border-t bg-background/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
                 <div v-if="isArchived" class="text-center text-muted-foreground">
                     This conversation is archived. Unarchive it to continue the conversation.
                 </div>
@@ -1025,15 +1024,16 @@ onUnmounted(() => {
                         >
                             <Send class="h-4 w-4" />
                         </Button>
-                        <button
+                        <Button
                             v-else
                             @click="stopProcessing"
-                            class="h-10 w-10 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90 inline-flex items-center justify-center text-sm font-medium transition-colors"
+                            variant="destructive"
+                            size="icon"
+                            class="h-10 w-10 rounded-full"
                             title="Stop processing"
-                            style="z-index: 999999 !important; position: relative !important; pointer-events: auto !important;"
                         >
                             <Square class="h-4 w-4" />
-                        </button>
+                        </Button>
                     </div>
                 </div>
             </div>

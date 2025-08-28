@@ -1,62 +1,34 @@
 #!/bin/bash
 
-# Get the directory where this script is located
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+# Add the paths where claude might be installed
+export PATH="/Users/arturhanusek/Library/Application Support/Herd/config/nvm/versions/node/v20.19.3/bin:/Users/customer/Library/Application Support/Herd/config/nvm/versions/node/v20.19.4/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:$PATH"
 
-# Check if PROJECT_ID is provided as first argument
-if [ -z "$1" ]; then
-    echo "Error: PROJECT_ID is required as first argument"
-    echo "Usage: $(basename "$0") <PROJECT_ID> [claude arguments...]"
-    echo "Example: $(basename "$0") my-project --help"
+# this should be passed as first argument
+COMMAND_DIRECTORY="$1"
+
+# check if both arguments are provided, otherwise fail
+if [ -z "$COMMAND_DIRECTORY" ]; then
+    echo "Error: COMMAND_DIRECTORY is required"
+    echo "Usage: $(basename "$0") <COMMAND_DIRECTORY> [claude arguments...]"
+    echo "Example: $(basename "$0") /path/to/projects/my-project --help"
     exit 1
 fi
 
-PROJECT_ID="$1"
-shift # Remove PROJECT_ID from arguments to pass remaining args to claude
-
-# For LaraChat, we work in the LaraChat directory itself
-# or use a specific project directory if provided
-if [ "$PROJECT_ID" = "default" ] || [ "$PROJECT_ID" = "larachat" ]; then
-    # Use the LaraChat directory itself
-    PROJECT_DIR="$SCRIPT_DIR/storage/app/private/repositories/base"
-else
-    # Try project-specific locations
-    # Try new location first (direct subdomain path)
-    PROJECT_DIR="/Users/customer/www/subdomains/$PROJECT_ID"
-    
-    # If not found, try old location in storage
-    if [ ! -d "$PROJECT_DIR" ]; then
-        PROJECT_DIR="$SCRIPT_DIR/storage/app/private/repositories/projects/$PROJECT_ID"
-    fi
-    
-    # If still not found, try another old location
-    if [ ! -d "$PROJECT_DIR" ]; then
-        PROJECT_DIR="$SCRIPT_DIR/storage/Users/customer/www/subdomains/projects/$PROJECT_ID"
-    fi
-fi
-
-if [ ! -d "$PROJECT_DIR" ]; then
-    echo "Error: Project directory does not exist: $PROJECT_DIR"
-    echo "Available locations checked:"
-    echo "  - /Users/customer/www/subdomains/$PROJECT_ID"
-    echo "  - $SCRIPT_DIR/storage/app/private/repositories/projects/$PROJECT_ID"
-    echo "  - $SCRIPT_DIR/storage/Users/customer/www/subdomains/projects/$PROJECT_ID"
+if [ ! -d "$COMMAND_DIRECTORY" ]; then
+    echo "Error: Project directory does not exist: $COMMAND_DIRECTORY"
     exit 1
 fi
 
-cd "$PROJECT_DIR" || exit 1
+cd "$COMMAND_DIRECTORY" || exit 1
 
-# Set up environment for Claude CLI
-# Include Herd PHP/Composer paths and Node paths
-export PATH="/Users/customer/Library/Application Support/Herd/bin:/Users/customer/Library/Application Support/Herd/config/nvm/versions/node/v20.19.4/bin:/opt/homebrew/bin:$PATH"
-export HOME="${HOME:-/Users/customer}"
-export USER="${USER:-customer}"
+# Shift first argument so remaining can be passed to claude
+shift 1
 
 # Execute claude with all arguments from the project directory
 # If the last argument doesn't start with a dash (it's the prompt), pass it via stdin
 # This ensures claude doesn't wait for interactive input
 if [ $# -gt 0 ]; then
-    last_arg="${@: -1}"
+    last_arg="${*: -1}"
     if [[ ! "$last_arg" =~ ^- ]]; then
         # Remove the last argument (the prompt) and pass it via stdin
         set -- "${@:1:$(($#-1))}"

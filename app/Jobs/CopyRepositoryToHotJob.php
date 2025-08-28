@@ -40,29 +40,14 @@ class CopyRepositoryToHotJob implements ShouldQueue
         $basePath = storage_path('app/private/repositories/base/'.$this->repository);
         $hotPath = storage_path('app/private/repositories/hot/'.$this->repository);
 
+        if (is_dir($hotPath)) {
+            return;
+        }
+
         if (! is_dir($basePath)) {
-            Log::error('CopyRepositoryToHot: Missing repository directory, cleaning up', [
+            Log::error('CopyRepositoryToHot: Missing repository directory', [
                 'repository' => $this->repository,
                 'path' => $basePath,
-            ]);
-
-            // Find and delete the repository from the database
-            $repository = Repository::where('name', $this->repository)
-                ->orWhere('local_path', 'LIKE', '%'.$this->repository.'%')
-                ->first();
-
-            if ($repository) {
-                $repository->delete();
-                Log::info('CopyRepositoryToHot: Repository deleted from database', [
-                    'repository_id' => $repository->id,
-                    'repository_name' => $this->repository,
-                ]);
-            }
-
-            // Don't retry this job since the repository doesn't exist
-            // Mark as successfully handled to prevent retries
-            Log::info('CopyRepositoryToHot: Job completed - repository no longer exists', [
-                'repository' => $this->repository,
             ]);
 
             return;
@@ -72,18 +57,10 @@ class CopyRepositoryToHotJob implements ShouldQueue
             // Get the default branch name
             $defaultBranch = $this->getDefaultBranch($basePath);
 
+            $this->runGitCommand('reset --hard', $basePath);
             $this->runGitCommand('checkout '.$defaultBranch, $basePath);
-
-            // Try to fetch and reset, but don't fail if it doesn't work (e.g., in test environments)
-            try {
-                $this->runGitCommand('fetch', $basePath);
-                $this->runGitCommand('reset --hard origin/'.$defaultBranch, $basePath);
-            } catch (\Exception $e) {
-                Log::info('CopyRepositoryToHot: Could not fetch/reset repository (may be a test environment)', [
-                    'repository' => $this->repository,
-                    'error' => $e->getMessage(),
-                ]);
-            }
+            $this->runGitCommand('fetch', $basePath);
+            $this->runGitCommand('reset --hard origin/'.$defaultBranch, $basePath);
 
             Log::info('CopyRepositoryToHot: Prepared base repository', [
                 'repository' => $this->repository,
@@ -93,7 +70,6 @@ class CopyRepositoryToHotJob implements ShouldQueue
                 'repository' => $this->repository,
                 'error' => $e->getMessage(),
             ]);
-            // Continue with copying even if git operations fail
         }
 
         // Generate a temporary directory name with random suffix
@@ -108,12 +84,9 @@ class CopyRepositoryToHotJob implements ShouldQueue
             'temp_path' => $tempPath,
         ]);
 
-        // Remove existing hot directory if it exists
-        if (File::exists($hotPath)) {
+        if (is_dir($hotPath)) {
             File::deleteDirectory($hotPath);
-            Log::info('CopyRepositoryToHot: Removed existing hot directory', [
-                'repository' => $this->repository,
-            ]);
+            return;
         }
 
         // Rename temporary directory to final hot directory

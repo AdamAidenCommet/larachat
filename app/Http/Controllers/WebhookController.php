@@ -58,43 +58,6 @@ class WebhookController extends Controller
             $project_id = uniqid();
             $message = $data['message'];
             $repository = $data['repository'] ?? null;
-            
-            // Get agent if specified - accept agent slug or ID
-            $agentId = null;
-            if (! empty($data['agent'])) {
-                $agent = null;
-                
-                // First try to find by slug
-                if (is_string($data['agent'])) {
-                    $agent = \App\Models\Agent::where('slug', $data['agent'])->first();
-                }
-                
-                // If not found by slug, try by ID
-                if (! $agent && is_numeric($data['agent'])) {
-                    $agent = \App\Models\Agent::find($data['agent']);
-                }
-                
-                if ($agent) {
-                    $agentId = $agent->id;
-                } else {
-                    Log::warning('Webhook specified agent not found', ['agent' => $data['agent']]);
-                }
-            }
-            
-            // Get mode from webhook data, default to 'ask' (which maps to 'plan' internally)
-            // Accept both 'ask' and 'plan' for planning mode, 'code' and 'bypassPermissions' for coding mode
-            $inputMode = strtolower($data['mode'] ?? 'ask');
-            
-            // Map user-friendly mode names to internal mode values
-            $mode = match($inputMode) {
-                'ask', 'plan' => 'plan',
-                'code', 'bypasspermissions' => 'bypassPermissions',
-                default => null
-            };
-            
-            if ($mode === null) {
-                return response()->json(['error' => 'Invalid mode. Must be "ask", "plan", "code", or "bypassPermissions"'], 422);
-            }
 
             // Get base project directory from .env
             $baseProjectDirectory = env('PROJECTS_DIRECTORY', 'app/private/repositories');
@@ -108,8 +71,6 @@ class WebhookController extends Controller
                 'claude_session_id' => null, // Let Claude generate this
                 'project_directory' => $projectDirectory,
                 'repository' => $repository,
-                'mode' => $mode,
-                'agent_id' => $agentId,
                 'filename' => 'claude-sessions/'.date('Y-m-d\TH-i-s').'-session-'.$project_id.'.json',
                 'is_processing' => true, // Mark as processing when created
             ]);
@@ -128,16 +89,12 @@ class WebhookController extends Controller
                 'conversation_id' => $conversation->id,
                 'user_id' => $user->id,
                 'repository' => $repository,
-                'mode' => $mode,
-                'agent_id' => $agentId,
             ]);
 
             return response()->json([
                 'status' => 'success',
                 'conversation_id' => $conversation->id,
                 'message' => 'Conversation created successfully',
-                'mode' => $mode,
-                'agent_id' => $agentId,
             ], 201);
 
         } catch (\Exception $e) {

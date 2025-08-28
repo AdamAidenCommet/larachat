@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Refresh master branch with latest changes and rebuild
-git checkout master && git reset --hard origin/master && git pull origin master
+git checkout master && git reset --hard HEAD && git pull origin master
 
 # Fix permissions for scripts folder and all script files
 if [ -d "scripts" ]; then

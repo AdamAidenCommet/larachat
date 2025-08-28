@@ -366,14 +366,14 @@ class RepositoryController extends Controller
 
     /**
      * Update repository settings
-     * 
+     *
      * Update repository settings including deploy script
-     * 
+     *
      * @authenticated
-     * 
+     *
      * @urlParam repository integer required The ID of the repository. Example: 1
      * @bodyParam deploy_script string The deployment script for the repository. Example: npm run build && npm run deploy
-     * 
+     *
      * @response 200 scenario="Success" {
      *   "message": "Repository settings updated successfully",
      *   "repository": {
@@ -388,11 +388,11 @@ class RepositoryController extends Controller
         $request->validate([
             'deploy_script' => 'nullable|string'
         ]);
-        
+
         $repository->update([
             'deploy_script' => $request->input('deploy_script')
         ]);
-        
+
         return response()->json([
             'message' => 'Repository settings updated successfully',
             'repository' => $repository

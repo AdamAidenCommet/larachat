@@ -81,37 +81,3 @@ scripts/refresh-master.sh
 ```
 
 **DO NOT** manually run git checkout master, git pull, etc. The script handles everything correctly.
-
-## Claude Subagents Integration
-Database agents are automatically synchronized to `.claude/agents/` directory for use with Claude Code's built-in subagent feature.
-
-### How it works:
-1. When an agent is created/updated/deleted in the database, it automatically syncs to `.claude/agents/`
-2. Each agent becomes a markdown file with YAML frontmatter containing:
-   - `name`: Slugified agent name (e.g., "code-reviewer")
-   - `description`: Purpose of the agent
-   - `tools`: Comma-separated list of allowed tools (e.g., "Read, Grep, Glob")
-3. Claude Code automatically discovers and uses these agents based on task context
-
-### Agent Fields:
-- **name**: Display name of the agent
-- **description**: Brief description for Claude to understand when to use this agent
-- **prompt**: System prompt defining the agent's behavior
-- **tools**: Optional list of tools the agent can access (defaults to all if not specified)
-
-### Manual Sync Command:
-If needed, sync all agents from database to filesystem:
-```bash
-php artisan agents:sync
-```
-
-### Example Agent File (.claude/agents/code-reviewer.md):
-```markdown
----
-name: code-reviewer
-description: Expert at reviewing Laravel and Vue.js code
-tools: Read, Grep, Glob, Bash
----
-
-You are a code review specialist focused on Laravel and Vue.js applications...
-```

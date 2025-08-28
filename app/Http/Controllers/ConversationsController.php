@@ -45,7 +45,6 @@ class ConversationsController extends Controller
     public function index()
     {
         $conversations = Conversation::where('archived', false)
-            ->with('agent')
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -94,24 +93,16 @@ class ConversationsController extends Controller
             'agent_id' => 'nullable|string',
         ]);
 
-        // Allow blank repository in both plan mode and when explicitly requested
-        // This enables users to work with blank repositories for general tasks
-        $isBlankRepositoryRequest = empty($request->input('repository')) || $request->input('repository') === '';
-        $mode = $request->input('mode', 'plan');
-
-        // For now, allow blank repositories in both modes to give users flexibility
-        // Users can start conversations without a specific codebase
-
-        $project_id = uniqid();
         $msg = $request->input('message');
 
-        // For blank repository, use the base directory
-        if (empty($request->input('repository'))) {
-            $projectDirectory = 'app/private/repositories/base';
+        $str = date('Y-m-d\TH-i-s') . '-' . uniqid() ;
+
+        // For blank repository, ensure the base directory exists
+        if (empty($request->input("repository"))) {
+            $projectDirectory = storage_path('app/private/repositories/base');
         } else {
-            // Get base project directory from .env
-            $baseProjectDirectory = env('PROJECTS_DIRECTORY', 'app/private/repositories');
-            $projectDirectory = rtrim($baseProjectDirectory, '/').'/'.$project_id;
+            $baseProjectDirectory = env('PROJECTS_DIRECTORY', './../../subdomains');
+            $projectDirectory = rtrim($baseProjectDirectory, '/').'/'.$str;
         }
 
         $conversation = Conversation::query()->create([
@@ -121,7 +112,7 @@ class ConversationsController extends Controller
             'claude_session_id' => null, // Let Claude generate this
             'project_directory' => $projectDirectory,
             'repository' => $request->input('repository'),
-            'filename' => 'claude-sessions/'.date('Y-m-d\TH-i-s').'-session-'.$project_id.'.json',
+            'filename' => 'claude-sessions/' . $str. '.json',
             'is_processing' => true, // Mark as processing when created
             'mode' => $request->input('mode', 'plan'), // Default to 'plan' if not specified
             'agent_id' => $request->input('agent_id') ? (int)$request->input('agent_id') : null,
@@ -391,7 +382,7 @@ class ConversationsController extends Controller
 
         // Try to terminate the running Claude process
         \App\Services\ClaudeService::terminateConversationProcess($conversation->id);
-        
+
         return response()->json(['message' => 'Processing stopped successfully']);
     }
 }

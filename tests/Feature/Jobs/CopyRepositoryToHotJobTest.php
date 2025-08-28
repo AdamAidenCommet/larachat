@@ -20,30 +20,6 @@ class CopyRepositoryToHotJobTest extends TestCase
         $this->assertInstanceOf(CopyRepositoryToHotJob::class, $job);
     }
 
-    public function test_job_deletes_repository_when_base_directory_missing()
-    {
-        // Create a repository in the database
-        $repository = Repository::factory()->create([
-            'name' => 'test-repo-missing',
-            'local_path' => 'repositories/base/test-repo-missing',
-        ]);
-
-        // Ensure the base directory doesn't exist
-        $basePath = storage_path('app/private/repositories/base/test-repo-missing');
-        if (is_dir($basePath)) {
-            File::deleteDirectory($basePath);
-        }
-
-        // Run the job - it should complete successfully but delete the repository
-        $job = new CopyRepositoryToHotJob('test-repo-missing');
-        $job->handle();
-
-        // Check that the repository was deleted from the database
-        $this->assertDatabaseMissing('repositories', [
-            'id' => $repository->id,
-        ]);
-    }
-
     public function test_job_skips_blank_repository()
     {
         $job = new CopyRepositoryToHotJob('');

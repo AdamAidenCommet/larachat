@@ -18,11 +18,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string|null $claude_session_id
  * @property string|null $filename
  * @property bool $is_processing
+ * @property bool $is_completed
  * @property bool $archived
  * @property string $mode
  * @property string|null $git_branch
  * @property int|null $pr_number
  * @property int|null $agent_id
+ * @property string|null $agent_name
+ * @property Agent $agent
  */
 class Conversation extends Model
 {
@@ -37,15 +40,18 @@ class Conversation extends Model
         'claude_session_id',
         'filename',
         'is_processing',
+        'is_completed',
         'archived',
         'mode',
         'git_branch',
         'pr_number',
         'agent_id',
+        'agent_name',
     ];
 
     protected $casts = [
         'is_processing' => 'boolean',
+        'is_completed' => 'boolean',
         'archived' => 'boolean',
     ];
 

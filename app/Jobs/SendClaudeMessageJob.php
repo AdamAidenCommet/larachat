@@ -27,122 +27,52 @@ class SendClaudeMessageJob implements ShouldQueue
 
     public function handle(): void
     {
+        if ($this->validate() === false) {
+            return;
+        }
+
         try {
-            // Validate conversation exists and is valid
-            if (! $this->conversation->exists) {
-                Log::warning('Conversation no longer exists', [
-                    'conversation_id' => $this->conversation->id,
-                ]);
-
-                return;
-            }
-
-            // Check if processing has been stopped by the user
-            $freshConversation = $this->conversation->fresh();
-            if (!$freshConversation->is_processing) {
-                Log::info('Conversation processing was stopped by user', [
-                    'conversation_id' => $this->conversation->id,
-                ]);
-                return;
-            }
-
-            // Check if project directory exists (if specified)
-            if ($this->conversation->project_directory) {
-                // If project_directory starts with absolute path, use it directly
-                // Otherwise treat it as relative to storage_path
-                if (str_starts_with($this->conversation->project_directory, '/')) {
-                    $projectPath = $this->conversation->project_directory;
-                } else {
-                    $projectPath = storage_path($this->conversation->project_directory);
-                }
-
-                if (! is_dir($projectPath)) {
-                    Log::error('Project directory does not exist', [
-                        'conversation_id' => $this->conversation->id,
-                        'project_directory' => $this->conversation->project_directory,
-                        'full_path' => $projectPath,
-                    ]);
-
-                    $this->conversation->update([
-                        'is_processing' => false,
-                        'error_message' => 'Project directory not found: '.$this->conversation->project_directory,
-                    ]);
-
-                    return;
-                }
-            }
-
-            // Filename should already be set by the controller
-            $filename = $this->conversation->filename;
-
-            // If for some reason it's not set, generate it
-            if (! $filename) {
-                $timestamp = now()->format('Y-m-d\TH-i-s');
-                $tempId = substr(uniqid(), -12);
-                $filename = "claude-sessions/{$timestamp}-session-{$tempId}.json";
-                $this->conversation->update(['filename' => $filename]);
-
-                // Also save the user message if we had to generate filename
-                ClaudeService::saveUserMessage(
-                    $this->message,
-                    $filename,
-                    $this->conversation->claude_session_id,
-                    $this->conversation->project_directory
-                );
-            }
             // Note: User message is already saved by the controller synchronously
 
-            // Create a progress callback to update the conversation in real-time
-            $progressCallback = function ($type, $data) {
-                if ($type === 'sessionId' && ! $this->conversation->claude_session_id) {
-                    $this->conversation->update(['claude_session_id' => $data]);
-                    Log::info('Updated conversation with session ID', [
-                        'conversation_id' => $this->conversation->id,
-                        'sessionId' => $data,
-                    ]);
-                } elseif ($type === 'response') {
-                    // Update the conversation's updated_at timestamp to signal new content
-                    $this->conversation->touch();
-
-                    Log::debug('Progress update', [
-                        'conversation_id' => $this->conversation->id,
-                        'filename' => $data['filename'],
-                        'responseCount' => $data['responseCount'],
-                    ]);
-                }
-            };
+            $progressCallback = $this->progressCallbackMethod();
 
             // Use conversation mode to determine permission mode
             // If mode is 'plan', use 'plan' permission mode; otherwise use 'bypassPermissions'
             $permissionMode = $this->conversation->mode === 'plan' ? 'plan' : 'bypassPermissions';
-            
+
             // Build options string
             $options = '--permission-mode '.$permissionMode;
-            
-            // Add agent prompt as system message if agent is selected
-            if ($this->conversation->agent_id) {
-                $this->conversation->load('agent');
-                if ($this->conversation->agent && $this->conversation->agent->prompt) {
-                    // Properly escape the agent prompt for shell usage
-                    // Use addslashes to escape special characters including quotes, backslashes, etc.
-                    $agentPrompt = addslashes($this->conversation->agent->prompt);
-                    $options .= ' --append-system-prompt "'.$agentPrompt.'"';
-                    
-                    Log::info('Adding agent system prompt', [
-                        'conversation_id' => $this->conversation->id,
-                        'agent_id' => $this->conversation->agent_id,
-                        'agent_name' => $this->conversation->agent->name,
-                        'prompt_length' => strlen($agentPrompt),
-                    ]);
-                }
+
+            if ($this->conversation->agent) {
+                $options .= ' --append-system-prompt '. addslashes('"'.$this->conversation->agent->prompt.'"');
+
+                Log::info('Adding agent system prompt', [
+                    'conversation_id' => $this->conversation->id,
+                    'agent_id' => $this->conversation->agent_id,
+                    'agent_name' => $this->conversation->agent->name,
+                    'prompt_length' => strlen($this->conversation->agent->prompt),
+                ]);
+            }
+
+            // Also save the user message if we had to generate filename
+            ClaudeService::saveUserMessage(
+                $this->message,
+                $this->conversation->filename,
+                $this->conversation->claude_session_id,
+                $this->conversation->project_directory
+            );
+
+            $projectDirectory = $this->conversation->project_directory;
+            if (!str_starts_with($projectDirectory, '/')) {
+                $projectDirectory = base_path($projectDirectory);
             }
 
             $result = ClaudeService::processInBackground(
                 $this->message,
                 $options,
                 $this->conversation->claude_session_id,
-                $filename,
-                $this->conversation->project_directory,
+                $this->conversation->filename,
+                $projectDirectory,
                 $progressCallback,
                 $this->conversation->id
             );
@@ -295,5 +225,75 @@ class SendClaudeMessageJob implements ShouldQueue
             'is_processing' => false,
             'error_message' => 'Failed to send message to Claude: '.$exception->getMessage(),
         ]);
+    }
+
+    private function validate(): bool
+    {
+        $conversation = $this->conversation;
+
+        if ($conversation->exists === false) {
+            Log::warning('Conversation no longer exists', ['conversation_id' => $conversation->id]);
+
+            return false;
+        }
+
+        if ($conversation->fresh()->is_processing === false) {
+            Log::info('Conversation processing was stopped by user', ['conversation_id' => $conversation->id]);
+
+            return false;
+        }
+
+        // Check if project directory exists (if specified)
+        if ($conversation->project_directory) {
+            // If project_directory starts with absolute path, use it directly
+            // Otherwise treat it as relative to storage_path
+            if (str_starts_with($conversation->project_directory, '/')) {
+                $projectPath = $conversation->project_directory;
+            } else {
+                $projectPath = storage_path($conversation->project_directory);
+            }
+
+            if (! is_dir($projectPath)) {
+                Log::error('Project directory does not exist', [
+                    'conversation_id' => $conversation->id,
+                    'project_directory' => $conversation->project_directory,
+                    'full_path' => $projectPath,
+                ]);
+
+                $conversation->update([
+                    'is_processing' => false,
+                    'error_message' => 'Project directory not found: '. $conversation->project_directory,
+                ]);
+
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * @return \Closure
+     */
+    public function progressCallbackMethod(): \Closure
+    {
+        return function ($type, $data) {
+            if ($type === 'sessionId' && !$this->conversation->claude_session_id) {
+                $this->conversation->update(['claude_session_id' => $data]);
+                Log::info('Updated conversation with session ID', [
+                    'conversation_id' => $this->conversation->id,
+                    'sessionId' => $data,
+                ]);
+            } elseif ($type === 'response') {
+                // Update the conversation's updated_at timestamp to signal new content
+                $this->conversation->touch();
+
+                Log::debug('Progress update', [
+                    'conversation_id' => $this->conversation->id,
+                    'filename' => $data['filename'],
+                    'responseCount' => $data['responseCount'],
+                ]);
+            }
+        };
     }
 }

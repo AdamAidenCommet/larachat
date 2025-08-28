@@ -2,7 +2,7 @@ export interface Message {
     id: number;
     content: string;
     role: 'user' | 'assistant';
-    timestamp: Date | string;
+    timestamp: Date;
     rawResponses?: any[];
 }
 
