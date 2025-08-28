@@ -35,10 +35,12 @@ class ClaudeService
 
             // With the wrapper handling directory changes, we don't need to set working directory here
             // The wrapper will cd to the correct project directory based on the project ID
+            $homeDir = $_SERVER['HOME'] ?? '/Users/customer';
+            $userName = $_SERVER['USER'] ?? 'customer';
             $process = new Process($command, null, [
-                'PATH' => '/Users/arturhanusek/Library/Application Support/Herd/bin:/Users/arturhanusek/Library/Application Support/Herd/config/nvm/versions/node/v20.19.3/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin',
-                'HOME' => '/Users/arturhanusek',
-                'USER' => 'arturhanusek',
+                'PATH' => $homeDir . '/Library/Application Support/Herd/bin:' . $homeDir . '/Library/Application Support/Herd/config/nvm/versions/node/v20.19.3/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin',
+                'HOME' => $homeDir,
+                'USER' => $userName,
             ]);
             $process->setTimeout(null);
             $process->setIdleTimeout(null);
@@ -308,10 +310,12 @@ class ClaudeService
 
         // With the wrapper handling directory changes, we don't need to set working directory here
         // The wrapper will cd to the correct project directory based on the project ID
+        $homeDir = $_SERVER['HOME'] ?? '/Users/customer';
+        $userName = $_SERVER['USER'] ?? 'customer';
         $process = new Process($command, null, [
-            'PATH' => '/Users/arturhanusek/Library/Application Support/Herd/bin:/Users/arturhanusek/Library/Application Support/Herd/config/nvm/versions/node/v20.19.3/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin',
-            'HOME' => '/Users/arturhanusek',
-            'USER' => 'arturhanusek',
+            'PATH' => $homeDir . '/Library/Application Support/Herd/bin:' . $homeDir . '/Library/Application Support/Herd/config/nvm/versions/node/v20.19.3/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin',
+            'HOME' => $homeDir,
+            'USER' => $userName,
         ]);
         $process->setTimeout(null);
         $process->setIdleTimeout(null);
@@ -627,7 +631,11 @@ class ClaudeService
     {
         $wrapperPath = base_path('claude-wrapper.sh');
         $command = [$wrapperPath];
-        $command[] = $repositoryPath;
+        
+        // Use repository path if provided, otherwise use current app directory
+        // This ensures claude commands run in the correct project context
+        $commandDirectory = $repositoryPath ?: base_path();
+        $command[] = $commandDirectory;
 
         // Add Claude CLI arguments
         $command = array_merge($command, ['--print', '--verbose', '--output-format', 'stream-json']);

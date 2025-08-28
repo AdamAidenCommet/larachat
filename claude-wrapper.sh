@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # Add the paths where claude might be installed
-export PATH="/Users/arturhanusek/Library/Application Support/Herd/config/nvm/versions/node/v20.19.3/bin:/Users/customer/Library/Application Support/Herd/config/nvm/versions/node/v20.19.4/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:$PATH"
+# Dynamically use the current user's home directory
+export PATH="${HOME}/Library/Application Support/Herd/config/nvm/versions/node/v20.19.3/bin:${HOME}/Library/Application Support/Herd/config/nvm/versions/node/v20.19.4/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:$PATH"
 
 # this should be passed as first argument
 COMMAND_DIRECTORY="$1"

@@ -62,9 +62,22 @@ class SendClaudeMessageJob implements ShouldQueue
                 $this->conversation->project_directory
             );
 
+            // Ensure project directory is properly formatted as absolute path
             $projectDirectory = $this->conversation->project_directory;
-            if (!str_starts_with($projectDirectory, '/')) {
-                $projectDirectory = base_path($projectDirectory);
+            if ($projectDirectory) {
+                // If not an absolute path, treat it as relative to storage
+                if (!str_starts_with($projectDirectory, '/')) {
+                    $projectDirectory = storage_path($projectDirectory);
+                }
+                
+                // Ensure the directory exists
+                if (!is_dir($projectDirectory)) {
+                    Log::warning('Project directory does not exist, will use app directory', [
+                        'conversation_id' => $this->conversation->id,
+                        'project_directory' => $projectDirectory,
+                    ]);
+                    $projectDirectory = null;
+                }
             }
 
             $result = ClaudeService::processInBackground(
