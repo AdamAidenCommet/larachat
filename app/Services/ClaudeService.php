@@ -629,11 +629,37 @@ class ClaudeService
      */
     public static function getArr(?string $repositoryPath, ?string $sessionId, string $options, $prompt): array
     {
-        $wrapperPath = base_path('claude-wrapper.sh');
+        // Determine isolation level from environment or use default
+        // Options: 'none' (original), 'isolated' (env isolation), 'sandbox' (full sandbox)
+        $isolationLevel = env('CLAUDE_ISOLATION_LEVEL', 'isolated');
+        
+        switch ($isolationLevel) {
+            case 'sandbox':
+                // Maximum isolation - copies files to temporary sandbox
+                $wrapperPath = base_path('claude-sandbox.sh');
+                break;
+            case 'isolated':
+                // Environment isolation - restricts HOME and environment variables
+                $wrapperPath = base_path('claude-wrapper-isolated.sh');
+                break;
+            case 'none':
+            default:
+                // Original wrapper - only changes working directory
+                $wrapperPath = base_path('claude-wrapper.sh');
+                break;
+        }
+        
+        // Log the isolation level being used
+        \Log::info('Claude wrapper isolation level', [
+            'level' => $isolationLevel,
+            'wrapper' => basename($wrapperPath),
+            'repository_path' => $repositoryPath,
+        ]);
+        
         $command = [$wrapperPath];
         
         // Use repository path if provided, otherwise use current app directory
-        // This ensures claude commands run in the correct project context
+        // The isolated wrapper ensures Claude can ONLY access this directory
         $commandDirectory = $repositoryPath ?: base_path();
         $command[] = $commandDirectory;
 
